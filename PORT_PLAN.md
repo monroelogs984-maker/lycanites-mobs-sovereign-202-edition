@@ -218,11 +218,34 @@ Each phase depends on the ones above it being in place and registered.
 
 Phases 0–3 complete, Phase 4a+4b+4c complete — all verified end-to-end
 (`./gradlew runServer` loads clean, no errors). 3 real items (`mobtoken`, `immunizer`,
-`cleansingcrystal`), 7 full dungeon building block sets (98 blocks:
-lush/desert/shadow/demon/aberrant/ashen/stream x 14 variants each), and 12 effect blocks
-(7 fire, 3 cloud, 2 web) all register successfully. Config subsystem is 11/13 files
-ported — `ConfigCreatures` and `ConfigCreatureSubspecies` are deferred to Phase 5 (they
-depend on `Variant`/`CreatureStats`/`CreatureManager`).
+`cleansingcrystal`), 7 full dungeon building block sets (105 blocks: 15 variants x
+lush/desert/shadow/demon/aberrant/ashen/stream), and 12 effect blocks (7 fire, 3 cloud,
+2 web) all register successfully - **117 blocks + 117 block items confirmed registered**
+via a log line in `RegistryEvents`, not just inferred from a clean run. Config subsystem
+is 11/13 files ported — `ConfigCreatures` and `ConfigCreatureSubspecies` are deferred to
+Phase 5 (they depend on `Variant`/`CreatureStats`/`CreatureManager`).
+
+**Post-4c crash fix (2026-09-22):** Glenn hit a real client-side crash opening the
+creative inventory in Lycannots -
+`IllegalStateException: Registry is already frozen`, traced through
+`BlockManager`/`ObjectManager`/`LMBlocksGroup` into `Block.<init>`. Root cause:
+`ObjectManager.addBlock()` only ever stored blocks as a `Lazy` supplier in a local map -
+unlike `addItem()`, it never actually registered them to a `DeferredRegister`. Nothing
+forced those `Lazy`s to resolve during the registration window, so blocks silently never
+made it into the real block registry - no error at mod load (which is why `runServer`
+never caught it: a dedicated server never builds creative tab contents), but the first
+thing that forced the `Lazy` (opening the creative inventory, client-only) tried to
+construct-and-self-register a `Block` into an already-frozen registry and crashed. Fixed
+by porting a trimmed `RegistryEvents` class (just block/block-item registration - the
+original's other responsibilities all need Phase 5/6 systems) and wiring it to
+`RegisterEvent` on the mod event bus, matching the original Forge code's actual mechanism
+(`RegistryEvents` was referenced in the constructor but I hadn't ported it). Verified with
+the registration count log, not just a clean load. **Lesson for later phases:** `runServer`
+alone doesn't exercise client-only code paths like creative tabs/GUIs - this class of bug
+(a `Lazy`/deferred value that's never forced to resolve until something client-side touches
+it) can hide behind a clean server run. Worth specifically checking anything
+`ObjectManager`-Lazy-backed gets a real registration path, not just assuming symmetry with
+how items work.
 
 Phase 4 is now genuinely exhausted of self-contained work - everything left in
 `ItemManager.loadItems()` (the ~38 remaining items, `BlockShadowfire`, the 5 equipment/

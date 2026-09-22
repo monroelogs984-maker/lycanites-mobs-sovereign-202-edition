@@ -6,6 +6,7 @@ import com.lycanitesmobs.core.data.info.ModInfo;
 import com.lycanitesmobs.core.data.info.ObjectLists;
 import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
+import com.lycanitesmobs.core.event.RegistryEvents;
 import com.lycanitesmobs.core.manager.ElementManager;
 import com.lycanitesmobs.core.manager.ItemManager;
 import com.lycanitesmobs.core.manager.ObjectManager;
@@ -67,11 +68,15 @@ public class LycanitesMobs {
         ENTITY_TYPES.register(modEventBus);
         ItemManager.register(modEventBus);
 
+        // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
+        // register while the registry is still open (fires on the mod event bus, after all
+        // mod constructors run but before registries freeze). Without this, blocks silently
+        // never register - see RegistryEvents' class comment for the crash this caused.
+        modEventBus.addListener(RegistryEvents.getInstance()::registerBlocks);
+
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 4b+: FluidManager/EffectManager - both are gated on ObjectManager (now
-        // wired up) but need more block/item content ported first to be meaningful.
-        // TODO Phase 4b+: EquipmentPartManager registration - needs ItemEquipmentPart.
+        // TODO Phase 4d+: EquipmentPartManager registration - needs ItemEquipmentPart.
         // TODO Phase 5: CreatureManager registration + bindRegisteredValues().
         // TODO Phase 6: ProjectileManager/SpawnerManager/StructureSpawnInjector/AltarInfo/
         //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
