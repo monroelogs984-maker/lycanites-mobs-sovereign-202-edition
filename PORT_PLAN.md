@@ -91,12 +91,31 @@ Each phase depends on the ones above it being in place and registered.
         mechanical rename), `IPlantable` and `BiomeManager` were removed with no replacement,
         `DistExecutor` was removed (modern pattern: a separate `@Mod(dist = Dist.CLIENT)`
         class, not a runtime dist check).
-- [ ] **Phase 3 — Elements, Effects, Fluids**: `ElementManager`, `EffectManager`,
-      `FluidManager`. Small, mostly self-contained — good warm-up before the DataComponents
-      fight in Phase 4.
-- [ ] **Phase 4 — Items & Blocks**: `ItemManager`, `EquipmentPartManager`. This is where
-      the 1.20.5+ DataComponents rewrite hits hardest (item NBT model changed fundamentally
-      between 1.20.1 and 1.21.1) — expect this to be its own sub-project, not a quick pass.
+- [x] **Phase 3 — Elements** (done 2026-09-22): `ElementManager`, `ElementInfo`, `EffectBase`,
+      plus the `JSONLoader`/`JSONHelper` JSON-loading substrate they (and every later
+      JSON-driven manager) sit on — that substrate turned out to belong here, not Phase 2,
+      once actually read. All 28 element JSON definitions ported and loading (verified via
+      `./gradlew runServer` — 0 errors, server reaches "Done").
+      **Correction to the original plan:** `EffectManager` and `FluidManager` are NOT
+      self-contained the way this phase assumed before the files were actually read — both
+      call into `ObjectManager` (`addPotionEffect`/`addSound`/`addFluid`/`addItem`/`addBlock`),
+      which is gated on Phase 4. They move to Phase 4, not this one.
+      **Real bugs found by running it, not just compiling:** `Registry<T>.getValue()` doesn't
+      exist in 1.21.1 (renamed to plain `.get()`, or `.getOptional()` when you need a true
+      "not found" signal instead of a `DefaultedRegistry` falling back to its default value);
+      `MobEffectInstance` effect params are now `Holder<MobEffect>`, not `MobEffect` directly,
+      matching the same Holder-wrapping trend as `Attributes.MAX_HEALTH` in Phase 2;
+      `LivingEntity.setSecondsOnFire(int)` → `igniteForSeconds(float)`; `Biome` is a fully
+      dynamic (datapack) registry with no static access at all as of 1.21, so
+      `JSONHelper.getBiomes(List<String>)` (no registry-access context) has no valid
+      replacement and was dropped rather than ported wrong - flagged for whoever needs it in
+      Phase 7 to add back with a `RegistryAccess`/`Level` parameter.
+- [ ] **Phase 4 — Items & Blocks + Effects/Fluids registration**: `ItemManager`,
+      `EquipmentPartManager`, `ObjectManager` (deferred from Phase 2), `EffectManager`,
+      `FluidManager` (deferred from Phase 3), `JSONHelper.getJsonMaterials()` (deferred from
+      Phase 3, needs `Material`). This is where the 1.20.5+ DataComponents rewrite hits
+      hardest (item NBT model changed fundamentally between 1.20.1 and 1.21.1) — expect this
+      to be its own sub-project, not a quick pass.
 - [ ] **Phase 5 — Creatures**: `CreatureManager` and the 123 creature classes / 167 JSON
       configs. The big one. Break this into batches (by creature family or tier), build +
       deploy + visually verify each batch in S202 before moving to the next — do not
@@ -118,7 +137,19 @@ Each phase depends on the ones above it being in place and registered.
 
 ## Status
 
-Phases 0–2 complete and verified end-to-end (`./gradlew runServer` loads clean, no errors).
-Config subsystem is 11/13 files ported — `ConfigCreatures` and `ConfigCreatureSubspecies`
-are deferred to Phase 5 (they depend on `Variant`/`CreatureStats`/`CreatureManager`).
-`ObjectManager` deferred to Phase 4. Next up: Phase 3 (Elements, Effects, Fluids).
+Phases 0–3 complete and verified end-to-end (`./gradlew runServer` loads clean, no errors,
+28/28 element JSONs load). Config subsystem is 11/13 files ported — `ConfigCreatures` and
+`ConfigCreatureSubspecies` are deferred to Phase 5 (they depend on
+`Variant`/`CreatureStats`/`CreatureManager`). `ObjectManager`, `EffectManager`,
+`FluidManager` deferred to Phase 4. Next up: Phase 4 (Items & Blocks).
+
+## CI
+
+GitHub Actions (`.github/workflows/build.yml`, came bundled with the NeoForge MDK template)
+runs `./gradlew build` on every push. Caught a real mistake early: `gradle.properties` briefly
+had `org.gradle.java.home=/usr/lib/jvm/java-21-openjdk` committed to it (this machine's local
+JDK path) - broke CI immediately since GitHub's runners don't have that path. Fixed by
+removing it; rely on `JAVA_HOME` from the environment instead (CI's `setup-java` action sets
+it correctly; locally, pass `JAVA_HOME=/usr/lib/jvm/java-21-openjdk` explicitly per command,
+same as this plan's other `./gradlew` examples do). Never commit a machine-local
+`org.gradle.java.home` to this repo again.

@@ -4,6 +4,7 @@ import com.lycanitesmobs.core.data.config.CoreConfig;
 import com.lycanitesmobs.core.data.info.ModInfo;
 import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
+import com.lycanitesmobs.core.manager.ElementManager;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -63,7 +64,9 @@ public class LycanitesMobs {
 
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 3+: ElementManager/FluidManager/EffectManager/ObjectLists content loading.
+        // TODO Phase 4: FluidManager/EffectManager - both are gated on ObjectManager, which is
+        // gated on ItemManager/EquipmentPartManager (registryObjects()); can't be separated from
+        // Phase 4 the way ElementManager could. ObjectLists content loading is also Phase 4.
         // TODO Phase 4: ItemManager/EquipmentPartManager registration (registryObjects()).
         // TODO Phase 5: CreatureManager registration + bindRegisteredValues().
         // TODO Phase 6: ProjectileManager/SpawnerManager/StructureSpawnInjector/AltarInfo/
@@ -82,5 +85,6 @@ public class LycanitesMobs {
     private void commonSetup(final FMLCommonSetupEvent event) {
         configReady = true;
         LMHelperClass.fixMaxHealth();
+        ElementManager.getInstance().loadAllFromJson(modInfo);
     }
 }
