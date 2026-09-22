@@ -40,6 +40,13 @@ file content is the custom "Lycanite Mob Public License" (modification and deriv
 explicitly permitted) — that's the file that's authoritative, and it's what's declared
 in `gradle.properties` here.
 
+## Testing
+
+Dedicated CurseForge instance **Lycannots** (NeoForge 21.1.251, MC 1.21.1) —
+`~/Documents/curseforge/minecraft/Instances/Lycannots/` — kept separate from the S202
+instance so this WIP port doesn't touch the main modpack while it's unstable.
+`./gradlew deploy` builds and copies the jar there. `./gradlew build` alone does not.
+
 ## Phase order
 
 Ordered to match the mod's own bootstrap dependency graph (traced from
@@ -50,14 +57,40 @@ Each phase depends on the ones above it being in place and registered.
       / `neoforge.mods.toml` filled in with real Lycanites metadata (mod id kept as
       `lycanitesmobs` to stay compatible with Lycanites Kin, lycanoculus, and Lycanite's
       Companions), reference source trees pulled in, this plan.
-- [ ] **Phase 1 — Core bootstrap**: mod entry class on NeoForge's constructor-injection
-      lifecycle (no more `FMLJavaModLoadingContext`/`DistExecutor`/proxy split — those
-      patterns are gone in NeoForge), empty `DeferredRegister`s for items/blocks/entity
-      types, `CoreConfig` → `ModConfigSpec`. Goal: mod loads in a dev client with zero
-      content and doesn't crash.
-- [ ] **Phase 2 — Data-loading substrate**: `FileLoader`/`StreamLoader`, `ModInfo`,
-      the `ObjectManager` base pattern every content manager extends. Every later phase
-      depends on this being right — port it carefully.
+- [x] **Phase 1 — Core bootstrap** (done 2026-09-22): mod entry class (`LycanitesMobs.java`)
+      on NeoForge's constructor-injection lifecycle (no more
+      `FMLJavaModLoadingContext`/`DistExecutor`/proxy split — those patterns are gone in
+      NeoForge), empty `DeferredRegister`s for items/blocks/entity types, `CoreConfig` →
+      `ModConfigSpec`. **Verified with `./gradlew runServer`** — mod loads cleanly, server
+      reaches "Done". `LycanitesMobsClient` (Phase 8) not started yet.
+- [x] **Phase 2 — Data-loading substrate** (done 2026-09-22): `FileLoader`/`StreamLoader`,
+      `ModInfo`, `LMHelperClass`, `AssetHelper`. `ObjectManager` deliberately deferred to
+      Phase 4 — it pulls in `EffectBase` (Phase 3), containers (Phase 6/8), and
+      `LMItemsGroup` (Phase 4), none of which exist yet; porting it now would mean stubbing
+      three future phases just to make it compile.
+      **Real bugs found and fixed by actually running it, not just compiling:**
+      - `FileLoader` needs marker files at `assets/lycanitesmobs/.root`,
+        `data/lycanitesmobs/.root`, `common/lycanitesmobs/.root` (empty files) to locate its
+        classpath roots — without them, mod construction throws NPE and the server won't start.
+      - `LMHelperClass.fixMaxHealth()`'s reflection hack broke silently: `Attributes.MAX_HEALTH`
+        changed from a direct `RangedAttribute` to a `Holder<Attribute>` as of 1.21 — must
+        unwrap via `.value()` before reflecting into it, or it throws (caught, non-fatal, but
+        the max-health-uncap feature just didn't work).
+      - `ChunkStatus` moved package: `net.minecraft.world.level.chunk` →
+        `net.minecraft.world.level.chunk.status`.
+      - Confirmed ground truth (not memory) for the full NeoForge/1.21.1 API surface this phase
+        touched, by grepping the actual dependency jars and NeoGradle's decompiled sources in
+        `build/neoForm/.../transformSource/transformed/`: `ResourceLocation` constructors are
+        private now (use `.fromNamespaceAndPath()` / `.parse()`); `ForgeRegistries` doesn't
+        exist in NeoForge — use `BuiltInRegistries.<SINGULAR_NAME>` for static registries
+        (field names don't all match the old plural Forge names, e.g. `MENU` not `MENU_TYPES`,
+        `CARVER` not `WORLD_CARVERS`, `BLOCKSTATE_PROVIDER_TYPE` not
+        `BLOCK_STATE_PROVIDER_TYPES`); `Enchantment`/`PaintingVariant` became dynamic
+        (datapack) registries with no static lookup, need `RegistryAccess`;
+        `MinecraftForge`→`NeoForge`, `ForgeConfigSpec`→`ModConfigSpec` (API-identical, safe
+        mechanical rename), `IPlantable` and `BiomeManager` were removed with no replacement,
+        `DistExecutor` was removed (modern pattern: a separate `@Mod(dist = Dist.CLIENT)`
+        class, not a runtime dist check).
 - [ ] **Phase 3 — Elements, Effects, Fluids**: `ElementManager`, `EffectManager`,
       `FluidManager`. Small, mostly self-contained — good warm-up before the DataComponents
       fight in Phase 4.
@@ -85,5 +118,7 @@ Each phase depends on the ones above it being in place and registered.
 
 ## Status
 
-Phase 0 complete. Nothing beyond the scaffold has been ported yet — `src/main/java` is
-currently empty aside from what Phase 1 adds.
+Phases 0–2 complete and verified end-to-end (`./gradlew runServer` loads clean, no errors).
+Config subsystem is 11/13 files ported — `ConfigCreatures` and `ConfigCreatureSubspecies`
+are deferred to Phase 5 (they depend on `Variant`/`CreatureStats`/`CreatureManager`).
+`ObjectManager` deferred to Phase 4. Next up: Phase 3 (Elements, Effects, Fluids).
