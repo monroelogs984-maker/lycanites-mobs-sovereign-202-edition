@@ -145,12 +145,42 @@ Each phase depends on the ones above it being in place and registered.
             immediately. Fixed by adding a `loadContent()` method back, called from the
             constructor, matching the original's structure — `LycanitesMobs.java` now has a
             code comment explaining this so it doesn't happen again in a later phase.
-    - [ ] **Phase 4b+**: the remaining ~40 hardcoded items (soulgazer, soulstone, equipment,
-          summoning staves, etc.) and ~55 blocks (fire/cloud/web effect blocks, dungeon
-          building block sets via `BlockManager`, the 5 special equipment/pedestal blocks),
-          `EquipmentPartManager` (+ `ItemEquipmentPart`), `EffectManager`, `FluidManager`,
-          the remaining 5 creative tabs, `JSONHelper.getJsonMaterials()`. Batch this the same
-          way Phase 5's 123 creatures get batched — not all at once.
+    - [x] **Phase 4b** (done 2026-09-22): the "lush" dungeon building block set, proving
+          `BlockManager`'s registration path. Ported `BlockTypeGetter`, `BlockBase`,
+          `BlockStairsCustom`/`BlockSlabCustom`/`BlockFenceCustom`/`BlockWallCustom`/
+          `BlockPillar`, `BlockManager`, `LMBlocksGroup` (blocks tab), plus the two
+          genuinely-standalone items found while re-checking Phase 4a's original item list
+          (`ItemImmunizer`, `ItemCleansingCrystal` — only needed `ObjectManager`, already
+          ported). **Note on scope:** re-checked the rest of the original ~40 hardcoded items
+          (`ItemSoulgazer`, `ItemSoulContract`, `ItemSoulstone`, `ItemSoulkey`, the holiday
+          items) before starting this batch — every one of them pulls in `ExtendedPlayer`
+          (capability system), `CreatureManager`/`BaseCreatureEntity`/`PetEntry`, or
+          `AltarInfo`, none of which exist before Phase 5/6. So the "~40 items" remaining
+          isn't really Phase 4 work at all — it's Phase 5/6 work that happens to live in
+          `ItemManager.loadItems()`. Blocks were different: `BlockBase` and the 5 building
+          block classes only needed `BlockTypeGetter`/`LMBlocksGroup`, both self-contained.
+          **Verified with `./gradlew runServer` + jar content check** — clean load, all 7
+          new classes confirmed present in the deployed jar.
+          **API changes found, none required a running check this time (compiler caught
+          them all) but are worth recording:** `Block.appendHoverText()`'s second param
+          changed from `BlockGetter` to `Item.TooltipContext` — same change as `Item`'s
+          version in Phase 4a, confirmed by checking NeoForge's own patched vanilla source
+          rather than guessing it'd match. `net.minecraftforge.api.distmarker.{Dist,OnlyIn}`
+          → `net.neoforged.api.distmarker.{Dist,OnlyIn}` (same class names, NeoForge just
+          didn't rename this particular package away from `net.neoforged.api.*`, so it's
+          slightly inconsistent with `common`/`registries`/`fml` all moving to
+          `net.neoforged.neoforge.*` or `net.neoforged.fml.*` — confirmed by checking actual
+          usage in NeoForge's patched vanilla source rather than assuming a pattern held).
+    - [ ] **Phase 4c+**: revisit once Phase 5 (Creatures) and Phase 6 (Altars, gameplay
+          systems) exist — that's what actually unblocks `ItemSoulgazer`/`ItemSoulstone`/
+          `ItemSoulkey`/the summoning staves/the holiday items. Still fully Phase-4-only and
+          unblocked right now: the other 6 dungeon stone sets via `BlockManager`
+          (`desert`/`shadow`/`demon`/`aberrant`/`ashen`/`stream`), the fire/cloud/web effect
+          blocks (`block.fire.*`/`block.cloud.*`/`block.web.*`, ~721 lines, need checking for
+          real dependencies), `JSONHelper.getJsonMaterials()` (needs `Material`, already
+          ported). `EquipmentPartManager`/`ItemEquipmentPart`, `EffectManager`, `FluidManager`,
+          the equipment/pedestal blocks, and `LMEquipmentPartsGroup`/`LMChargesGroup`/
+          `LMBestEquipmentGroup`/`LMCreaturesGroup` are still blocked on Phase 5/6 too.
 - [ ] **Phase 5 — Creatures**: `CreatureManager` and the 123 creature classes / 167 JSON
       configs. The big one. Break this into batches (by creature family or tier), build +
       deploy + visually verify each batch in S202 before moving to the next — do not
@@ -172,11 +202,19 @@ Each phase depends on the ones above it being in place and registered.
 
 ## Status
 
-Phases 0–3 complete, Phase 4a complete — all verified end-to-end (`./gradlew runServer`
-loads clean, no errors). One real item (`mobtoken`) registers successfully. Config
-subsystem is 11/13 files ported — `ConfigCreatures` and `ConfigCreatureSubspecies` are
-deferred to Phase 5 (they depend on `Variant`/`CreatureStats`/`CreatureManager`).
-Next up: Phase 4b (batch in more items/blocks) or jump to Phase 5 (Creatures) — Glenn's call.
+Phases 0–3 complete, Phase 4a+4b complete — all verified end-to-end (`./gradlew runServer`
+loads clean, no errors). 3 real items (`mobtoken`, `immunizer`, `cleansingcrystal`) and a
+full dungeon building block set (`lushstone` + 13 variants: stairs/slabs/bricks/tiles/
+fence/wall/pillar/crystal) register successfully. Config subsystem is 11/13 files ported —
+`ConfigCreatures` and `ConfigCreatureSubspecies` are deferred to Phase 5 (they depend on
+`Variant`/`CreatureStats`/`CreatureManager`).
+
+Real conclusion from Phase 4b: most of the *item* side of "Phase 4" was never actually
+Phase-4-shaped work - it's Phase 5/6 (creatures, capabilities, altars) wearing an
+`ItemManager.loadItems()` costume. The *block* side (dungeon stone sets, effect blocks) is
+genuinely self-contained Phase 4 work and there's more of it available right now (Phase 4c).
+Next up: Phase 4c (more self-contained blocks) or jump to Phase 5 (Creatures) to unblock
+the rest of the items - Glenn's call.
 
 ## CI
 

@@ -8,7 +8,10 @@ import com.lycanitesmobs.core.data.info.ModInfo;
 import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.JSONLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
+import com.lycanitesmobs.core.item.consumable.utility.ItemCleansingCrystal;
+import com.lycanitesmobs.core.item.consumable.utility.ItemImmunizer;
 import com.lycanitesmobs.core.item.special.ItemMobToken;
+import com.lycanitesmobs.core.tabs.LMBlocksGroup;
 import com.lycanitesmobs.core.tabs.LMItemsGroup;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.core.registries.Registries;
@@ -21,10 +24,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.*;
 
 /**
- * Trimmed for Phase 4a of the NeoForge port: only the "items" creative tab and a single proof
- * item (ItemMobToken) are wired up. The original also registered blocks/creatures/equipment
- * parts/charges/best-equipment tabs and ~40 more items - those come back in later Phase 4
- * batches alongside the item/block classes they depend on. See PORT_PLAN.md.
+ * Being ported in batches for Phase 4 of the NeoForge port - Phase 4a wired up the items tab
+ * plus one proof item; Phase 4b adds the blocks tab plus the "lush" dungeon block set as proof
+ * that BlockManager's registration path works. The original registered creatures/equipment
+ * parts/charges/best-equipment tabs, ~40 more items, and ~50 more blocks (the other 6 dungeon
+ * stone sets, effect blocks, equipment blocks) - those come back in later Phase 4 batches
+ * alongside the item/block classes and systems (creature system, capabilities, altars) they
+ * depend on. See PORT_PLAN.md.
  */
 public class ItemManager extends JSONLoader {
     public static final DeferredRegister<CreativeModeTab> TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, LycanitesMobs.MODID);
@@ -32,7 +38,11 @@ public class ItemManager extends JSONLoader {
     public static final CreativeModeTab.Builder itemsGroup =
             LMItemsGroup.getBuilder();
 
+    public static final CreativeModeTab.Builder blocksGroup =
+            LMBlocksGroup.getBuilder();
+
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> itemTab = TABS.register(LycanitesMobs.MODID + ".items", itemsGroup::build);
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> blockTab = TABS.register(LycanitesMobs.MODID + ".blocks", blocksGroup::build);
     public static final Map<String, Item.Properties> registryItems = new HashMap<>();
     protected static ItemManager INSTANCE;
     protected static final Map<String, ItemInfo> items = new HashMap<>();
@@ -113,15 +123,21 @@ public class ItemManager extends JSONLoader {
      * Called during early start up, loads all non-json items.
      **/
     public void loadItems() {
-        ObjectManager.addItem("mobtoken", () -> new ItemMobToken(new Item.Properties()));
+        Item.Properties itemProperties = new Item.Properties();
 
-        // TODO Phase 4b+: the remaining ~40 hardcoded items and ~15 blocks from the original
-        // loadItems() (soulgazer, soulstone, equipment, soulkeys, summoning staves, equipment
-        // forge/infuser/station blocks, dungeon building block sets via BlockManager, effect
-        // blocks like frostfire/hellfire, etc). Each pulls in its own item/block class plus,
-        // for several, a creative tab (LMBlocksGroup, LMEquipmentPartsGroup, LMChargesGroup,
-        // LMBestEquipmentGroup) - batch these the same way Phase 5's 123 creatures will be
-        // batched, not all at once.
+        ObjectManager.addItem("mobtoken", () -> new ItemMobToken(new Item.Properties()));
+        ObjectManager.addItem("immunizer", () -> new ItemImmunizer(itemProperties));
+        ObjectManager.addItem("cleansingcrystal", () -> new ItemCleansingCrystal(itemProperties));
+
+        BlockManager.addDungeonBlocks("lush");
+
+        // TODO Phase 4c+: the remaining ~38 hardcoded items (soulgazer, soulstone, equipment,
+        // soulkeys, summoning staves - all gated on the creature system/ExtendedPlayer
+        // capability/AltarInfo, none of which exist yet) and ~40 more blocks (the other 6
+        // dungeon stone sets, fire/cloud/web effect blocks, the 5 special equipment/pedestal
+        // blocks). Also EquipmentPartManager/LMEquipmentPartsGroup, LMChargesGroup,
+        // LMBestEquipmentGroup, LMCreaturesGroup - batch these the same way Phase 5's 123
+        // creatures will be batched, not all at once.
     }
 
     // TODO Phase 4b: getEquipmentSharpnessRepair/getEquipmentManaRepair were dropped here -
