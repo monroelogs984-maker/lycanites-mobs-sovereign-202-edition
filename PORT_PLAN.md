@@ -195,10 +195,48 @@ Each phase depends on the ones above it being in place and registered.
           time given `BlockFireBase` alone is 384 lines of tick-loop/fire-spread logic where
           a subtly wrong port (not a compile error) would be much harder to catch than a
           missing method.
-- [ ] **Phase 5 — Creatures**: `CreatureManager` and the 123 creature classes / 167 JSON
-      configs. The big one. Break this into batches (by creature family or tier), build +
-      deploy + visually verify each batch in S202 before moving to the next — do not
-      attempt all 123 at once.
+- [~] **Phase 5 — Creatures** (IN PROGRESS, measured 2026-09-22 — categorically bigger than
+      Phase 4, not just "more of the same"): the substrate needed before even ONE creature
+      can spawn is ~23,000 lines, roughly 6x everything ported in Phases 0-4 combined:
+        - `BaseCreatureEntity` (7,167 lines, one file) - the shared base every creature
+          extends. 25 major sections (data sync, spawning, stats, movement, attacks, death,
+          AI behaviour/targets, battle phases, taming, abilities, equipment, immunities, NBT,
+          client/visuals/sounds, ...).
+        - `TameableCreatureEntity` (1,494 lines) - turns out nearly every creature extends
+          *this*, not `BaseCreatureEntity` directly, confirmed by checking 7 of the smallest
+          creature classes and finding zero exceptions.
+        - `core/entity/goals/` (8,446 lines, 64 files) - custom AI goal classes
+          (`AttackMeleeGoal`, `FindAttackTargetGoal`, etc). Every creature's `registerGoals()`
+          pulls from here.
+        - `core/data/info/creature/` (3,941 lines, 11 files) - `CreatureInfo`,
+          `CreatureType`, `CreatureGroup`, `CreatureConfig`, `CreatureSpawnConfig`,
+          `Subspecies`, etc - the JSON-driven definition/config layer, analogous to
+          `ItemInfo`/`ItemConfig` but far larger.
+        - `CreatureManager` + 3 small helper classes (~780 lines) - registration/bootstrap,
+          analogous to `ItemManager`.
+        - `entity/util` (`CreatureStats`, ~1,000 lines).
+      Sub-phase plan (lowest API-risk / most tractable first, since `BaseCreatureEntity`
+      itself is AI/combat/rendering-heavy and best tackled once everything it depends on
+      already exists and compiles):
+        - [ ] **5a**: `entity/util` (`CreatureStats`) + `core/data/info/creature/` substrate
+              (data/config classes, minimal MC API surface, closest in kind to Phase 4's
+              `ItemInfo`/`ItemConfig`).
+        - [ ] **5b**: `CreatureManager` + bootstrap/registry/validation helpers, wired into
+              `LycanitesMobs.loadContent()`. Won't do anything yet (no creature classes exist)
+              but proves the JSON-loading pipeline the same way `ElementManager` did in
+              Phase 3.
+        - [ ] **5c**: `core/entity/goals/` (the AI goal classes) - needed before any real
+              creature's `registerGoals()` can compile.
+        - [ ] **5d**: `BaseCreatureEntity` - almost certainly needs its own internal batching
+              given 25 sections and 7,167 lines; expect this alone to span multiple sessions.
+        - [ ] **5e**: `TameableCreatureEntity`.
+        - [ ] **5f**: first real creature (pick one with zero cross-references to other
+              creature classes, to avoid pulling in more of the 123 before the pipeline is
+              proven) - build + deploy + visually verify in Lycannots before touching a
+              second one.
+        - [ ] **5g+**: batch the remaining ~122 creatures by family/tier, same "one weapon at
+              a time" discipline as BHB - never batch for the sake of speed.
+      Do not attempt all 123 creatures, or even the full substrate, in one sitting.
 - [ ] **Phase 6 — Gameplay systems on top of creatures**: `ProjectileManager`,
       `SpawnerManager`, `StructureSpawnInjector`, `AltarInfo`, `MobEventManager`,
       `DungeonManager`.
