@@ -253,6 +253,24 @@ pedestal blocks) is gated on Phase 5 (creatures), Phase 6 (altars/capabilities),
 Phase 6/8 (containers). Next up has to be Phase 5 (Creatures) - there's no more Phase-4
 runway left to burn through first.
 
+**Post-4c asset fix (2026-09-22):** Glenn then reported missing textures and "descriptions
+all bugged" after the crash fix. Expected in part - no client resources (lang, textures,
+models, blockstates) had been ported at all yet, only Java code. Fixed by scope-copying
+just the assets for what's currently registered (not the full 132MB mod - the official
+`assets/lycanitesmobs/` tree covers all 123 creatures, almost none of which exist yet):
+713 files (~3.8MB) - the full `en_us.json` lang file (2283 lines, safe to take wholesale
+since unused keys for unregistered content are just inert data) plus every blockstate/
+model/texture file matching a name we've actually registered. Verified by cross-checking
+every `"lycanitesmobs:..."` reference inside the copied JSON against what was actually
+copied (a Python pass over all 357 references) rather than assuming the name-matching copy
+was complete - caught two real gaps: `mobtoken`'s item model references `soulgazer`'s
+texture (an upstream quirk in the original mod, not a porting bug - copied it in) and one
+truly-missing texture in the *original* mod itself (`smitefireballcharge`'s model points at
+a texture that was never included upstream) - that one's for an item we haven't registered
+yet, so it's inert, not worth chasing now. Same asset-scoping approach should repeat for
+every future content batch: copy what you just registered, then verify referentially, don't
+assume name-matching caught everything.
+
 ## CI
 
 GitHub Actions (`.github/workflows/build.yml`, came bundled with the NeoForge MDK template)
