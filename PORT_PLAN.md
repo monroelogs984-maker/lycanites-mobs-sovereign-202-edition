@@ -110,12 +110,47 @@ Each phase depends on the ones above it being in place and registered.
       `JSONHelper.getBiomes(List<String>)` (no registry-access context) has no valid
       replacement and was dropped rather than ported wrong - flagged for whoever needs it in
       Phase 7 to add back with a `RegistryAccess`/`Level` parameter.
-- [ ] **Phase 4 — Items & Blocks + Effects/Fluids registration**: `ItemManager`,
-      `EquipmentPartManager`, `ObjectManager` (deferred from Phase 2), `EffectManager`,
-      `FluidManager` (deferred from Phase 3), `JSONHelper.getJsonMaterials()` (deferred from
-      Phase 3, needs `Material`). This is where the 1.20.5+ DataComponents rewrite hits
-      hardest (item NBT model changed fundamentally between 1.20.1 and 1.21.1) — expect this
-      to be its own sub-project, not a quick pass.
+- [~] **Phase 4 — Items & Blocks + Effects/Fluids registration** (IN PROGRESS, batched like
+      Phase 5's creatures will be — this phase alone touches ~60 item classes + ~55 block
+      classes referenced from `ItemManager`/`BlockManager`, confirmed too big for one pass):
+    - [x] **Phase 4a** (done 2026-09-22): substrate + proof-of-pipeline. Ported
+          `ObjectManager` (containers/menus dropped, they're Phase 6/8), `Material`,
+          `ItemConfig`, `ItemInfo`, `ObjectLists` (`addEntity` dropped, needs Phase 5's
+          `CreatureManager`), `BaseItem`/`GenericItem` (reworked for DataComponents - see
+          below), a trimmed `LMItemsGroup` (items tab only), a trimmed `ItemManager`
+          (items tab + one real item, the rest of its ~40 hardcoded items deferred), and
+          `ItemMobToken` as the first real, working item. **Verified with
+          `./gradlew runServer` and a jar content check** — server loads clean through to
+          "Done", `ItemMobToken.class` is actually in the deployed jar.
+          **Two real bugs found by running it:**
+          - **DataComponents hits the item base class itself, not just leaf items:**
+            `BaseItem`'s `getTagCompound()`/`hasTag()`/`getTag()` NBT helper needed a full
+            rework — item NBT moved to `DataComponents.CUSTOM_DATA` holding a `CustomData`
+            wrapper. `ItemStack.canPerformAction()` still exists but takes `ItemAbility` now
+            (`net.minecraftforge.common.ToolActions` → `net.neoforged.neoforge.common.ItemAbilities`).
+            `Item.appendHoverText()`'s second param changed from `Level` to
+            `Item.TooltipContext`. `FoodProperties.Builder`: `saturationMod`→`saturationModifier`,
+            `alwaysEat`→`alwaysEdible`, `meat()` removed outright (no replacement),
+            `effect(MobEffectInstance, float)` deprecated in favor of a `Supplier` overload.
+          - **Registration timing, not an API rename — this one actually crashed the
+            server:** content registration (`ObjectManager.addItem`/`addBlock`/etc, which
+            call into the `DeferredRegister`s) MUST happen synchronously during mod
+            construction, not in an `FMLCommonSetupEvent` listener — NeoForge throws
+            `IllegalStateException: Cannot register new entries to DeferredRegister after
+            RegisterEvent has been fired` if you get this wrong. The original Forge code
+            called this from `loadContent()`, invoked directly at the end of the
+            constructor; I'd initially wired the Phase 3/4a content loading into
+            `commonSetup()` instead (matching where *later*, non-registration setup like
+            `Material.init()` correctly belongs) and NeoForge's stricter check caught it
+            immediately. Fixed by adding a `loadContent()` method back, called from the
+            constructor, matching the original's structure — `LycanitesMobs.java` now has a
+            code comment explaining this so it doesn't happen again in a later phase.
+    - [ ] **Phase 4b+**: the remaining ~40 hardcoded items (soulgazer, soulstone, equipment,
+          summoning staves, etc.) and ~55 blocks (fire/cloud/web effect blocks, dungeon
+          building block sets via `BlockManager`, the 5 special equipment/pedestal blocks),
+          `EquipmentPartManager` (+ `ItemEquipmentPart`), `EffectManager`, `FluidManager`,
+          the remaining 5 creative tabs, `JSONHelper.getJsonMaterials()`. Batch this the same
+          way Phase 5's 123 creatures get batched — not all at once.
 - [ ] **Phase 5 — Creatures**: `CreatureManager` and the 123 creature classes / 167 JSON
       configs. The big one. Break this into batches (by creature family or tier), build +
       deploy + visually verify each batch in S202 before moving to the next — do not
@@ -137,11 +172,11 @@ Each phase depends on the ones above it being in place and registered.
 
 ## Status
 
-Phases 0–3 complete and verified end-to-end (`./gradlew runServer` loads clean, no errors,
-28/28 element JSONs load). Config subsystem is 11/13 files ported — `ConfigCreatures` and
-`ConfigCreatureSubspecies` are deferred to Phase 5 (they depend on
-`Variant`/`CreatureStats`/`CreatureManager`). `ObjectManager`, `EffectManager`,
-`FluidManager` deferred to Phase 4. Next up: Phase 4 (Items & Blocks).
+Phases 0–3 complete, Phase 4a complete — all verified end-to-end (`./gradlew runServer`
+loads clean, no errors). One real item (`mobtoken`) registers successfully. Config
+subsystem is 11/13 files ported — `ConfigCreatures` and `ConfigCreatureSubspecies` are
+deferred to Phase 5 (they depend on `Variant`/`CreatureStats`/`CreatureManager`).
+Next up: Phase 4b (batch in more items/blocks) or jump to Phase 5 (Creatures) — Glenn's call.
 
 ## CI
 
