@@ -181,3 +181,12 @@ idea {
         downloadJavadoc = true
     }
 }
+
+tasks.register('deploy', Copy) {
+    dependsOn build
+    from(layout.buildDirectory.dir('libs')) {
+        include "${mod_id}-*.jar"
+        exclude "*-sources.jar"
+    }
+    into '/home/glenn/Documents/curseforge/minecraft/Instances/Lycannots/mods'
+}
