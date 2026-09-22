@@ -171,16 +171,30 @@ Each phase depends on the ones above it being in place and registered.
           slightly inconsistent with `common`/`registries`/`fml` all moving to
           `net.neoforged.neoforge.*` or `net.neoforged.fml.*` — confirmed by checking actual
           usage in NeoForge's patched vanilla source rather than assuming a pattern held).
-    - [ ] **Phase 4c+**: revisit once Phase 5 (Creatures) and Phase 6 (Altars, gameplay
-          systems) exist — that's what actually unblocks `ItemSoulgazer`/`ItemSoulstone`/
-          `ItemSoulkey`/the summoning staves/the holiday items. Still fully Phase-4-only and
-          unblocked right now: the other 6 dungeon stone sets via `BlockManager`
-          (`desert`/`shadow`/`demon`/`aberrant`/`ashen`/`stream`), the fire/cloud/web effect
-          blocks (`block.fire.*`/`block.cloud.*`/`block.web.*`, ~721 lines, need checking for
-          real dependencies), `JSONHelper.getJsonMaterials()` (needs `Material`, already
-          ported). `EquipmentPartManager`/`ItemEquipmentPart`, `EffectManager`, `FluidManager`,
-          the equipment/pedestal blocks, and `LMEquipmentPartsGroup`/`LMChargesGroup`/
-          `LMBestEquipmentGroup`/`LMCreaturesGroup` are still blocked on Phase 5/6 too.
+    - [x] **Phase 4c** (done 2026-09-22): the other 6 dungeon stone sets
+          (`desert`/`shadow`/`demon`/`aberrant`/`ashen`/`stream` - zero new files, just more
+          `BlockManager.addDungeonBlocks()` calls) and the fire/cloud/web effect blocks:
+          `BlockFireBase` (384 lines, the shared tick/spread/ignite logic all 7 fire blocks
+          sit on), `LycanitesBlockTags`, `BlockFrostfire`/`BlockIcefire`/`BlockHellfire`/
+          `BlockDoomfire`/`BlockPrimefire`/`BlockScorchfire`/`BlockSmitefire`,
+          `BlockFrostCloud`/`BlockPoisonCloud`/`BlockPoopCloud`,
+          `BlockFrostweb`/`BlockQuickWeb`. `BlockShadowfire` excluded - needs
+          `BaseCreatureEntity` (Phase 5). Also restored `ItemManager.cutoutBlocks`/
+          `registerCutoutBlock()`, dropped during Phase 4a's trim - every one of these blocks
+          calls it in its constructor. **Verified with `./gradlew runServer` + jar content
+          check** — clean load, all new classes present in the deployed jar.
+          **This batch compiled clean on the first try** (no `runServer`-only bugs this time)
+          because every risky vanilla API call was checked against NeoGradle's decompiled
+          source *before* writing the port, not after hitting a compiler error: confirmed
+          `Level.getBiome()` returns `Holder<Biome>` (needs `.value()`), that
+          `isFireSource`/`isFlammable`/`getFlammability`/`getIgniteOdds` are deprecated but
+          still present and callable (not removed), `TntBlock.explode()`,
+          `FireBlock.AGE`/`Blocks.FIRE`, `LivingEntity.canBeAffected()`,
+          `DamageSources.magic()`/`.inFire()`, `Entity.makeStuckInBlock()`, and
+          `DustParticleOptions.REDSTONE` are all unchanged. Worth the extra verification
+          time given `BlockFireBase` alone is 384 lines of tick-loop/fire-spread logic where
+          a subtly wrong port (not a compile error) would be much harder to catch than a
+          missing method.
 - [ ] **Phase 5 — Creatures**: `CreatureManager` and the 123 creature classes / 167 JSON
       configs. The big one. Break this into batches (by creature family or tier), build +
       deploy + visually verify each batch in S202 before moving to the next — do not
@@ -202,19 +216,19 @@ Each phase depends on the ones above it being in place and registered.
 
 ## Status
 
-Phases 0–3 complete, Phase 4a+4b complete — all verified end-to-end (`./gradlew runServer`
-loads clean, no errors). 3 real items (`mobtoken`, `immunizer`, `cleansingcrystal`) and a
-full dungeon building block set (`lushstone` + 13 variants: stairs/slabs/bricks/tiles/
-fence/wall/pillar/crystal) register successfully. Config subsystem is 11/13 files ported —
-`ConfigCreatures` and `ConfigCreatureSubspecies` are deferred to Phase 5 (they depend on
-`Variant`/`CreatureStats`/`CreatureManager`).
+Phases 0–3 complete, Phase 4a+4b+4c complete — all verified end-to-end
+(`./gradlew runServer` loads clean, no errors). 3 real items (`mobtoken`, `immunizer`,
+`cleansingcrystal`), 7 full dungeon building block sets (98 blocks:
+lush/desert/shadow/demon/aberrant/ashen/stream x 14 variants each), and 12 effect blocks
+(7 fire, 3 cloud, 2 web) all register successfully. Config subsystem is 11/13 files
+ported — `ConfigCreatures` and `ConfigCreatureSubspecies` are deferred to Phase 5 (they
+depend on `Variant`/`CreatureStats`/`CreatureManager`).
 
-Real conclusion from Phase 4b: most of the *item* side of "Phase 4" was never actually
-Phase-4-shaped work - it's Phase 5/6 (creatures, capabilities, altars) wearing an
-`ItemManager.loadItems()` costume. The *block* side (dungeon stone sets, effect blocks) is
-genuinely self-contained Phase 4 work and there's more of it available right now (Phase 4c).
-Next up: Phase 4c (more self-contained blocks) or jump to Phase 5 (Creatures) to unblock
-the rest of the items - Glenn's call.
+Phase 4 is now genuinely exhausted of self-contained work - everything left in
+`ItemManager.loadItems()` (the ~38 remaining items, `BlockShadowfire`, the 5 equipment/
+pedestal blocks) is gated on Phase 5 (creatures), Phase 6 (altars/capabilities), or
+Phase 6/8 (containers). Next up has to be Phase 5 (Creatures) - there's no more Phase-4
+runway left to burn through first.
 
 ## CI
 
