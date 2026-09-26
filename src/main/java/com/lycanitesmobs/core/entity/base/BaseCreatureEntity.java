@@ -41,6 +41,11 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShieldItem;
+import com.lycanitesmobs.core.data.info.element.ElementInfo;
+import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
+import com.lycanitesmobs.core.manager.ProjectileManager;
+import com.lycanitesmobs.core.data.info.projectile.ProjectileInfo;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.common.NeoForgeMod;
 import net.minecraft.world.level.block.state.BlockState;
@@ -432,6 +437,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return this.directNavigator.clearTargetPosition(speedModifier);
     }
 
+    public boolean hasDirectNavigationTarget() {
+        return this.directNavigator.hasTargetPosition();
+    }
+
     public boolean isDirectNavigationAtTarget() {
         return this.directNavigator.atTargetPosition();
     }
@@ -465,6 +474,16 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     public int claimFindTargetGoalIndex() {
         return this.nextFindTargetIndex++;
+    }
+
+    /** Returns the current (unclaimed) combat goal index without claiming it, for goals that share a slot. */
+    protected int currentCombatGoalIndex() {
+        return this.nextCombatGoalIndex;
+    }
+
+    /** Returns the current (unclaimed) idle goal index without claiming it, for goals that share a slot. */
+    protected int currentIdleGoalIndex() {
+        return this.nextIdleGoalIndex;
     }
 
     public int claimReactTargetGoalIndex() {
@@ -1045,6 +1064,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource damageSrc, float damageAmount) {
         if (super.hurt(damageSrc, damageAmount)) {
+            if (this.isBoss() && damageSrc.getEntity() instanceof Player player) {
+                this.addPlayerTarget(player);
+            }
             this.updateAttackerReputation(damageSrc);
             return true;
         }
@@ -1393,7 +1415,220 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     // NOTE: fire-spread and on-hit status effect application (applyDebuffs) not ported yet.
+    /**
+     * Restored (Phase 6a): was an empty stub, so melee hits applied no element debuffs at all.
+     **/
     private void applyContactAttackEffects(Entity target, boolean includeFireSpread) {
+        if (!(target instanceof LivingEntity livingTarget)) {
+            return;
+        }
+        if (livingTarget.isBlocking() && livingTarget.getUseItem().getItem() instanceof ShieldItem) {
+            return;
+        }
+        if (includeFireSpread && this.spreadFire && this.isOnFire() && this.getRandom().nextFloat() < this.creatureStats.getEffect()) {
+            target.igniteForSeconds(this.getEffectDuration(4) / 20F);
+        }
+        if (this.creatureStats.getAmplifier() >= 0) {
+            this.applyDebuffs(livingTarget, 1, 1);
+        }
+    }
+
+    // ==================================================
+    //                  Ranged Attacks
+    // ==================================================
+    // Ported in Phase 6a from the official source.
+
+    /**
+     * Returns the cooldown time in ticks between ranged attacks.
+     **/
+    /**
+     * Resets the attack cooldown so the next attack can happen immediately.
+     **/
+    public void resetAttackCooldown() {
+        this.attackCooldown = 0;
+        this.setAttackCooldownMax(this.attackCooldownMax);
+    }
+
+    /** Players that have damaged this creature while it's a boss (official trackBossPlayerDamage/addPlayerTarget). */
+    protected final java.util.Set<Player> playerTargets = new java.util.HashSet<>();
+
+    public void addPlayerTarget(Player player) {
+        this.playerTargets.add(player);
+    }
+
+    public void forEachPlayerTarget(java.util.function.Consumer<Player> action) {
+        this.playerTargets.removeIf(player -> !player.isAlive() || player.isRemoved());
+        this.playerTargets.forEach(action);
+    }
+
+    /**
+     * Advances the attack phase, looping back to 0 after attackPhaseMax.
+     **/
+    public void nextAttackPhase() {
+        if (++this.attackPhase > (this.attackPhaseMax - 1)) {
+            this.attackPhase = 0;
+        }
+    }
+
+    public int getRangedCooldown() {
+        return Math.round((float) ((1.0D / this.getAttribute(RANGED_SPEED).getValue()) * 20.0D));
+    }
+
+    /**
+     * When given a base time (in seconds) this will return the scaled time in ticks with stats taken into account.
+     **/
+    public int getEffectDuration(int seconds) {
+        return Math.round(seconds * (float) this.creatureStats.getEffect() * 20);
+    }
+
+    /**
+     * Returns the default amplifier to use for effects.
+     **/
+    public int getEffectAmplifier(float scale) {
+        return Math.round((float) this.creatureStats.getAmplifier());
+    }
+
+    /**
+     * When given a base effect strength value such as a life drain amount, returns it scaled by stats.
+     **/
+    public int getEffectStrength(float value) {
+        return Math.round((value * (float) (this.creatureStats.getAmplifier())));
+    }
+
+    /**
+     * Applies all element debuffs to the target entity.
+     **/
+    public void applyDebuffs(LivingEntity entity, int duration, int amplifier) {
+        for (ElementInfo element : this.getElements()) {
+            element.debuffEntity(entity, this.getEffectDuration(duration), this.getEffectAmplifier(amplifier));
+        }
+    }
+
+    /**
+     * Applies all element buffs to the target entity.
+     **/
+    public void applyBuffs(LivingEntity entity, int duration, int amplifier) {
+        if (this.creatureStats.getAmplifier() >= 0) {
+            for (ElementInfo element : this.getElements()) {
+                element.buffEntity(entity, this.getEffectDuration(duration), this.getEffectAmplifier(amplifier));
+            }
+        }
+    }
+
+    /**
+     * Used to make this entity fire a ranged attack at the target entity, range is also passed which can be used.
+     * Creatures override this to fire their projectile, then call super to finish the attack action.
+     **/
+    public void attackRanged(Entity target, float range) {
+        if (this.isBlocking() && !this.canAttackWhileBlocking()) {
+            return;
+        }
+        this.finishAttackAction();
+    }
+
+    /**
+     * Deals damage to target entity from a projectile fired by this entity.
+     *
+     * @param noPierce If true, this creature's piercing stat will be ignored, used for when blocked by a shield, etc.
+     * @return True if damage is dealt.
+     */
+    public boolean doRangedDamage(Entity target, ThrowableProjectile projectile, float damage, boolean noPierce) {
+        damage *= (float) (this.creatureStats.getDamage() / 2);
+        double pierceDamage = noPierce ? 0 : this.creatureStats.getPierce();
+
+        boolean success;
+        if (damage <= pierceDamage) {
+            success = target.hurt(this.getDamageSource(target.level().damageSources().thrown(projectile, this)), damage);
+        } else {
+            int hurtResistantTimeBefore = target.invulnerableTime;
+            if (pierceDamage > 0) {
+                target.hurt(this.getDamageSource(target.level().damageSources().thrown(projectile, this)), (float) pierceDamage);
+            }
+            target.invulnerableTime = hurtResistantTimeBefore;
+            damage -= (float) pierceDamage;
+            success = target.hurt(this.getDamageSource(target.level().damageSources().thrown(projectile, this)), damage);
+        }
+
+        if (success && target instanceof LivingEntity livingTarget && this.creatureStats.getAmplifier() >= 0) {
+            this.applyDebuffs(livingTarget, 1, 1);
+        }
+
+        return success;
+    }
+
+    /**
+     * Fires a projectile from this mob by Projectile Info name.
+     *
+     * @param target     The target entity to fire at. If null, the projectile is fired from the facing direction instead.
+     * @param angle      The angle offset away from the target in degrees.
+     * @param offset     The xyz offset to fire from. Note that the Y offset is relative to 75% of this mob's height.
+     * @return The newly created projectile, or null if the projectile isn't known.
+     */
+    @Nullable
+    public BaseProjectileEntity fireProjectile(String projectileName, Entity target, float range, float angle, Vector3d offset, float velocity, float scale, float inaccuracy) {
+        ProjectileInfo projectileInfo = ProjectileManager.getInstance().getProjectile(projectileName);
+        if (projectileInfo == null) {
+            return null;
+        }
+        return this.fireProjectile(projectileInfo.createProjectile(this.getCommandSenderWorld(), this), target, range, angle, offset, velocity, scale, inaccuracy);
+    }
+
+    /**
+     * Fires a hardcoded ("old") projectile class from this mob. TODO(port): no old projectiles are registered yet
+     * (lasers, hellfire), so this currently returns null.
+     */
+    @Nullable
+    public BaseProjectileEntity fireProjectile(Class<? extends BaseProjectileEntity> projectileClass, Entity target, float range, float angle, Vector3d offset, float velocity, float scale, float inaccuracy) {
+        BaseProjectileEntity projectile = ProjectileManager.getInstance().createOldProjectile(projectileClass, this.getCommandSenderWorld(), this);
+        return this.fireProjectile(projectile, target, range, angle, offset, velocity, scale, inaccuracy);
+    }
+
+    /**
+     * Fires the provided projectile instance from this mob.
+     */
+    @Nullable
+    public BaseProjectileEntity fireProjectile(BaseProjectileEntity projectile, Entity target, float range, float angle, Vector3d offset, float velocity, float scale, float inaccuracy) {
+        if (projectile == null) {
+            return null;
+        }
+
+        projectile.setPos(
+                projectile.getX() + offset.x * this.sizeScale,
+                projectile.getY() + (this.getBbHeight() / 2) + (offset.y * this.sizeScale),
+                projectile.getZ() + offset.z * this.sizeScale
+        );
+        projectile.setProjectileScale(scale);
+
+        Vector3d projectileVector = this.resolveProjectileVector(projectile, target, range, angle, offset);
+        projectile.shoot(projectileVector.x, projectileVector.y, projectileVector.z, velocity, inaccuracy);
+        DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, projectile, () -> {
+            if (projectile.getLaunchSound() != null) {
+                this.playSound(projectile.getLaunchSound(), 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
+            }
+        });
+
+        return projectile;
+    }
+
+    private Vector3d resolveProjectileVector(BaseProjectileEntity projectile, Entity target, float range, float angle, Vector3d offset) {
+        Vector3d facing = this.getFacingPositionDouble(this.getX(), this.getY(), this.getZ(), range, angle);
+        double distanceX = facing.x - this.getX();
+        double distanceZ = facing.z - this.getZ();
+        double distanceXZ = Math.sqrt(distanceX * distanceX + distanceZ * distanceZ) * 0.1D;
+        double distanceY = distanceXZ;
+        if (target != null) {
+            double targetX = target.getX() - this.getX();
+            double targetZ = target.getZ() - this.getZ();
+            double newX = targetX * Math.cos(angle) - targetZ * Math.sin(angle);
+            double newY = targetX * Math.sin(angle) + targetZ * Math.cos(angle);
+            targetX = newX + this.getX();
+            targetZ = newY + this.getZ();
+
+            distanceX = targetX - this.getX();
+            distanceY = target.getBoundingBox().minY + (target.getBbHeight() * 0.5D) - projectile.getY() + offset.y;
+            distanceZ = targetZ - this.getZ();
+        }
+        return new Vector3d(distanceX, distanceY, distanceZ);
     }
 
     private void finishAttackAction() {

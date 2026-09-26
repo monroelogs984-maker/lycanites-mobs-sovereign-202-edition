@@ -1083,3 +1083,48 @@ suspects: `WanderGoal`/`RandomPositionGenerator` target choice in lava, or path 
 swimmers (Cephignis); park unless Glenn keeps it.
 
 Silex swims along the tank floor rather than mid-water - may be normal wander targeting, unconfirmed.
+
+## Phase 6a: projectiles + creature ranged attacks (2026-09-26)
+
+**Ported:** `ProjectileInfo` (JSON projectile definitions), 8 of 9 `ProjectileBehaviour`s (placeBlocks, explosion,
+fireProjectiles, drainHealth, randomForce, laser, randomEffect, catch), `BaseProjectileEntity`, `CustomProjectileEntity`
+(+ `CustomProjectileModelEntity`, `ModelProjectileEntity`), `ProjectileManager` (JSON part), `AttackRangedGoal`,
+`FireProjectilesGoal`, and a 1.21 `ProjectileSpriteRenderer` (client). All 39 JSON projectiles registered as entity
+types through `ObjectManager` (same path as creatures) - "Registered 113 entity types" = 74 creatures + 39 projectiles.
+Assets: 39 projectile JSONs, 72 charge sprites (`textures/item/charges`, the sprite source) + 5 model-projectile
+textures, 45 projectile sounds; **new `sounds.json`** (54 entries: projectile + existing block sounds).
+
+**Base class additions:** `getRangedCooldown`, `getEffectDuration/Amplifier/Strength`, `applyDebuffs/applyBuffs`,
+`attackRanged`, `doRangedDamage`, `fireProjectile` (by name / class / instance), `resetAttackCooldown`,
+`nextAttackPhase`, `hasDirectNavigationTarget`, `current{Combat,Idle}GoalIndex`, boss `playerTargets`
+(`addPlayerTarget`/`forEachPlayerTarget`, tracked in `hurt()`).
+
+**Pre-existing bug fixed:** `applyContactAttackEffects()` was an empty stub, so **melee hits applied no element
+debuffs** (no poison/burn/etc on hit). Restored from the official source.
+
+**1.21 translation notes:** Forge `NetworkHooks` spawn packet dropped (vanilla); `defineSynchedData(Builder)` (with
+explicit defaults since it runs before field init); `getGravity()` -> `getDefaultGravity()` (double); `portalTime` ->
+`setPortalCooldown()`; `AttackEntityEvent` -> NeoForge's; `ForgeRegistries` -> `BuiltInRegistries`;
+`new ResourceLocation(s)` -> `ResourceLocation.parse(s)`; effects need `Holder`s (`MOB_EFFECT.getHolder(...)`);
+vertex API `vertex/uv/uv2/endVertex` -> `addVertex/setUv/setLight` (no endVertex).
+
+**Creatures restored (17):** ranged-only (substitute melee replaced): Remobra (venomshot), Troll (boulderblast),
+Afrit (scorchfireball), Arix (icefireball), Clink (throwingscythe), Erepede (mudshot), Epion (bloodleech), Belphegor
+(doomfireball), Apollyon (doomfireball rain; its aura/chase/minion goals still unported). Ranged added alongside melee:
+Argus (chaosorb), Astaroth (devilstar), Behemophet (hellfireball), Brucha (14-quill volley, melee disabled like official).
+FireProjectilesGoal: Chupacabra (rare variant chaos orbs), Conba (poop). Lasers: Eyewig (poisonray), Ioray (waterjet).
+Each got a "PHASE 6a UPDATE" class-doc note.
+
+**Verified (runServer + RCON, night, no-AI pig as attacker to trigger revenge, temporary debug logging - removed):**
+Remobra/Afrit/Epion/Brucha all called `attackRanged`, spawned their projectiles, and the projectiles hit (pig 10 ->
+0.4 HP); Eyewig's laser spawned and damaged. 0 ERROR/FATAL. **Testing gotchas:** trolls petrify in daylight (test at
+night); projectiles hit within 2-8 ticks so polling misses them - log instead; the port's targeting mostly only
+hunts players, so villagers/pigs are only engaged via revenge.
+
+**Not ported (TODO(port)):** charge items (ChargeItem - throwable player items + pet levelling, which S202 cuts),
+dispenser behaviour, the `summon` behaviour (pets system), "old" hardcoded projectiles (lasers' end entities, rapid
+fire, summoning portal, hellfire/devil gatling/hell shield boss projectiles), OBJ model projectile rendering (5 model
+projectiles render as sprites), `ProjectileEquipmentFeature`.
+
+**Known gap found:** creature sounds - the port had no `sounds.json`, so all creature sounds are silent; only
+projectile/block entries were added here (creature .ogg files not copied yet, ~19 MB).

@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.imp;
 
+import net.minecraft.world.entity.Entity;
+import org.joml.Vector3d;
+import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.manager.ObjectManager;
@@ -17,6 +20,8 @@ import net.minecraft.world.level.block.Blocks;
  * fireProjectile) substituted with AttackMeleeGoal since ProjectileManager isn't ported.
  * Dropped the land/leap flight-state machine, petControlsEnabled/bag getters/
  * getFallResistance (tame/equipment, not ported). isFlying() simplified to always true.
+ * PHASE 6a UPDATE (2026-09-26): ranged attack restored (projectiles ported) - any wording above about a
+ * substituted melee attack or ProjectileManager being unported is outdated.
  */
 public class EntityArix extends TameableCreatureEntity implements Enemy {
 
@@ -34,7 +39,7 @@ public class EntityArix extends TameableCreatureEntity implements Enemy {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
+        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackRangedGoal(this).setSpeed(0.75D).setRange(14.0F).setMinChaseDistance(5.0F).setCheckSight(false));
     }
 
     @Override
@@ -77,5 +82,11 @@ public class EntityArix extends TameableCreatureEntity implements Enemy {
     public boolean isInvulnerableTo(DamageSource source) {
         if (source.type().equals(ObjectManager.getDamageSource(this.level(), "ooze").type())) return true;
         return super.isInvulnerableTo(source);
+    }
+
+    @Override
+    public void attackRanged(Entity target, float range) {
+        this.fireProjectile("icefireball", target, range, 0, new Vector3d(0, 0, 0), 0.8f, 2f, 6F);
+        super.attackRanged(target, range);
     }
 }

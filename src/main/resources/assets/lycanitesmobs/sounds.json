@@ -1,0 +1,488 @@
+{
+  "projectile.frostweb": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/frostweb",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.tundra": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/tundra",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.icefireball": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/icefireball",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.blizzard": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/blizzard",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.doomfireball": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/doomfireball",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.hellfireball": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/hellfireball",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.devilstar": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/devilstar",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.demonicspark": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/demonicspark",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.demonicblast": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/demonicblast",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.devilgatling": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/devilgatling",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.throwingscythe": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/throwingscythe",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.tricksterflare": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/tricksterflare",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.mudshot": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/mudshot",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.ember": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/ember",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.primeember": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/primeember",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.aquapulse": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/aquapulse",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.whirlwind": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/whirlwind",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.lightball": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/lightball",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.acidsplash": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/acidsplash",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.acidsplash.impact": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/acidsplash_impact",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.acidglob": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/acidglob",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.lifedrain": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/lifedrain",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.lobdarklings": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/lobdarklings",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.faebolt": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/faebolt",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.crystalshard": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/crystalshard",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.frostbolt": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/frostbolt",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.aetherwave": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/aetherwave",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.chaosorb": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/chaosorb",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.chaosorb.impact": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/chaosorb_impact",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.boulderblast": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/boulderblast",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.arcanelaserstorm": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/arcanelaserstorm",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.arcanelaser": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/arcanelaser",
+        "stream": true
+      }
+    ]
+  },
+  "projectile.quill": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/quill",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.poop": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/poop",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.spectralbolt": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/spectralbolt",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.bloodleech": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/bloodleech",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.foulburst": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/foulburst",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.poisonray": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/poisonray",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.venomshot": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/venomshot",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.waterjet": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/waterjet",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.magma": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/magma",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.scorchfireball": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/scorchfireball",
+        "stream": false
+      }
+    ]
+  },
+  "projectile.summoningseed": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:projectile/summoningseed",
+        "stream": false
+      }
+    ]
+  },
+  "block.frostcloud": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/frostcloud",
+        "stream": false
+      }
+    ]
+  },
+  "block.frostfire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/frostfire",
+        "stream": false
+      }
+    ]
+  },
+  "block.icefire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/icefire",
+        "stream": false
+      }
+    ]
+  },
+  "block.hellfire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/hellfire",
+        "stream": false
+      }
+    ]
+  },
+  "block.doomfire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/doomfire",
+        "stream": false
+      }
+    ]
+  },
+  "block.scorchfire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/scorchfire",
+        "stream": false
+      }
+    ]
+  },
+  "block.poopcloud": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/poopcloud",
+        "stream": false
+      }
+    ]
+  },
+  "block.primefire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/primefire",
+        "stream": false
+      }
+    ]
+  },
+  "block.shadowfire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/shadowfire",
+        "stream": false
+      }
+    ]
+  },
+  "block.smitefire": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/smitefire",
+        "stream": false
+      }
+    ]
+  },
+  "block.poisoncloud": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:block/poisoncloud",
+        "stream": false
+      }
+    ]
+  }
+}

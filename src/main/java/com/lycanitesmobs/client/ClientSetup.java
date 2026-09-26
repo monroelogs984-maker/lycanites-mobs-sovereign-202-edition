@@ -8,6 +8,10 @@ import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
+import com.lycanitesmobs.client.renderer.entity.projectile.ProjectileSpriteRenderer;
+import com.lycanitesmobs.core.data.info.projectile.ProjectileInfo;
+import com.lycanitesmobs.core.entity.base.BaseProjectileEntity;
+import com.lycanitesmobs.core.manager.ProjectileManager;
 import net.minecraft.world.entity.EntityType;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -49,6 +53,15 @@ public class ClientSetup {
                 event.registerEntityRenderer(entityType, context -> new CreatureRenderer<>(creatureName, context, 1.0F));
             } else {
                 event.registerEntityRenderer(entityType, PlaceholderCreatureRenderer::new);
+            }
+        }
+
+        // Projectiles (Phase 6a): every JSON projectile renders as a sprite (model projectiles too, for now).
+        for (ProjectileInfo projectileInfo : ProjectileManager.getInstance().getProjectiles()) {
+            EntityType<? extends BaseProjectileEntity> entityType =
+                    (EntityType<? extends BaseProjectileEntity>) (EntityType<?>) ObjectManager.getEntityType(projectileInfo.getName());
+            if (entityType != null) {
+                event.registerEntityRenderer(entityType, ProjectileSpriteRenderer::new);
             }
         }
     }

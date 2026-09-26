@@ -1,5 +1,9 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.abilities.FireProjectilesGoal;
+import net.minecraft.world.entity.Entity;
+import org.joml.Vector3d;
+import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.creature.insect.EntityVespid;
@@ -34,6 +38,8 @@ import net.minecraft.world.level.Level;
  * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
  * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
  * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
+ * PHASE 6a UPDATE (2026-09-26): ranged attack restored (projectiles ported) - any wording above about a
+ * substituted melee attack or ProjectileManager being unported is outdated.
  */
 public class EntityConba extends TameableCreatureEntity implements Enemy {
 
@@ -52,6 +58,7 @@ public class EntityConba extends TameableCreatureEntity implements Enemy {
         this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAvoidTargetGoal(this).setTargetClass(Player.class).setTameTargetting(false));
         this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAvoidTargetGoal(this).setTargetClass(Villager.class));
         this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAvoidTargetGoal(this).setTargetClass(Pillager.class));
+        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new FireProjectilesGoal(this).setProjectile("poop").setFireRate(20).setVelocity(1.2F));
     }
 
     @Override
@@ -59,5 +66,11 @@ public class EntityConba extends TameableCreatureEntity implements Enemy {
         if (target instanceof EntityVespid || target instanceof EntityVespidQueen)
             return false;
         return super.canAttack(target);
+    }
+
+    @Override
+    public void attackRanged(Entity target, float range) {
+        this.fireProjectile("poop", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
+        super.attackRanged(target, range);
     }
 }

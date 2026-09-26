@@ -1,5 +1,6 @@
 package com.lycanitesmobs;
 
+import com.lycanitesmobs.core.manager.ProjectileManager;
 import com.lycanitesmobs.core.block.Material;
 import com.lycanitesmobs.core.data.config.CoreConfig;
 import com.lycanitesmobs.core.data.info.ModInfo;
@@ -95,7 +96,7 @@ public class LycanitesMobs {
         modEventBus.addListener(this::commonSetup);
 
         // TODO Phase 4d+: EquipmentPartManager registration - needs ItemEquipmentPart.
-        // TODO Phase 6: ProjectileManager/SpawnerManager/StructureSpawnInjector/AltarInfo/
+        // TODO Phase 6: (ProjectileManager done in 6a) SpawnerManager/StructureSpawnInjector/AltarInfo/
         //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
         //       (SpawnerEventListener, CommandManager, GameEventListener, MobEventListener).
         // TODO Phase 6: PacketManager networking registration.
@@ -129,6 +130,7 @@ public class LycanitesMobs {
         // runtime), so startup() is still safe to call synchronously here alongside the other
         // registration-touching calls.
         CreatureManager.getInstance().startup(modInfo);
+        ProjectileManager.getInstance().startup(modInfo);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -138,5 +140,6 @@ public class LycanitesMobs {
         Material.init();
         CreatureManager.getInstance().loadConfig();
         CreatureManager.getInstance().bindRegisteredValues();
+        ProjectileManager.getInstance().bindRegisteredTypes();
     }
 }

@@ -1,5 +1,9 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.util.GoalConditions;
+import com.lycanitesmobs.core.entity.goals.actions.abilities.FireProjectilesGoal;
+import org.joml.Vector3d;
+import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -21,6 +25,8 @@ import net.minecraft.world.level.Level;
  * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
  * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
  * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
+ * PHASE 6a UPDATE (2026-09-26): ranged attack restored (projectiles ported) - any wording above about a
+ * substituted melee attack or ProjectileManager being unported is outdated.
  */
 public class EntityChupacabra extends TameableCreatureEntity {
 
@@ -34,6 +40,8 @@ public class EntityChupacabra extends TameableCreatureEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setSpeed(1.5D));
+        this.goalSelector.addGoal(this.currentIdleGoalIndex(), new FireProjectilesGoal(this).setProjectile("chaosorb").setFireRate(40).setVelocity(1.0F).setScale(0.5F)
+                .setConditions(new GoalConditions().setRareVariantOnly(true)));
     }
 
     @Override
