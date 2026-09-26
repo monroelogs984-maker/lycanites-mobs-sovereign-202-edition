@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.manager;
 
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.effect.MobEffect;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.entity.effect.EffectBase;
 import com.lycanitesmobs.core.data.info.ModInfo;
@@ -219,6 +221,17 @@ public class ObjectManager {
     }
 
     // ========== Potion Effect ==========
+    /**
+     * Returns the registry holder for a custom effect, for 1.21 APIs (MobEffectInstance, hasEffect, removeEffect).
+     * Null if the effect doesn't exist or isn't registered yet.
+     */
+    @Nullable
+    public static Holder<MobEffect> getEffectHolder(String name) {
+        EffectBase effect = getEffect(name);
+        if (effect == null) return null;
+        return BuiltInRegistries.MOB_EFFECT.getHolder(effect.getRegistryName()).orElse(null);
+    }
+
     public static EffectBase getEffect(String name) {
         name = name.toLowerCase();
         if (!effects.containsKey(name)) return null;

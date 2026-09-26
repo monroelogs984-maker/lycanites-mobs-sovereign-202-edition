@@ -1139,3 +1139,40 @@ and the rest of `block`; `sounds.json` now has 884 entries, all resolving to rea
 has say/hurt/death entries. Mob-event sounds (33 entries, 16 MB) intentionally left until the mob events phase.
 Also restored the `isEntityClassAssignableTo(TameableCreatureEntity.class)` condition for tame/beg sounds (dropped
 earlier because the class was a stub). Jar grows to ~22 MB. Not audibly verified (headless) - needs an in-game listen.
+
+## Remaining creatures - batch 1 of 3 (2026-09-26, Glenn: "port the rest")
+
+28 creatures, copied from official and translated (more faithfully than the earlier trimmed batches - missing base
+helpers were added instead of cutting behaviour): tpumpkyn, necrovore, sutiramu, vorach, lycosa, frostweaver, reiver,
+triffid, grell, shambler, raidra, tremor, reaper, nymph, sylph, ent, wendigo, eechetik, wraith, xaphan, treant, shade,
+wisp, volcan, spriggan, vapula, naxiris, cockatrice.
+
+**Custom mob effects now exist (fixes a big pre-existing gap):** the port never created or registered Lycanites' 26
+effects (paralysis, fear, weight, plague, leech, ...), so every `lycanitesmobs:*` element debuff/buff silently did
+nothing and food effects failed ("Unable to add food effect" warnings - now gone). Added `EffectManager.createEffects()`
+(official list), `RegistryEvents.registerEffects()` (MOB_EFFECT RegisterEvent), `ObjectManager.getEffectHolder()` for
+1.21 Holder APIs, and the 26 effect icons. **Effect behaviour is still TODO** - most of it lives in the ExtendedEntity
+capability / FearHandler / client handlers in the official source (paralysis immobilising, fear fleeing, etc.).
+
+**New base helpers:** `leap()` x3 (NeoForge `CommonHooks.onLivingJump`), `getFallResistance()` (now applied in
+`causeFallDamage`), `onDamage()` + `getDamageModifier()` (wired into `hurt`), `getBrightness()`, `canBeTargetedBy()`,
+`isLookingAtMe()`, `isPetType()` (false until pets), `getPickupEntity()`/`dropPickupEntity()`, `isSafeToLand()`,
+`getGroundY()`/`getAirY()`/`restrictYHeightFromGround()`, `destroyArea()` x3 (spawner trigger TODO), `webProof()` +
+`makeStuckInBlock()` web immunity, fields `fleeHealthPercent`/`solidCollision`/`damageTakenThisSec`. Rideable stub
+gained `abilityToggled` + `isEntityPassenger()`.
+
+**Translation conventions (scratchpad normalize.py, re-derive if needed):** drop `MobType` attribute lines;
+`setMaxUpStep(x)` -> STEP_HEIGHT attribute; distmarker -> `net.neoforged.api.distmarker`; mount overrides
+(mountAbility, getPassengersRidingOffset, getMountedZOffset, riderEffects, ...) and bag-size overrides keep their bodies
+but lose `@Override` with a `TODO(port): restore @Override` comment - **restore these when RideableCreatureEntity is
+ported**; `getDimensions(..).width/height` -> `getBbWidth/Height()`; `canBreatheUnderwater()` overrides ->
+`creatureCanBreatheUnderwater()`; `setSecondsOnFire` -> `igniteForSeconds`; Forge AttackEntityEvent -> NeoForge's
+(`.isCanceled()`); `ForgeHooks.onLivingAttack` pre-checks dropped (noted); spawnsInWater/Underground flags dropped
+(JSON spawn config); `ObjectManager.getEffect()` in effect APIs -> `getEffectHolder()`.
+
+Deferred inside batch 1: Shade's `EntityFear.spawnForPlayer` haunt entity (with effect behaviour); Spriggan uses
+`BushBlock` instead of the removed `IPlantable`.
+
+Verified: runServer - "Registered 26 mob effects", "Registered 141 entity types" (102 creatures + 39 projectiles),
+0 food effect warnings; all 28 summoned and ticked 20s together at night (27 alive - Spriggan died in the melee brawl,
+survives fine alone); paralysis applies to a villager; 0 ERROR/FATAL.

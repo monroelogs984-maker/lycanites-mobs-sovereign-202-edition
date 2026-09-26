@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.event;
 
+import com.lycanitesmobs.core.entity.effect.EffectBase;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.block.BlockTypeGetter;
 import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
@@ -94,6 +95,21 @@ public class RegistryEvents {
                     LMHelperClass.logInfoMessage("Registered " + count + " block items.");
                 }
         );
+    }
+
+    /**
+     * Registers Lycanites' custom mob effects (created by EffectManager.createEffects()). Before 2026-09-26 this
+     * didn't exist, so every lycanitesmobs:* element debuff/buff silently did nothing.
+     */
+    public void registerEffects(RegisterEvent event) {
+        event.register(Registries.MOB_EFFECT, helper -> {
+            int count = 0;
+            for (EffectBase effect : ObjectManager.getEffects()) {
+                helper.register(effect.getRegistryName(), effect);
+                count++;
+            }
+            LMHelperClass.logInfoMessage("Registered " + count + " mob effects.");
+        });
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.lycanitesmobs;
 
+import com.lycanitesmobs.core.manager.EffectManager;
 import com.lycanitesmobs.core.manager.ProjectileManager;
 import com.lycanitesmobs.core.block.Material;
 import com.lycanitesmobs.core.data.config.CoreConfig;
@@ -79,6 +80,7 @@ public class LycanitesMobs {
         // never register - see RegistryEvents' class comment for the crash this caused.
         modEventBus.addListener(RegistryEvents.getInstance()::registerBlocks);
         modEventBus.addListener(RegistryEvents.getInstance()::registerEntityTypes);
+        modEventBus.addListener(RegistryEvents.getInstance()::registerEffects);
         modEventBus.addListener(RegistryEvents.getInstance()::registerEntityAttributes);
 
         // NOTE: guarded so com.lycanitesmobs.client.* (references EntityRenderersEvent, a
@@ -120,6 +122,7 @@ public class LycanitesMobs {
      * startup()) belongs here, in the constructor's call graph, not in commonSetup().
      */
     private void loadContent() {
+        EffectManager.getInstance().createEffects();
         ElementManager.getInstance().loadAllFromJson(modInfo);
         ObjectLists.createVanillaLists();
         ItemManager.getInstance().startup(modInfo);

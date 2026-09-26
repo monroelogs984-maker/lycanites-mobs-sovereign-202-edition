@@ -41,6 +41,9 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
+import net.neoforged.neoforge.common.CommonHooks;
 import net.minecraft.world.item.ShieldItem;
 import com.lycanitesmobs.core.data.info.element.ElementInfo;
 import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
@@ -134,6 +137,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected float renderTick = 0;
     protected boolean isAggressiveByDefault = true;
     protected boolean spreadFire = false;
+    /** Health percentage below which this creature flees (0 = never). Read by flee/avoid AI. */
+    protected float fleeHealthPercent = 0;
+    /** If true, other entities collide with this creature as if it were solid. */
+    protected boolean solidCollision = false;
+    /** Damage taken during the current second, used by some creatures' abilities. */
+    public float damageTakenThisSec = 0;
     protected boolean stealthPrev = false;
     protected int currentBlockingTime = 0;
     protected int blockingTime = 60;
@@ -1063,7 +1072,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      **/
     @Override
     public boolean hurt(DamageSource damageSrc, float damageAmount) {
+        damageAmount *= this.getDamageModifier(damageSrc);
         if (super.hurt(damageSrc, damageAmount)) {
+            this.onDamage(damageSrc, damageAmount);
             if (this.isBoss() && damageSrc.getEntity() instanceof Player player) {
                 this.addPlayerTarget(player);
             }
@@ -1430,6 +1441,294 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
         if (this.creatureStats.getAmplifier() >= 0) {
             this.applyDebuffs(livingTarget, 1, 1);
+        }
+    }
+
+    // ==================================================
+    //          Creature helpers (ported 2026-09-26)
+    // ==================================================
+    // Needed by the remaining creature batches; bodies from the official source unless noted.
+
+    /**
+     * Returns how much fall distance this creature ignores; 100+ means immune to fall damage.
+     **/
+    public float getFallResistance() {
+        return 0;
+    }
+
+    /**
+     * Called whenever this creature takes damage (after the damage is accepted).
+     **/
+    public void onDamage(DamageSource damageSrc, float damage) {
+        this.damageTakenThisSec += damage;
+    }
+
+    /**
+     * Returns a multiplier applied to incoming damage from the given source.
+     **/
+    public float getDamageModifier(DamageSource damageSrc) {
+        return 1.0F;
+    }
+
+    public float getBrightness() {
+        return LMHelperClass.getBrightness(this);
+    }
+
+    /**
+     * Returns true if the provided entity may target this creature. Bosses can only be targeted by player-owned pets.
+     **/
+    public boolean canBeTargetedBy(LivingEntity entity) {
+        if (this.isBoss() && entity instanceof BaseCreatureEntity entityCreature) {
+            return entityCreature instanceof TameableCreatureEntity entityTameable && entityTameable.getPlayerOwner() != null;
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if the target entity is looking at this entity.
+     **/
+    public boolean isLookingAtMe(Entity targetEntity) {
+        if (targetEntity == null) {
+            return false;
+        }
+        Vec3 targetViewVector = targetEntity.getViewVector(1.0F).normalize();
+        Vec3 distance = new Vec3(this.getX() - targetEntity.getX(), this.getEyeY() - targetEntity.getEyeY(), this.getZ() - targetEntity.getZ());
+        double distanceStraight = distance.length();
+        distance = distance.normalize();
+        double lookDistance = targetViewVector.dot(distance);
+        double lookRange = 1.5D;
+        double comparison = 1.0D - (lookRange / distanceStraight);
+        if (targetEntity instanceof Player player) {
+            return lookDistance > comparison && player.hasLineOfSight(this);
+        }
+        return lookDistance > comparison;
+    }
+
+    /**
+     * Returns true if this creature is a pet of the given PetEntry type ("pet", "mount", "minion", "familiar").
+     * TODO(port): always false until the pets system (PetEntry) is ported.
+     **/
+    public boolean isPetType(String type) {
+        return false;
+    }
+
+    public LivingEntity getPickupEntity() {
+        return this.pickupEntity;
+    }
+
+    /**
+     * Drops the entity this creature is carrying. TODO(port): the official also clears the carried entity's
+     * ExtendedEntity pickedUpByEntity link (capability not ported).
+     **/
+    public void dropPickupEntity() {
+        this.pickupEntity = null;
+    }
+
+    /**
+     * Returns true if this creature can safely land from its current position.
+     **/
+    public boolean isSafeToLand() {
+        if (this.onGround()) {
+            return true;
+        }
+        if (this.getCommandSenderWorld().getBlockState(this.blockPosition().below()).isSolid()) {
+            return true;
+        }
+        return this.getCommandSenderWorld().getBlockState(this.blockPosition().below(2)).isSolid();
+    }
+
+    public int getGroundY(BlockPos pos) {
+        int y = pos.getY();
+        if (y <= 0) {
+            return 0;
+        }
+        BlockState startBlock = this.getCommandSenderWorld().getBlockState(pos);
+        if (startBlock.isAir()) {
+            for (int possibleGroundY = Math.max(0, y - 1); possibleGroundY >= 0; possibleGroundY--) {
+                BlockState possibleGroundBlock = this.getCommandSenderWorld().getBlockState(new BlockPos(pos.getX(), possibleGroundY, pos.getZ()));
+                if (possibleGroundBlock.isAir()) {
+                    y = possibleGroundY;
+                } else {
+                    break;
+                }
+            }
+        }
+        return y;
+    }
+
+    public int getAirY(BlockPos pos) {
+        int y = pos.getY();
+        int yMax = this.getCommandSenderWorld().getMaxBuildHeight() - 1;
+        if (y >= yMax) {
+            return yMax;
+        }
+        if (this.getCommandSenderWorld().canSeeSkyFromBelowWater(pos)) {
+            return yMax;
+        }
+        BlockState startBlock = this.getCommandSenderWorld().getBlockState(pos);
+        if (startBlock.isAir()) {
+            for (int possibleAirY = Math.min(yMax, y + 1); possibleAirY <= yMax; possibleAirY++) {
+                BlockState possibleGroundBlock = this.getCommandSenderWorld().getBlockState(new BlockPos(pos.getX(), possibleAirY, pos.getZ()));
+                if (possibleGroundBlock.isAir()) {
+                    y = possibleAirY;
+                } else {
+                    break;
+                }
+            }
+        }
+        return y;
+    }
+
+    /**
+     * Returns a random Y between minY and maxY blocks above the ground at the given position, capped by open air.
+     **/
+    public int restrictYHeightFromGround(BlockPos coords, int minY, int maxY) {
+        int groundY = this.getGroundY(coords);
+        int airYMax = Math.min(this.getAirY(coords), groundY + maxY);
+        int airYMin = Math.min(airYMax, groundY + minY);
+        if (airYMin >= airYMax) {
+            return airYMin;
+        }
+        return airYMin + this.getRandom().nextInt(airYMax - airYMin);
+    }
+
+    @FunctionalInterface
+    private interface DestroyAreaBlockConsumer {
+        void accept(BlockPos pos, BlockState state);
+    }
+
+    private void forEachDestroyAreaBlock(int x, int y, int z, int range, boolean expandOnly, DestroyAreaBlockConsumer blockConsumer) {
+        int width = (int) Math.ceil(this.getBbWidth());
+        int minHorizontal = expandOnly ? -(width + range) : -(width - range);
+        int maxHorizontal = width + range;
+        int height = (int) Math.ceil(this.getBbHeight());
+        for (int w = minHorizontal; w <= maxHorizontal; w++) {
+            for (int d = minHorizontal; d <= maxHorizontal; d++) {
+                for (int h = 0; h <= height; h++) {
+                    BlockPos breakPos = new BlockPos(x + w, y + h, z + d);
+                    if (this.getCommandSenderWorld().getBlockEntity(breakPos) != null) {
+                        continue;
+                    }
+                    blockConsumer.accept(breakPos, this.getCommandSenderWorld().getBlockState(breakPos));
+                }
+            }
+        }
+    }
+
+    public void destroyArea(int x, int y, int z, float strength, boolean drop) {
+        this.destroyArea(x, y, z, strength, drop, 0);
+    }
+
+    public void destroyArea(int x, int y, int z, float strength, boolean drop, int range) {
+        this.destroyArea(x, y, z, strength, drop, range, null, 0);
+    }
+
+    /**
+     * Destroys blocks around the given position that are weaker than strength. Callers check the mobGriefing rule.
+     * TODO(port): the official also fires SpawnerTriggerDispatcher.onBlockBreak (spawners not ported).
+     **/
+    public void destroyArea(int x, int y, int z, float strength, boolean drop, int range, Player player, int chain) {
+        int adjustedRange = Math.max(range - 1, 0);
+        this.forEachDestroyAreaBlock(x, y, z, adjustedRange, false, (breakPos, blockState) -> {
+            float hardness = blockState.getDestroySpeed(this.getCommandSenderWorld(), breakPos);
+            Block material = blockState.getBlock();
+            if (hardness < 0 || strength < hardness || strength < blockState.getBlock().getExplosionResistance() || material == Blocks.WATER || material == Blocks.LAVA) {
+                return;
+            }
+            if (player != null && breakPos.getX() == x && breakPos.getY() == y && breakPos.getZ() == z) {
+                return;
+            }
+            this.getCommandSenderWorld().destroyBlock(breakPos, drop);
+        });
+    }
+
+    /**
+     * Returns true if this creature isn't slowed by webs (cobweb, quickweb, frostweb).
+     **/
+    public boolean webProof() {
+        return false;
+    }
+
+    @Override
+    public void makeStuckInBlock(BlockState blockState, Vec3 motionMultiplier) {
+        if (this.webProof() && (blockState.getBlock() == Blocks.COBWEB
+                || blockState.getBlock() == ObjectManager.getBlock("quickweb")
+                || blockState.getBlock() == ObjectManager.getBlock("frostweb"))) {
+            return;
+        }
+        super.makeStuckInBlock(blockState, motionMultiplier);
+    }
+
+    /**
+     * Leaps forwards in the facing direction.
+     **/
+    public void leap(double distance, double leapHeight) {
+        if (!this.isFlying()) {
+            this.playJumpSound();
+        }
+        double angle = Math.toRadians(this.yRotO);
+        double xAmount = -Math.sin(angle);
+        double yAmount = leapHeight;
+        double zAmount = Math.cos(angle);
+        if (this.isFlying()) {
+            yAmount = Math.sin(Math.toRadians(this.xRotO)) * distance + this.getDeltaMovement().y() * 0.2D;
+        }
+        this.push(
+                xAmount * distance + this.getDeltaMovement().x() * 0.2D,
+                yAmount,
+                zAmount * distance + this.getDeltaMovement().z() * 0.2D
+        );
+        CommonHooks.onLivingJump(this);
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.hurtMarked = true;
+        }
+    }
+
+    /**
+     * Leaps towards the target entity if it's within range.
+     **/
+    public void leap(float range, double leapHeight, Entity target) {
+        if (target == null) {
+            return;
+        }
+        this.leap(range, leapHeight, target.blockPosition());
+    }
+
+    /**
+     * Leaps towards the target position if it's between 2 blocks and range away.
+     **/
+    public void leap(float range, double leapHeight, BlockPos targetPos) {
+        if (targetPos == null) {
+            return;
+        }
+        if (!this.isFlying()) {
+            this.playJumpSound();
+        }
+        double distance = targetPos.distSqr(this.blockPosition());
+        if (distance > 2.0F * 2.0F && distance <= range * range) {
+            double xDist = targetPos.getX() - this.blockPosition().getX();
+            double zDist = targetPos.getZ() - this.blockPosition().getZ();
+            if (xDist == 0) {
+                xDist = 0.05D;
+            }
+            if (zDist == 0) {
+                zDist = 0.05D;
+            }
+            double xzDist = Math.sqrt(xDist * xDist + zDist * zDist);
+            float targetYaw = (float) (Math.atan2(zDist, xDist) * 180.0D / Math.PI) - 90.0F;
+            this.setYRot(targetYaw);
+            this.yRotO = targetYaw;
+            this.yBodyRot = targetYaw;
+            this.yHeadRot = targetYaw;
+            this.push(
+                    xDist / xzDist * 0.5D * 0.8D + this.getDeltaMovement().x() * 0.2D,
+                    leapHeight,
+                    zDist / xzDist * 0.5D * 0.8D + this.getDeltaMovement().z() * 0.2D
+            );
+            CommonHooks.onLivingJump(this);
+            if (!this.getCommandSenderWorld().isClientSide) {
+                this.hurtMarked = true;
+            }
         }
     }
 
@@ -1950,12 +2249,16 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Flying creatures take no fall damage. Trimmed (Phase 5g): TODO(port) the official getFallResistance()
-     * reduction for non-flyers.
+     * Flying creatures take no fall damage; others have their fall distance reduced by getFallResistance().
      **/
     @Override
     public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
         if (this.isFlying()) {
+            return false;
+        }
+        // Official getFallResistance(): reduces the fall distance, 100+ means no fall damage at all.
+        fallDistance -= this.getFallResistance();
+        if (this.getFallResistance() >= 100 || fallDistance <= 0) {
             return false;
         }
         return super.causeFallDamage(fallDistance, damageMultiplier, source);
