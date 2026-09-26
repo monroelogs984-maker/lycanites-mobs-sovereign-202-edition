@@ -35,8 +35,7 @@ public class EntityTrite extends TameableCreatureEntity implements Enemy {
 
     @Override
     public boolean canAttack(LivingEntity target) {
-        // TODO(port): official also excludes EntityAsmodeus - restore once it's ported.
-        if (target instanceof EntityAstaroth)
+        if (target instanceof EntityAstaroth || target instanceof EntityAsmodeus)
             return false;
         return super.canAttack(target);
     }

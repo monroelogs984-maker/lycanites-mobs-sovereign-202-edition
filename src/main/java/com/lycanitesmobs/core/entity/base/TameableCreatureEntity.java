@@ -971,6 +971,15 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         return this.isTamed() && player == this.getPlayerOwner();
     }
 
+    /** Tamed creatures (even boss-type ones) don't show a boss health bar. */
+    @Override
+    public boolean showBossInfo() {
+        if (this.isTamed()) {
+            return false;
+        }
+        return super.showBossInfo();
+    }
+
     // ==================================================
     //                        NBT
     // ==================================================

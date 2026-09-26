@@ -27,4 +27,15 @@ public class DeferredLevelActionManager {
         }
         return true;
     }
+
+    public static void spawnEntityNow(Level level, Entity entity) {
+        spawnEntityNow(level, entity, null);
+    }
+
+    public static void spawnEntityNow(Level level, Entity entity, @Nullable Runnable afterSpawn) {
+        level.addFreshEntity(entity);
+        if (afterSpawn != null) {
+            afterSpawn.run();
+        }
+    }
 }

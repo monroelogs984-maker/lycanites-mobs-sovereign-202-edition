@@ -1,39 +1,40 @@
 package com.lycanitesmobs.core.entity.creature.demon;
 
-import net.minecraft.world.entity.Entity;
-import org.joml.Vector3d;
-import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
-import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
-import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
-import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.manager.ObjectManager;
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
+import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
+import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
+import com.lycanitesmobs.core.entity.projectile.hellfire.EntityHellfireOrb;
 import com.lycanitesmobs.core.util.helpers.AssetHelper;
+import com.lycanitesmobs.core.util.helpers.LMHelperClass;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Vector3d;
 
-/**
- * Trimmed - original extends TameableCreatureEntity (tame/pet-control/bag, not ported). Dropped
- * the entity-pickup-and-throw melee follow-up (canPickupEntity/pickupEntity/getPickupEntity/
- * dropPickupEntity aren't ported beyond the bare field - see EntityStryder's note in
- * PORT_PLAN.md), ranged hellfireballs (AttackRangedGoal/fireProjectile need ProjectileManager,
- * not ported), and the client-side hellfire-orb visual sync (EntityRahovart.updateHellfireOrbs
- * is a rendering helper, not ported). Kept the self-contained hellfire ground-trail effect and
- * the Krampus custom-name texture swap, both pure asset/block calls with no missing deps.
- * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
- * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
- * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
- * PHASE 6a UPDATE (2026-09-26): ranged attack restored (projectiles ported) - any wording above about a
- * substituted melee attack or ProjectileManager being unported is outdated.
- */
+import java.util.ArrayList;
+import java.util.List;
+
 public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
+
+    // Data Manager:
+    protected static final EntityDataAccessor<Integer> HELLFIRE_ENERGY = SynchedEntityData.defineId(EntityBehemophet.class, EntityDataSerializers.INT);
+
+    protected int hellfireEnergy = 0;
+    protected List<EntityHellfireOrb> hellfireOrbs = new ArrayList<>();
 
     public EntityBehemophet(EntityType<? extends EntityBehemophet> entityType, Level world) {
         super(entityType, world);
+
+        // Setup:
         this.hasAttackSound = false;
         this.setupMob();
     }
@@ -45,10 +46,34 @@ public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackRangedGoal(this).setSpeed(1.0D).setRange(16.0F).setMinChaseDistance(0F).setChaseTime(-1));
     }
 
+    /**
+     * Initiates the entity setting all the values to be watched by the datawatcher.
+     **/
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(HELLFIRE_ENERGY, this.hellfireEnergy);
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
 
+        // Sync Hellfire Energy:
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.entityData.set(HELLFIRE_ENERGY, this.hellfireEnergy);
+        } else {
+            try {
+                this.hellfireEnergy = this.entityData.get(HELLFIRE_ENERGY);
+            } catch (Exception e) {
+            }
+        }
+
+        // Hellfire Update:
+        if (this.getCommandSenderWorld().isClientSide && this.hellfireEnergy > 0)
+            EntityRahovart.updateHellfireOrbs(this, this.updateTick, 3, this.hellfireEnergy, 1F, this.hellfireOrbs);
+
+        // Trail:
         if (!this.getCommandSenderWorld().isClientSide && this.isMoving() && this.tickCount % 5 == 0) {
             int trailHeight = 1;
             int trailWidth = 1;
@@ -70,6 +95,18 @@ public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
         }
     }
 
+    public void resetHellfireEnergy() {
+        this.hellfireEnergy = 0;
+    }
+
+    public void addHellfireEnergy(int amount) {
+        this.hellfireEnergy += amount;
+    }
+
+    public boolean hasFullHellfireEnergy() {
+        return this.hellfireEnergy >= 100;
+    }
+
     @Override
     public boolean canAttack(LivingEntity target) {
         if (target instanceof EntityBelphegor)
@@ -78,10 +115,64 @@ public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
     }
 
     @Override
+    public boolean canAttackWithPickup() {
+        return true;
+    }
+
+    @Override
+    public boolean attackMelee(Entity target, double damageScale) {
+        if (!super.attackMelee(target, damageScale))
+            return false;
+
+        // Pickup and Throw:
+        if (target instanceof LivingEntity) {
+            LivingEntity entityLivingBase = (LivingEntity) target;
+            if (this.canPickupEntity(entityLivingBase)) {
+                this.pickupEntity(entityLivingBase);
+            } else if (this.getPickupEntity() == target && this.getRandom().nextBoolean()) {
+                this.dropPickupEntity();
+                target.setDeltaMovement(LMHelperClass.convertToVec3(this.getFacingPositionDouble(0, 1D, 0, 2D, this.yBodyRot)));
+                target.hurtMarked = true;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public void attackRanged(Entity target, float range) {
+        this.fireProjectile("hellfireball", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
+        super.attackRanged(target, range);
+    }
+
+    @Override
+    public double[] getPickupOffset(Entity entity) {
+        Vector3d offset = this.getFacingPositionDouble(0, 2, 0, 1.5D, this.yBodyRot);
+        return new double[]{offset.x, offset.y, offset.z};
+    }
+
+    @Override
     public boolean canBurn() {
         return false;
     }
 
+    public boolean petControlsEnabled() {
+        return true;
+    }
+
+    // TODO(port): restore @Override once creature inventories are ported
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // TODO(port): restore @Override once creature inventories are ported
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    /**
+     * Returns this creature's main texture. Also checks for for subspecies.
+     **/
     @Override
     public ResourceLocation getTexture() {
         if (!this.hasCustomName() || !"Krampus".equals(this.getCustomName().getString()))
@@ -89,11 +180,5 @@ public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
 
         String textureName = this.getTextureName() + "_krampus";
         return AssetHelper.entityTexture(textureName);
-    }
-
-    @Override
-    public void attackRanged(Entity target, float range) {
-        this.fireProjectile("hellfireball", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
-        super.attackRanged(target, range);
     }
 }

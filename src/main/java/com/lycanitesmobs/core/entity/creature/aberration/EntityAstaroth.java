@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.creature.demon.EntityMalwrath;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
 import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
@@ -51,8 +52,7 @@ public class EntityAstaroth extends TameableCreatureEntity implements Enemy {
 
     @Override
     public boolean canAttack(LivingEntity target) {
-        // TODO(port): official also excludes EntityMalwrath and EntityAsmodeus - restore once those are ported.
-        if (target instanceof EntityTrite)
+        if (target instanceof EntityTrite || target instanceof EntityMalwrath || target instanceof EntityAsmodeus)
             return false;
         return super.canAttack(target);
     }

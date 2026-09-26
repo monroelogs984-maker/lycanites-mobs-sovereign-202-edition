@@ -1198,3 +1198,36 @@ DyeColor.getTextureDiffuseColor() int; canBeLeashed(Player) -> canBeLeashed(); B
 Verified: runServer - "Registered 157 entity types" (117 creatures + 39 JSON projectiles + rapidfire); all 15 summon and
 tick; Ignibus/Serpix triggered via pig revenge fire rapidfire without crashing; the 3 that died in the 15-creature brawl
 (pixen, serpix, geonach) survive alone. 0 errors after the rapidfire sound fix (the only error was that null sound).
+
+## Remaining creatures - batch 3 of 3: bosses (2026-09-26) - ALL 121 CREATURES NOW PORTED
+
+Rahovart, Asmodeus, Amalgalich, Malwrath. Belphegor + Behemophet **re-ported from official** (the old trimmed versions
+lacked the hellfire energy Rahovart feeds on). Only `fear` (dummy haunt entity for the fear effect) remains - it comes
+with the effect-behaviour / ExtendedEntity work.
+
+**Boss infrastructure added to the base:** minion system (summonMinion + prep, setMinion/isMinion, add/has/getMinions,
+onMinionUpdate/onMinionDeath via die(), onTryToDamageMinion, tick pruning), arena centre, damage caps (`damageMax`
+per hit in hurt(), `damageLimit` per second via enforceDamageLimit + isInvulnerableTo), battle phases
+(updateBattlePhase hook each tick, get/setBattlePhase with phase sound + name), **boss health bar**
+(ServerBossEvent: red for bosses, green for rare variants when enabled; added/removed on start/stopSeenByPlayer;
+slow heal when no player targets), attackHitscan, nearbyCreatureCount, getPlayerTargetCount, TARGET_TYPES.
+Tameable: tamed creatures hide the boss bar. Goals: FaceTargetGoal, HealWhenNoPlayersGoal, SummonMinionsGoal,
+EffectAuraGoal (now Holder-based), ForceGoal, GrowGoal, SuicideGoal, BreakDoorGoal + DoorInteractGoal.
+Arena nodes (ArenaNode/Network/Grid), SchismMath. **Boss projectiles registered** as old projectiles: hellfirewall,
+hellfireorb, hellfirewave(+part), hellfirebarrier(+part), devilgatling. `DeferredLevelActionManager.spawnEntityNow`.
+Astaroth/Trite `canAttack` exclusions for Malwrath/Asmodeus restored.
+
+**BIG pre-existing bug fixed - `onFirstSpawn()` had been trimmed to one line.** Consequences until now: every creature
+spawned at 20 HP regardless of max health (Troll 20/32, bosses ~20/3200), **no uncommon/rare variant ever spawned
+naturally**, and sizes never varied. Restored the official version (starting level -> refreshAttributes -> full heal,
+random subspecies/variant, random size); pet-entry check TODO. Verified: Troll spawns 83.2/83.2 (level-scaled), bosses
+~3100-4160 HP, 40 Wargs -> 35 base / 3 Ashen / 2 Dark, all 40 with random sizes.
+
+Verified (runServer): 168 entity types (121 creatures + 39 JSON projectiles + 8 old projectiles), all 4 bosses spawn,
+tick and hold health, 0 ERROR/FATAL. **Not verified: boss fights** - boss AI targets players (nearby players,
+arena, phases), so a headless pig doesn't engage them; needs an in-game fight. Boss hellfire textures other than
+hellfireorb/hellfireball may render as missing-texture sprites (their own textures/models not checked).
+
+**Leftover TODOs across the creature batches:** mount overrides marked `TODO(port): restore @Override`
+(RideableCreatureEntity), effect behaviour (ExtendedEntity/FearHandler) incl. EntityFear, pickup carrying,
+minion temporary/spawn-event state, transform fusion levels/minions, spawner trigger in destroyArea.

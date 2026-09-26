@@ -41,6 +41,8 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.entity.vehicle.Boat;
@@ -137,12 +139,27 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected float hitAreaHeightScale = 1;
     protected byte attackPhaseMax = 0;
     protected byte attackPhase = 0;
-    protected int battlePhase = 0;
     protected int fleeTime = 200;
     protected int currentFleeTime = 0;
     protected float renderTick = 0;
     protected boolean isAggressiveByDefault = true;
     protected boolean spreadFire = false;
+    // Minions / bosses (ported 2026-09-26 for the boss batch):
+    private final List<LivingEntity> minions = new ArrayList<>();
+    protected boolean isMinion = false;
+    /** Centre of a boss arena, if this creature has one. */
+    protected BlockPos arenaCenter = null;
+    /** Maximum damage taken from a single hit (0 = no cap). */
+    protected int damageMax = 0;
+    /** Maximum damage taken per second (0 = no cap). */
+    protected float damageLimit = 0;
+    private float healthLastTick = -1;
+    protected boolean extraAnimation01 = false;
+    /** Current boss battle phase (0-based), advanced by bosses in updateBattlePhase(). */
+    protected int battlePhase = 0;
+    private ServerBossEvent bossInfo;
+    private boolean forceBossHealthBar = false;
+
     /** If true, this creature's spawn check ignores block collision (e.g. Cinder spawning in fire). */
     protected boolean spawnsInBlock = false;
     /** Health percentage below which this creature flees (0 = never). Read by flee/avoid AI. */
@@ -776,9 +793,6 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return this.isBossAlways() || this.spawnedAsBoss;
     }
 
-    public boolean isBossAlways() {
-        return this.creatureInfo.isBoss();
-    }
 
     @Override
     public boolean canChangeDimensions(Level oldLevel, Level newLevel) {
@@ -1081,6 +1095,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource damageSrc, float damageAmount) {
         damageAmount *= this.getDamageModifier(damageSrc);
+        if (this.damageMax > 0) {
+            damageAmount = Math.min(damageAmount, this.damageMax);
+        }
         if (super.hurt(damageSrc, damageAmount)) {
             this.onDamage(damageSrc, damageAmount);
             if (this.isBoss() && damageSrc.getEntity() instanceof Player player) {
@@ -1840,6 +1857,285 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return transformedEntity;
     }
 
+    // ==================================================
+    //                 Minions and Bosses
+    // ==================================================
+
+    /**
+     * Spawns the provided minion around this creature at the given angle and distance and registers it.
+     * TODO(port): the official also copies temporary/spawn-event state (not ported).
+     **/
+    public void summonMinion(LivingEntity minion, double angle, double distance) {
+        double angleRadians = Math.toRadians(angle);
+        double x = this.getX() + ((this.getBbWidth() + distance) * Math.cos(angleRadians) - Math.sin(angleRadians));
+        double y = this.getY() + 1;
+        if (minion instanceof BaseCreatureEntity creatureMinion && creatureMinion.isFlying()) {
+            y += this.getBbHeight() / 2;
+        }
+        double z = this.getZ() + ((this.getBbWidth() + distance) * Math.sin(angleRadians) + Math.cos(angleRadians));
+        minion.moveTo(x, y, z, this.getRandom().nextFloat() * 360.0F, 0.0F);
+        DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, minion, () -> {
+            if (minion instanceof BaseCreatureEntity creatureMinion) {
+                creatureMinion.setMinion(true);
+                if (!this.isRareVariant()) {
+                    creatureMinion.applyVariant(this.getVariantIndex());
+                }
+                creatureMinion.setSubspecies(this.getSubspeciesIndex());
+                creatureMinion.setMasterTarget(this);
+                creatureMinion.onFirstSpawn();
+            }
+            if (this.getTarget() != null) {
+                minion.setLastHurtByMob(this.getTarget());
+            }
+            this.addMinion(minion);
+        });
+    }
+
+    public void setMinion(boolean minion) {
+        this.isMinion = minion;
+    }
+
+    public boolean isMinion() {
+        return this.isMinion;
+    }
+
+    public boolean hasMinion(LivingEntity minion) {
+        return this.minions.contains(minion);
+    }
+
+    public List<LivingEntity> getMinions(EntityType filterType) {
+        if (filterType == null) {
+            return new ArrayList<>(this.minions);
+        }
+        List<LivingEntity> filteredMinions = new ArrayList<>();
+        for (LivingEntity minion : this.minions) {
+            if (minion.getType() == filterType) {
+                filteredMinions.add(minion);
+            }
+        }
+        return filteredMinions;
+    }
+
+    public boolean addMinion(LivingEntity minion) {
+        if (this.minions.contains(minion)) {
+            return false;
+        }
+        this.minions.add(minion);
+        return true;
+    }
+
+    /** Called by minions every tick while alive. */
+    public void onMinionUpdate(LivingEntity minion, long tick) {
+    }
+
+    /** Called by minions when they die. */
+    public void onMinionDeath(LivingEntity minion, DamageSource damageSource) {
+    }
+
+    /** Called by AI goals that attempt to damage minions. */
+    public void onTryToDamageMinion(LivingEntity minion, float damageAmount) {
+    }
+
+    void tickMinionLifecycle() {
+        if (!this.minions.isEmpty()) {
+            this.minions.removeIf(minion -> !minion.isAlive());
+        }
+        if (this.getMasterTarget() instanceof BaseCreatureEntity masterCreature) {
+            masterCreature.onMinionUpdate(this, this.updateTick);
+        }
+    }
+
+    @Override
+    public void die(DamageSource damageSource) {
+        if (this.getMasterTarget() instanceof BaseCreatureEntity masterCreature) {
+            masterCreature.onMinionDeath(this, damageSource);
+        }
+        super.die(damageSource);
+    }
+
+    /**
+     * Caps damage taken per second at damageLimit by clamping health loss between ticks (official).
+     **/
+    private void enforceDamageLimit(boolean isClient) {
+        if (this.damageLimit <= 0) {
+            return;
+        }
+        if (this.healthLastTick < 0) {
+            this.healthLastTick = this.getHealth();
+        }
+        if (this.healthLastTick - this.getHealth() > this.damageLimit) {
+            this.setHealth(this.healthLastTick - this.damageLimit);
+        }
+        this.healthLastTick = this.getHealth();
+        if (!isClient && this.updateTick % 20 == 0) {
+            this.damageTakenThisSec = 0;
+        }
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        if (this.damageLimit > 0 && this.damageTakenThisSec >= this.damageLimit) {
+            return true;
+        }
+        return super.isInvulnerableTo(source);
+    }
+
+    public BlockPos getArenaCenter() {
+        return this.arenaCenter;
+    }
+
+    public void setArenaCenter(BlockPos pos) {
+        this.arenaCenter = pos;
+    }
+
+    public boolean hasArenaCenter() {
+        return this.getArenaCenter() != null;
+    }
+
+    public int getPlayerTargetCount() {
+        return this.playerTargets.size();
+    }
+
+    public boolean extraAnimation01() {
+        return this.extraAnimation01;
+    }
+
+    protected int currentFindTargetGoalIndex() {
+        return this.nextFindTargetIndex;
+    }
+
+    public int nearbyCreatureCount(EntityType targetType, double range) {
+        return this.getNearbyEntities(Entity.class, entity -> entity.getType() == targetType, range).size();
+    }
+
+    /**
+     * An instant ranged attack that hits the target directly (no projectile).
+     **/
+    public boolean attackHitscan(Entity target, double damageScale) {
+        if (this.isBlocking() && !this.canAttackWhileBlocking()) {
+            return false;
+        }
+        if (target == null || !this.hasLineOfSight(target)) {
+            return false;
+        }
+        if (!this.attackEntityAsMob(target, damageScale)) {
+            return false;
+        }
+        this.applyContactAttackEffects(target, false);
+        this.finishAttackAction();
+        return true;
+    }
+
+    // ========== Battle Phases / Boss Health Bar (ported 2026-09-26) ==========
+
+    /** Called every tick; bosses override this to switch phases based on health. */
+    public void updateBattlePhase() {
+    }
+
+    public int getBattlePhase() {
+        return this.battlePhase;
+    }
+
+    public void setBattlePhase(int phase) {
+        if (this.getBattlePhase() == phase) {
+            return;
+        }
+        this.battlePhase = phase;
+        this.refreshBossHealthName();
+        this.playPhaseSound();
+    }
+
+    public void playPhaseSound() {
+        SoundEvent sound = ObjectManager.getSound(this.getSoundName() + "_phase");
+        if (sound == null) {
+            return;
+        }
+        this.playSound(sound, this.getSoundVolume() * 2, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
+    }
+
+    /** Returns whether or not this mob is always a boss (some mobs are only custom-spawned as bosses). */
+    public boolean isBossAlways() {
+        return this.creatureInfo.isBoss();
+    }
+
+    public boolean hasPlayerTargets() {
+        return !this.playerTargets.isEmpty();
+    }
+
+    public boolean showBossInfo() {
+        if (this.forceBossHealthBar || this.isBoss()) {
+            return true;
+        }
+        if (this.isRareVariant()) {
+            return Variant.showsRareHealthBars();
+        }
+        return false;
+    }
+
+    public void forceBossHealthBar() {
+        this.forceBossHealthBar = true;
+    }
+
+    public void createBossInfo(BossEvent.BossBarColor color, boolean darkenSky) {
+        this.bossInfo = (ServerBossEvent) (new ServerBossEvent(this.getBossHealthName(), color, BossEvent.BossBarOverlay.PROGRESS)).setDarkenScreen(darkenSky);
+    }
+
+    @Nullable
+    public BossEvent getBossInfo() {
+        if (this.bossInfo == null && this.showBossInfo() && !this.getCommandSenderWorld().isClientSide) {
+            this.createBossInfo(this.isBoss() ? BossEvent.BossBarColor.RED : BossEvent.BossBarColor.GREEN, false);
+        }
+        return this.bossInfo;
+    }
+
+    public void refreshBossHealthName() {
+        if (this.bossInfo != null) {
+            this.bossInfo.setName(this.getBossHealthName());
+        }
+    }
+
+    private MutableComponent getBossHealthName() {
+        MutableComponent name = this.getName().copy();
+        if (this.isBossAlways()) {
+            name.append(" (").append(Component.translatable("entity.phase")).append(" " + (this.getBattlePhase() + 1) + ")");
+        }
+        return name;
+    }
+
+    private void tickBossHealth(boolean isClient) {
+        if (!isClient && this.isBoss() && this.updateTick % 20 == 0 && !this.hasPlayerTargets()) {
+            this.heal(1);
+        }
+        if (this.bossInfo != null) {
+            this.bossInfo.setProgress(this.getHealth() / this.getMaxHealth());
+        }
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        if (this.getBossInfo() != null) {
+            this.bossInfo.addPlayer(player);
+        }
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        if (this.bossInfo != null) {
+            this.bossInfo.removePlayer(player);
+        }
+    }
+
+    public enum TARGET_TYPES {
+        ENEMY((byte) 1), ALLY((byte) 2), SELF((byte) 4);
+        public final byte id;
+
+        TARGET_TYPES(byte value) {
+            this.id = value;
+        }
+    }
+
     /**
      * Returns true if this creature isn't slowed by webs (cobweb, quickweb, frostweb).
      **/
@@ -2347,16 +2643,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return (List<T>) this.getCommandSenderWorld().getEntitiesOfClass(clazz, this.getBoundingBox().inflate(range, range, range), predicate != null ? predicate : (e) -> true);
     }
 
-    public int getBattlePhase() {
-        return this.battlePhase;
-    }
 
-    public void setBattlePhase(int phase) {
-        if (this.getBattlePhase() == phase) {
-            return;
-        }
-        this.battlePhase = phase;
-    }
 
     public boolean isTamed() {
         return false;
@@ -2774,8 +3061,68 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * reload - see the `firstSpawn` field). Override to run one-time setup (e.g. spawning
      * connected entities); callers must chain to super() to clear the flag.
      */
+    /**
+     * Called on this creature's first server tick. Restored from the official source 2026-09-26 - the earlier port had
+     * trimmed it to just clearing the flag, so no creature ever got its starting level (which refreshes stats and heals
+     * to the new max health - every creature spawned at 20 HP, bosses included), no uncommon/rare variant ever spawned
+     * naturally, and sizes never varied. TODO(port): the official first checks handleFirstSpawnPetEntry() (pets system).
+     **/
     public void onFirstSpawn() {
         this.firstSpawn = false;
+        if (this.isMinion()) {
+            return;
+        }
+        if (this.needsInitialLevel) {
+            this.applyLevel(this.getStartingLevel());
+        }
+        if (this.getSubspeciesIndex() == 0 && this.getVariantIndex() == 0) {
+            this.getRandomSubspecies();
+            if (CreatureManager.getInstance().getConfig().variantsSpawn() && !this.creatureInfo.getCreatureSpawn().disablesVariants()) {
+                this.getRandomVariant();
+            }
+        }
+        if (this.sizeScale == 1.0D && CreatureManager.getInstance().getConfig().randomSizes()) {
+            this.getRandomSize();
+        }
+    }
+
+    public int getStartingLevel() {
+        int startingLevelMin = Math.max(1, CreatureManager.getInstance().getConfig().startingLevelMin());
+        if (CreatureManager.getInstance().getConfig().startingLevelMax() > startingLevelMin) {
+            return startingLevelMin + this.getRandom().nextInt(CreatureManager.getInstance().getConfig().startingLevelMax() - startingLevelMin);
+        }
+        if (CreatureManager.getInstance().getConfig().levelPerDay() > 0 && CreatureManager.getInstance().getConfig().levelPerDayMax() > 0) {
+            int day = (int) Math.floor(this.getCommandSenderWorld().getGameTime() / 23999D);
+            double levelGain = Math.min(CreatureManager.getInstance().getConfig().levelPerDay() * day, CreatureManager.getInstance().getConfig().levelPerDayMax());
+            startingLevelMin += (int) Math.floor(levelGain);
+        }
+        if (CreatureManager.getInstance().getConfig().levelPerLocalDifficulty() > 0) {
+            double levelGain = this.getCommandSenderWorld().getCurrentDifficultyAt(this.blockPosition()).getEffectiveDifficulty();
+            startingLevelMin += Math.max(0, (int) Math.floor(levelGain - 1.5D));
+        }
+        return startingLevelMin;
+    }
+
+    public void getRandomSubspecies() {
+        if (!this.isMinion()) {
+            this.subspecies = this.creatureInfo.getRandomSubspecies(this);
+        }
+    }
+
+    public void getRandomVariant() {
+        if (!this.isMinion()) {
+            Variant randomVariant = this.getSubspecies().getRandomVariant(this, this.spawnedRare);
+            this.applyVariant(randomVariant != null ? randomVariant.getIndex() : 0);
+        }
+    }
+
+    public void getRandomSize() {
+        double range = CreatureManager.getInstance().getConfig().randomSizeMax() - CreatureManager.getInstance().getConfig().randomSizeMin();
+        double scale = CreatureManager.getInstance().getConfig().randomSizeMin() + range * this.getRandom().nextDouble();
+        if (this.getVariant() != null) {
+            scale *= this.getVariant().getScale();
+        }
+        this.setSizeScale(scale);
     }
 
     @Override
@@ -2790,6 +3137,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.tickBlockingState();
         this.tickTargetRuntime();
         this.tickMovementRuntime(this.getCommandSenderWorld().isClientSide);
+        this.tickMinionLifecycle();
+        this.updateBattlePhase();
+        this.tickBossHealth(this.getCommandSenderWorld().isClientSide);
+        this.enforceDamageLimit(this.getCommandSenderWorld().isClientSide);
         this.tickEnvironmentalState(this.getCommandSenderWorld().isClientSide);
         this.updateTick++;
     }

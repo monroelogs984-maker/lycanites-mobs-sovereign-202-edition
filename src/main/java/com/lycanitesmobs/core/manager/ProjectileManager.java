@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.entity.projectile.misc.EntityDevilGatling;
+import com.lycanitesmobs.core.entity.projectile.hellfire.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.LycanitesMobs;
@@ -228,8 +230,16 @@ public class ProjectileManager extends JSONLoader {
                 RapidFireProjectileEntity::new,
                 null,
                 null);
-        // TODO(port): summoningportal (summoning), laserend (lasers), and the boss projectiles
-        // (shadowfirebarrier, hellfire*, devilgatling, hellshield, helllaser*).
+        // Boss projectiles (Rahovart / Asmodeus), ported with the boss batch 2026-09-26:
+        this.addOldProjectile("hellfirewall", EntityHellfireWall.class, EntityHellfireWall::new, EntityHellfireWall::new, EntityHellfireWall::new, false);
+        this.addOldProjectile("hellfireorb", EntityHellfireOrb.class, EntityHellfireOrb::new, EntityHellfireOrb::new, EntityHellfireOrb::new, false);
+        this.addOldProjectile("hellfirewave", EntityHellfireWave.class, EntityHellfireWave::new, EntityHellfireWave::new, EntityHellfireWave::new, false);
+        this.addOldProjectile("hellfirewavepart", EntityHellfireWavePart.class, EntityHellfireWavePart::new, EntityHellfireWavePart::new, EntityHellfireWavePart::new, false);
+        this.addOldProjectile("hellfirebarrier", EntityHellfireBarrier.class, EntityHellfireBarrier::new, EntityHellfireBarrier::new, EntityHellfireBarrier::new, false);
+        this.addOldProjectile("hellfirebarrierpart", EntityHellfireBarrierPart.class, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, false);
+        this.addOldProjectile("devilgatling", EntityDevilGatling.class, EntityDevilGatling::new, EntityDevilGatling::new, EntityDevilGatling::new, false);
+        // TODO(port): summoningportal (summoning), laserend (lasers), shadowfirebarrier, hellshield, helllaser/helllaserend
+        // (not used by any ported creature yet).
     }
 
     public void addOldProjectile(String name, Class<? extends BaseProjectileEntity> entityClass, OldProjectileBaseFactory baseFactory, OldProjectileOwnerFactory ownerFactory, OldProjectilePositionFactory positionFactory) {
