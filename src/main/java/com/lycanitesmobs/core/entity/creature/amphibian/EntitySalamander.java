@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.amphibian;
 
+import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -83,5 +84,10 @@ public class EntitySalamander extends RideableCreatureEntity implements Enemy {
     @Override
     public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         return false;
+    }
+
+    @Override
+    public void applyDropEffects(CustomItemEntity entityItem) {
+        entityItem.setCanBurn(false);
     }
 }

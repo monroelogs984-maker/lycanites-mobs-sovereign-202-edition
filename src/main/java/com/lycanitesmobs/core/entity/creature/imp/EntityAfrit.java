@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.imp;
 
+import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
 import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
@@ -91,5 +92,10 @@ public class EntityAfrit extends TameableCreatureEntity implements Enemy {
     public void attackRanged(Entity target, float range) {
         this.fireProjectile("scorchfireball", target, range, 0, new Vector3d(0, 0, 0), 0.8f, 2f, 6F);
         super.attackRanged(target, range);
+    }
+
+    @Override
+    public void applyDropEffects(CustomItemEntity entityItem) {
+        entityItem.setCanBurn(false);
     }
 }

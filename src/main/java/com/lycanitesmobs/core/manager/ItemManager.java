@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.block.building.HiveBlock;
+import com.lycanitesmobs.core.item.block.ItemBlockPlacer;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.data.info.item.ItemConfig;
@@ -25,6 +27,8 @@ import com.lycanitesmobs.core.item.consumable.utility.ItemCleansingCrystal;
 import com.lycanitesmobs.core.item.consumable.utility.ItemImmunizer;
 import com.lycanitesmobs.core.item.special.ItemMobToken;
 import com.lycanitesmobs.core.tabs.LMBlocksGroup;
+import com.lycanitesmobs.core.tabs.LMChargesGroup;
+import com.lycanitesmobs.core.tabs.LMCreaturesGroup;
 import com.lycanitesmobs.core.tabs.LMItemsGroup;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.core.registries.Registries;
@@ -60,6 +64,8 @@ public class ItemManager extends JSONLoader {
 
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> itemTab = TABS.register(LycanitesMobs.MODID + ".items", itemsGroup::build);
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> blockTab = TABS.register(LycanitesMobs.MODID + ".blocks", blocksGroup::build);
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> creaturesTab = TABS.register(LycanitesMobs.MODID + ".creatures", LMCreaturesGroup.getBuilder()::build);
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> chargesTab = TABS.register(LycanitesMobs.MODID + ".charges", LMChargesGroup.getBuilder()::build);
     public static final Map<String, Item.Properties> registryItems = new HashMap<>();
     protected static ItemManager INSTANCE;
     protected static final Map<String, ItemInfo> items = new HashMap<>();
@@ -160,6 +166,11 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addItem("immunizer", () -> new ItemImmunizer(itemProperties));
         ObjectManager.addItem("cleansingcrystal", () -> new ItemCleansingCrystal(itemProperties));
 
+        // Special (place their effect block on use):
+        ObjectManager.addItem("frostyfur", () -> new ItemBlockPlacer(itemProperties, "frostyfur", "frostcloud"));
+        ObjectManager.addItem("poisongland", () -> new ItemBlockPlacer(itemProperties, "poisongland", "poisoncloud"));
+        ObjectManager.addItem("geistliver", () -> new ItemBlockPlacer(itemProperties, "geistliver", "shadowfire"));
+
         BlockManager.addDungeonBlocks("lush");
         BlockManager.addDungeonBlocks("desert");
         BlockManager.addDungeonBlocks("shadow");
@@ -167,6 +178,8 @@ public class ItemManager extends JSONLoader {
         BlockManager.addDungeonBlocks("aberrant");
         BlockManager.addDungeonBlocks("ashen");
         BlockManager.addDungeonBlocks("stream");
+        ObjectManager.addBlock("propolis", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.CLAY).sound(SoundType.WET_GRASS).strength(0.6F).randomTicks(), "propolis"), false);
+        ObjectManager.addBlock("veswax", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.WOOD).sound(SoundType.WOOD).strength(0.6F).randomTicks(), "veswax"), false);
 
         // Effect Blocks (BlockShadowfire excluded - needs BaseCreatureEntity, Phase 5):
         Block.Properties fireProperties = Block.Properties.of().mapColor(MapColor.FIRE).randomTicks().noCollission().dynamicShape().sound(SoundType.WOOL).noOcclusion();
@@ -200,18 +213,15 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addBlock("quickweb", () -> new BlockQuickWeb(webProperties), false);
         ObjectManager.addBlock("frostweb", () -> new BlockFrostweb(webProperties), false);
 
-        // TODO Phase 4d+: the remaining ~37 hardcoded items (soulgazer, soulstone, equipment,
-        // soulkeys, summoning staves - all gated on the creature system/ExtendedPlayer
-        // capability/AltarInfo, none of which exist yet) and the 5 special equipment/pedestal
-        // blocks (need containers, Phase 6/8). Also EquipmentPartManager/
-        // LMEquipmentPartsGroup, LMChargesGroup, LMBestEquipmentGroup, LMCreaturesGroup -
-        // batch these the same way Phase 5's 123 creatures will be batched, not all at once.
-        // NOTE: the 40 JSON-driven food items (moss_pie, cooked_*_meat, etc, under
-        // common/lycanitesmobs/items/) are NOT hardcoded here - they load via
-        // loadAllFromJson() below using the already-ported ItemInfo/GenericItem pipeline, no
-        // Java class needed per item. "Charges" (ChargeItem) are NOT a loadItems() omission -
-        // they're created dynamically per-ProjectileInfo (core/data/info/projectile/
-        // ProjectileInfo.java:548), genuinely gated on Phase 6's ProjectileManager.
+        ObjectManager.addDamageType("ooze");
+        ObjectManager.addDamageType("acid");
+
+        // Not ported (S202 review, PORT_PLAN.md "S202 redesign decisions"): the 8 rare-variant altars + their
+        // soulkeys/soulcubes are cut (boss soulkeys return with the new pedestal altar phase), holiday items
+        // (halloweentreat, wintergift) are cut with the holiday events, equipment waits for the post-release
+        // socket system. Pet items (soulgazer, soulstone, soul_contract, summoning staves) come with the pets
+        // system (ExtendedPlayer). Charges, spawn eggs, saddles and treats are generated by ProjectileInfo /
+        // CreatureManager, fluids + buckets by FluidManager.
     }
 
     // TODO Phase 4b: getEquipmentSharpnessRepair/getEquipmentManaRepair were dropped here -

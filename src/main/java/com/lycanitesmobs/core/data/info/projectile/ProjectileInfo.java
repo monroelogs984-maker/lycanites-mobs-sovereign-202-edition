@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.data.info.projectile;
 
+import com.lycanitesmobs.core.item.consumable.entity.ChargeItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -533,8 +534,15 @@ public class ProjectileInfo {
      * Loads this projectile (should only be called during startup), generates charge items, etc.
      */
     public void load() {
-        // TODO(port): charge item generation (ChargeItem, one throwable item per projectile) and dispenser
-        // behaviour are not ported yet - creature ranged attacks don't need them.
+        // Charge Item:
+        if (!this.noChargeItem) {
+            this.chargeItem = Lazy.of(() -> ObjectManager.getItem(this.chargeItemName));
+            if (!ObjectManager.hasItem(this.chargeItemName)) {
+                Item.Properties properties = new Item.Properties();
+                this.chargeItem = Lazy.of(() -> new ChargeItem(properties, this));
+                ObjectManager.addItem(this.chargeItemName, this.chargeItem);
+            }
+        }
 
         // Sounds:
         ObjectManager.addSound(name, "projectile." + name);

@@ -42,7 +42,14 @@ public class CustomItemEntity extends ItemEntity {
     // ==================================================
     //                    Immunities
     // ==================================================
-    // TODO Fire Immunity handled by EntityType
+    /**
+     * 1.21.1: lava/fire damage is gated by fireImmune() through isInvulnerableTo(), so an unburnable drop (from lava
+     * creatures) must report itself fire immune or it still burns up in lava.
+     **/
+    @Override
+    public boolean fireImmune() {
+        return !this.canBurn || super.fireImmune();
+    }
 
 
     // ==================================================

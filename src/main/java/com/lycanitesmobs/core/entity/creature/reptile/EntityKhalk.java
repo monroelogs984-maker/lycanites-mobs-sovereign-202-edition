@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -76,5 +77,10 @@ public class EntityKhalk extends TameableCreatureEntity implements Enemy {
     @Override
     public boolean canBreatheAir() {
         return true;
+    }
+
+    @Override
+    public void applyDropEffects(CustomItemEntity entityItem) {
+        entityItem.setCanBurn(false);
     }
 }

@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.item.consumable.entity.ItemCustomSpawnEgg;
+import com.lycanitesmobs.core.item.equipment.CreatureSaddleItem;
 import net.neoforged.neoforge.common.util.Lazy;
 import net.minecraft.world.item.Item;
 import com.lycanitesmobs.core.item.consumable.entity.CreatureTreatItem;
@@ -164,8 +166,6 @@ public class CreatureManager extends JSONLoader {
 
     /**
      * Registers the per-creature-type items. Must run in the mod constructor's call graph (DeferredRegister).
-     * Phase 5e: only treats so far. TODO(port): saddle (CreatureSaddleItem, needs riding), spawn egg
-     * (ItemCustomSpawnEgg) and filled soulstone (ItemSoulstoneFilled, needs the pets system).
      */
     public void registerItems() {
         for (CreatureType creatureType : this.creatureTypes.values()) {
@@ -174,6 +174,14 @@ public class CreatureManager extends JSONLoader {
             Lazy<Item> treat = Lazy.of(() -> new CreatureTreatItem(smallStackItemProperties, creatureType));
             creatureType.setTreatItem(treat);
             ObjectManager.addItem(creatureType.getTreatName(), treat);
+
+            Lazy<Item> saddle = Lazy.of(() -> new CreatureSaddleItem(smallStackItemProperties, creatureType));
+            creatureType.setSaddleItem(saddle);
+            ObjectManager.addItem(creatureType.getSaddleName(), saddle);
+
+            Lazy<Item> spawnEgg = Lazy.of(() -> new ItemCustomSpawnEgg(new Item.Properties(), creatureType));
+            creatureType.setSpawnEggItem(spawnEgg);
+            ObjectManager.addItem(creatureType.getSpawnEggName(), spawnEgg);
         }
     }
 

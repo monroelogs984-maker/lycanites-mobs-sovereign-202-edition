@@ -13,7 +13,10 @@ import com.lycanitesmobs.core.data.info.projectile.ProjectileInfo;
 import com.lycanitesmobs.core.entity.base.BaseProjectileEntity;
 import com.lycanitesmobs.core.manager.ProjectileManager;
 import net.minecraft.world.entity.EntityType;
+import com.lycanitesmobs.client.item.ItemColorCustomSpawnEgg;
+import com.lycanitesmobs.core.data.info.creature.CreatureType;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
 /**
@@ -31,6 +34,18 @@ public class ClientSetup {
      */
     public static void registerReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(ModelReloadListener.INSTANCE);
+    }
+
+    /**
+     * Spawn egg tints (one egg item per creature type, colored per creature).
+     */
+    public static void registerItemColors(RegisterColorHandlersEvent.Item event) {
+        ItemColorCustomSpawnEgg spawnEggColor = new ItemColorCustomSpawnEgg();
+        for (CreatureType creatureType : CreatureManager.getInstance().getCreatureTypes()) {
+            if (creatureType.getSpawnEggItem() != null) {
+                event.register(spawnEggColor, creatureType.getSpawnEggItem());
+            }
+        }
     }
 
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {

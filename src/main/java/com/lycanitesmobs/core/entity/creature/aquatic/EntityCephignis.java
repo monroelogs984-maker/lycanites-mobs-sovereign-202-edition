@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -92,4 +93,9 @@ public class EntityCephignis extends AgeableCreatureEntity {
         return false;
     }
 
+
+    @Override
+    public void applyDropEffects(CustomItemEntity entityItem) {
+        entityItem.setCanBurn(false);
+    }
 }

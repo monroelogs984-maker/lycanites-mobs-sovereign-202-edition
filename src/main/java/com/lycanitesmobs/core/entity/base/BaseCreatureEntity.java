@@ -1,5 +1,11 @@
 package com.lycanitesmobs.core.entity.base;
 
+import java.util.Collection;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.registries.Registries;
 import com.google.common.base.Predicate;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.data.info.Variant;
@@ -23,6 +29,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -197,6 +204,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     private final List<ItemDrop> drops = new ArrayList<>();
     private final List<ItemDrop> savedDrops = new ArrayList<>();
+    /** True once this creature has dropped its death loot, prevents double drops. **/
+    protected boolean hasDropped = false;
+    /** If true, this creature drops no loot or experience until it is damaged by a player. **/
+    protected boolean dropsRequirePlayerDamage = false;
     private FindAttackTargetGoal aiTargetPlayer = null;
     private RevengeGoal aiDefendAnimals = null;
     protected float flyingSpeed = 0.02F;
@@ -565,11 +576,90 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.savedDrops.add(itemDrop);
     }
 
-    // NOTE: full actual drop-on-death subsystem (dropCustomDeathLoot iterating this.drops) isn't
-    // ported yet - this exists only so subclasses (AgeableCreatureEntity's adult-only drop gate)
-    // have something to override.
+    /**
+     * Cycles through all of this entity's drops and drops random loot on death. Minions, bound pets and creatures
+     * that still require player damage drop nothing.
+     *
+     * <p>1.21.1: the official override of dropAllDeathLoot() did its own drop capturing + ForgeHooks.onLivingDrops;
+     * vanilla's dropAllDeathLoot() now does both (and the XP drop) and calls this hook inside the capture, so only
+     * the drop rolling is kept here. Looting is a data-driven enchantment now, read via the registry holder.
+     **/
+    @Override
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+        if (this.isMinion() || this.isBoundPet() || this.dropsRequirePlayerDamage || this.hasDropped) {
+            return;
+        }
+        this.hasDropped = true;
+
+        int lootingLevel = 0;
+        if (damageSource.getEntity() instanceof LivingEntity killer) {
+            lootingLevel = level.registryAccess().registry(Registries.ENCHANTMENT)
+                    .flatMap(registry -> registry.getHolder(Enchantments.LOOTING))
+                    .map(looting -> EnchantmentHelper.getEnchantmentLevel(looting, killer))
+                    .orElse(0);
+        }
+
+        int variantScale = 1;
+        if (this.isRareVariant()) {
+            variantScale = Variant.getRareDropScale();
+        } else if (this.getVariant() != null && "uncommon".equals(this.getVariant().getRarity())) {
+            variantScale = Variant.getUncommonDropScale();
+        }
+
+        for (ItemDrop itemDrop : this.drops) {
+            if (!this.canDropItem(itemDrop)) {
+                continue;
+            }
+            int multiplier = 1;
+            if (itemDrop.getVariantIndex() < 0) {
+                multiplier *= variantScale;
+            }
+            if (this.extraMobBehaviour != null && this.extraMobBehaviour.itemDropMultiplierOverride() != 1) {
+                multiplier = Math.round((float) multiplier * (float) this.extraMobBehaviour.itemDropMultiplierOverride());
+            }
+            int quantity = itemDrop.getQuantity(this.getRandom(), lootingLevel, multiplier);
+            if (quantity <= 0) {
+                continue;
+            }
+            this.dropItem(itemDrop.getEntityDropItemStack(this, quantity));
+        }
+    }
+
+    /**
+     * 1.21.1: getExperienceReward() is final now, the variant-scaled experience goes through this hook instead.
+     **/
+    @Override
+    protected int getBaseExperienceReward() {
+        if (this.isMinion() || this.isBoundPet() || this.dropsRequirePlayerDamage) {
+            return 0;
+        }
+        return this.computeExperienceReward();
+    }
+
     public boolean canDropItem(ItemDrop itemDrop) {
+        if (itemDrop.getSubspeciesIndex() >= 0 && itemDrop.getSubspeciesIndex() != this.getSubspeciesIndex()) {
+            return false;
+        }
+        if (itemDrop.getVariantIndex() >= 0 && itemDrop.getVariantIndex() != this.getVariantIndex()) {
+            return false;
+        }
         return true;
+    }
+
+    /**
+     * Returns true if this creature is a pet bound to a player's pet entry. TODO(port): pet entries (soulstones /
+     * Beastiary) aren't ported, so no creature is a bound pet yet.
+     **/
+    public boolean isBoundPet() {
+        return false;
+    }
+
+    /**
+     * Sets if this creature should no longer drop items until it takes damage from a source belonging to a player.
+     **/
+    public void setDropsRequirePlayerDamage(boolean requiresPlayerDamage) {
+        this.dropsRequirePlayerDamage = requiresPlayerDamage;
     }
 
     private void initializePathing() {
@@ -1099,6 +1189,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             damageAmount = Math.min(damageAmount, this.damageMax);
         }
         if (super.hurt(damageSrc, damageAmount)) {
+            if (this.dropsRequirePlayerDamage && damageSrc.getEntity() instanceof Player) {
+                this.dropsRequirePlayerDamage = false;
+            }
             this.onDamage(damageSrc, damageAmount);
             if (this.isBoss() && damageSrc.getEntity() instanceof Player player) {
                 this.addPlayerTarget(player);
@@ -1681,6 +1774,27 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     public void dropItem(ItemStack itemStack) {
         this.spawnAtLocation(itemStack, 0.0F);
+    }
+
+    /**
+     * The vanilla item drop method, overridden to make use of the CustomItemEntity class (see applyDropEffects).
+     **/
+    @Override
+    public ItemEntity spawnAtLocation(ItemStack itemStack, float heightOffset) {
+        if (itemStack.isEmpty() || this.level().isClientSide) {
+            return null;
+        }
+        CustomItemEntity entityItem = new CustomItemEntity(this.level(), this.getX(), this.getY() + (double) heightOffset, this.getZ(), itemStack);
+        entityItem.setDefaultPickUpDelay();
+        this.applyDropEffects(entityItem);
+
+        Collection<ItemEntity> capturedDrops = this.captureDrops();
+        if (capturedDrops != null) {
+            capturedDrops.add(entityItem);
+        } else {
+            this.level().addFreshEntity(entityItem);
+        }
+        return entityItem;
     }
 
     public boolean canStealth() {
@@ -3206,6 +3320,15 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (nbt.contains("SpawnedAsBoss")) {
             this.setSpawnedAsBoss(nbt.getBoolean("SpawnedAsBoss"));
         }
+        if (nbt.contains("DropsRequirePlayerDamage")) {
+            this.dropsRequirePlayerDamage = nbt.getBoolean("DropsRequirePlayerDamage");
+        }
+        if (nbt.contains("Drops")) {
+            ListTag nbtDropList = nbt.getList("Drops", 10);
+            for (int i = 0; i < nbtDropList.size(); i++) {
+                this.addSavedItemDrop(new ItemDrop(nbtDropList.getCompound(i)));
+            }
+        }
         if (nbt.contains("SpawnedRare")) {
             this.setSpawnedRare(nbt.getBoolean("SpawnedRare"));
         }
@@ -3230,6 +3353,15 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         nbt.putInt("Experience", this.getExperience());
         nbt.putByte("Color", (byte) this.getColor().getId());
         nbt.putBoolean("SpawnedAsBoss", this.wasSpawnedAsBoss());
+        nbt.putBoolean("DropsRequirePlayerDamage", this.dropsRequirePlayerDamage);
+        ListTag nbtDropList = new ListTag();
+        for (ItemDrop drop : this.savedDrops) {
+            CompoundTag dropNBT = new CompoundTag();
+            if (drop.writeToNBT(dropNBT)) {
+                nbtDropList.add(dropNBT);
+            }
+        }
+        nbt.put("Drops", nbtDropList);
         nbt.putBoolean("SpawnedRare", this.wasSpawnedRare());
         if (this.hasHome()) {
             BlockPos homePos = this.getRestrictCenter();

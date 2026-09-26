@@ -3,6 +3,8 @@ package com.lycanitesmobs.core.tabs;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import net.minecraft.network.chat.Component;
+import com.lycanitesmobs.core.item.consumable.entity.ChargeItem;
+import com.lycanitesmobs.core.item.consumable.entity.ItemCustomSpawnEgg;
 import net.minecraft.world.item.*;
 
 import java.util.*;
@@ -25,13 +27,12 @@ public class LMItemsGroup {
                 .title(Component.translatable("itemGroup." + LycanitesMobs.MODID + ".items"))
                 .icon(this::getIconItem)
                 .displayItems((enabledFeatures, entries) -> {
-                    // NOTE: the original filter here also excluded ItemEquipmentPart,
-                    // ItemCustomSpawnEgg and ChargeItem instances (they get their own tabs).
-                    // None of those classes are ported yet (Phase 4b+) so there's nothing to
-                    // exclude yet - re-add these checks once they exist.
+                    // Spawn eggs and charges have their own tabs.
                     List<String> filtered = new ArrayList<>();
                     for (String name : itemNames) {
                         if (name.equals("equipment")) continue;
+                        Item namedItem = ObjectManager.getItem(name);
+                        if (namedItem instanceof ItemCustomSpawnEgg || namedItem instanceof ChargeItem) continue;
                         filtered.add(name);
                     }
 

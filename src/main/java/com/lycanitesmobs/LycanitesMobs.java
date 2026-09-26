@@ -12,6 +12,7 @@ import com.lycanitesmobs.core.event.RegistryEvents;
 import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.manager.ElementManager;
 import com.lycanitesmobs.core.manager.ItemManager;
+import com.lycanitesmobs.core.manager.FluidManager;
 import com.lycanitesmobs.core.manager.ModAttributes;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
@@ -73,6 +74,7 @@ public class LycanitesMobs {
         ENTITY_TYPES.register(modEventBus);
         ModAttributes.ATTRIBUTES.register(modEventBus);
         ItemManager.register(modEventBus);
+        FluidManager.register(modEventBus);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -93,6 +95,7 @@ public class LycanitesMobs {
         if (FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerEntityRenderers);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerReloadListeners);
+            modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerItemColors);
         }
 
         modEventBus.addListener(this::commonSetup);
@@ -126,6 +129,7 @@ public class LycanitesMobs {
         ElementManager.getInstance().loadAllFromJson(modInfo);
         ObjectLists.createVanillaLists();
         ItemManager.getInstance().startup(modInfo);
+        FluidManager.getInstance().defineFluids();
         // NOTE: does NOT call CreatureManager.loadConfig() here - config values can't be read
         // (ModConfigSpec$ConfigValue.get() throws IllegalStateException) until NeoForge's
         // ModConfigEvent.Loading has fired, which happens after the mod constructor. JSON
