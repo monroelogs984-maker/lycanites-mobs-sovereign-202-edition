@@ -1,0 +1,72 @@
+package com.lycanitesmobs.core.entity.creature.anthronian;
+
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
+import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.level.Level;
+
+/**
+ * Trimmed - ranged boulder-throw attack (fireProjectile/AttackRangedGoal) dropped, needs
+ * ProjectileManager (not ported); falls back to melee. BreakDoorGoal dropped (see EntityEttin's
+ * note). Block-destroying griefing AoE dropped (no destroyArea hook). Pickaxe-extra-damage
+ * getDamageModifier and getFallResistance dropped (not real hooks in this port). Equipment/
+ * pet-control dropped. Daylight stone-form (petrification when it can see sky during the day)
+ * kept - self-contained, uses already-ported isDaytime().
+ */
+public class EntityTroll extends TameableCreatureEntity implements Enemy {
+
+    protected boolean stoneForm = false;
+
+    public EntityTroll(EntityType<? extends EntityTroll> entityType, Level world) {
+        super(entityType, world);
+        this.hasAttackSound = false;
+        this.setupMob();
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
+
+        if (this.getNavigation() instanceof GroundPathNavigation) {
+            GroundPathNavigation pathNavigateGround = (GroundPathNavigation) this.getNavigation();
+            pathNavigateGround.setCanOpenDoors(true);
+        }
+    }
+
+    @Override
+    public String getTextureName() {
+        if (this.stoneForm)
+            return super.getTextureName() + "_stone";
+        return super.getTextureName();
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        if (!this.stoneForm) {
+            if (this.isDaytime() && this.getCommandSenderWorld().canSeeSkyFromBelowWater(this.blockPosition())) {
+                this.stoneForm = true;
+            }
+        } else {
+            if (!this.isDaytime() || !this.getCommandSenderWorld().canSeeSkyFromBelowWater(this.blockPosition())) {
+                this.stoneForm = false;
+            }
+        }
+    }
+
+    @Override
+    public float getAISpeedModifier() {
+        if (this.stoneForm)
+            return 0.125F;
+        return 1.0F;
+    }
+
+    @Override
+    public boolean canBurn() {
+        return !this.stoneForm;
+    }
+}

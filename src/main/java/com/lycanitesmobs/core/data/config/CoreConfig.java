@@ -15,11 +15,8 @@ public class CoreConfig {
 		ConfigAdmin.INSTANCE = new ConfigAdmin(BUILDER);
 		ConfigClient.INSTANCE = new ConfigClient(BUILDER);
 		ConfigDungeons.INSTANCE = new ConfigDungeons(BUILDER);
-		// TODO Phase 5 (Creatures): ConfigCreatures and ConfigCreatureSubspecies depend on
-		// core.data.info.Variant / core.entity.util.CreatureStats / core.manager.CreatureManager,
-		// none of which are ported yet. Wire these back in once CreatureManager exists.
-		// ConfigCreatures.INSTANCE = new ConfigCreatures(BUILDER);
-		// ConfigCreatureSubspecies.INSTANCE = new ConfigCreatureSubspecies(BUILDER);
+		ConfigCreatures.INSTANCE = new ConfigCreatures(BUILDER);
+		ConfigCreatureSubspecies.INSTANCE = new ConfigCreatureSubspecies(BUILDER);
 		ConfigCreatureSpawning.INSTANCE = new ConfigCreatureSpawning(BUILDER);
 		ConfigItem.INSTANCE = new ConfigItem(BUILDER);
 		ConfigMobEvent.INSTANCE = new ConfigMobEvent(BUILDER);

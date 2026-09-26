@@ -218,25 +218,129 @@ Each phase depends on the ones above it being in place and registered.
       Sub-phase plan (lowest API-risk / most tractable first, since `BaseCreatureEntity`
       itself is AI/combat/rendering-heavy and best tackled once everything it depends on
       already exists and compiles):
-        - [ ] **5a**: `entity/util` (`CreatureStats`) + `core/data/info/creature/` substrate
-              (data/config classes, minimal MC API surface, closest in kind to Phase 4's
-              `ItemInfo`/`ItemConfig`).
-        - [ ] **5b**: `CreatureManager` + bootstrap/registry/validation helpers, wired into
-              `LycanitesMobs.loadContent()`. Won't do anything yet (no creature classes exist)
-              but proves the JSON-loading pipeline the same way `ElementManager` did in
-              Phase 3.
-        - [ ] **5c**: `core/entity/goals/` (the AI goal classes) - needed before any real
-              creature's `registerGoals()` can compile.
-        - [ ] **5d**: `BaseCreatureEntity` - almost certainly needs its own internal batching
-              given 25 sections and 7,167 lines; expect this alone to span multiple sessions.
-        - [ ] **5e**: `TameableCreatureEntity`.
-        - [ ] **5f**: first real creature (pick one with zero cross-references to other
-              creature classes, to avoid pulling in more of the 123 before the pipeline is
-              proven) - build + deploy + visually verify in Lycannots before touching a
-              second one.
-        - [ ] **5g+**: batch the remaining ~122 creatures by family/tier, same "one weapon at
-              a time" discipline as BHB - never batch for the sake of speed.
+        - [x] **5a**: `entity/util` (`CreatureStats`, `Targeting`) + `core/data/info/creature/`
+              substrate - done 2026-09-22.
+        - [x] **5b**: `CreatureManager` + bootstrap/registry/validation helpers, wired into
+              `LycanitesMobs.loadContent()`/`commonSetup()` - done 2026-09-22. Two real
+              registration-timing bugs found and fixed (see Status below): entity types
+              needed the same `RegisterEvent`-forcing fix blocks got in Phase 4c, and
+              `CreatureManager.loadConfig()` can't run in the constructor.
+        - [x] **5c**: `core/entity/goals/` - done 2026-09-22, but trimmed hard: only 13 of 64
+              files ported (`BaseGoal`, `GoalConditions`, `TargetSorterNearest`,
+              `TargetingGoal`, `FindAttackTargetGoal`, `FindAvoidTargetGoal`, `RevengeGoal`,
+              `AvoidIfHitGoal`, `RandomPositionGenerator`, `WanderGoal`, `LookIdleGoal`,
+              `MoveRestrictionGoal`, `AttackMeleeGoal`). Group/pack goals (`FindGroupAttack/
+              AvoidTargetGoal`, `FollowMasterGoal`), water/tempt/fuse goals (`PaddleGoal`,
+              `StayByWaterGoal`, `AvoidGoal`, `TemptGoal`, `Find/FollowFuseGoal`), and
+              `WatchClosestGoal` are NOT ported - `BaseCreatureEntity.registerGoals()` only
+              wires up avoid-if-hit + revenge + wander + look-idle. All pure Java/vanilla-API,
+              no Forge-specific calls needed translating.
+        - [x] **5d**: `BaseCreatureEntity` - done 2026-09-22, but this is an aggressively
+              trimmed port, not a faithful one - see "Phase 5d/5f status" below for exactly
+              what was dropped and why. Also needed a full pass of 1.21.1 API changes beyond
+              anything seen in Phases 0-4c (see below) - this file is where they all surfaced.
+        - [~] **5e**: `TameableCreatureEntity`/`AgeableCreatureEntity`/`RideableCreatureEntity`
+              exist ONLY as empty stub classes (just a constructor) so `CreatureInfo`'s
+              `Class.isAssignableFrom()` checks compile - no taming/aging/riding behaviour is
+              ported. ~69 of 123 creatures extend `TameableCreatureEntity` and will need the
+              real thing eventually; deliberately deferred since it's another ~1,500+2,015
+              lines and the goal was proving one creature spawns, not taming.
+        - [x] **5f**: first real creature - `EntityCalpod`, chosen specifically because it's
+              one of only 9 creatures extending `BaseCreatureEntity` directly (bypasses the
+              TameableCreatureEntity stub entirely). Compiles, registers, mod loads clean via
+              `runServer` with no "has no attributes" or Lazy-registration errors. NOT YET
+              spawn-tested in Lycannots (client-side model/renderer for it doesn't exist -
+              expect either an invisible/crashing entity, or a genuine spawn - unverified).
+              Trimmed from the original: swarm minion-spawning, block-griefing-on-attack, bag
+              equipment.
+        - [ ] **5g+**: batch the remaining creatures. Given 5e is stubbed, the next tractable
+              batch is more creatures that extend `BaseCreatureEntity` directly (8 left:
+              `EntityFear`, `EntityAsmodeus`, `EntityAmalgalich`, `EntityRahovart`,
+              `EntityTreant`, `EntityGorgomite`, `EntityCherufe`, `EntityWendigo` - though the
+              last 3 in that list are bosses/large, so probably skip those first). Porting
+              `TameableCreatureEntity` for real is its own sub-phase whenever taming actually
+              matters. Same "one weapon at a time" discipline as BHB - never batch for speed.
       Do not attempt all 123 creatures, or even the full substrate, in one sitting.
+
+      **Phase 5d/5f status - what was actually dropped from `BaseCreatureEntity` (2026-09-22):**
+      Ported the constructor, `defineSynchedData`, `applyDynamicAttributes`/`refreshAttributes`,
+      `registerGoals` (trimmed set above), `setupMob`/`loadItemDrops`, naming
+      (`getFullName`/species/variant/subspecies/level name parts), all target accessors
+      (master/parent/avoid/fixate/perch/rider + `TARGET_BITS`), level/experience, melee attack
+      chain (`attackMelee`→`attackEntityAsMob`, pierce damage kept, enchant-knockback/fire-
+      aspect/shield-interrupt dropped as dead code since `canInteruptShields()` is
+      hard-`false`), pack-check (`isInPack`/`countAllies`), home/restriction (now delegates to
+      vanilla `Mob.restrictTo`/`getRestrictCenter`/`getRestrictRadius` - see below), sounds
+      (all of them - step/hurt/death/ambient/attack/jump/fly/swim), environmental immunity
+      flags (`canBurn`/`waterDamage`/`canBreatheAir`/`canBreatheUnderwater`/
+      `canBreatheUnderlava`/`lavaContact`), NBT persistence (progression fields only). A
+      drastically simplified `aiStep()` (blocking-state + target-runtime ticking + tick
+      counter only) replaces the original's ~15-subsystem update loop.
+
+      **Dropped entirely** (deferred to later phases, not stubbed): capabilities
+      (`ExtendedEntity`/`ExtendedPlayer`/`ExtendedWorld`), networking sync (`MessageCreature`/
+      `queueSync`/`doSync` are no-ops), containers/inventory (`CreatureInventory`/
+      `CreatureContainer` - no per-creature inventory exists), pets (`PetEntry`), summoning
+      pedestals, equipment parts, projectiles, creature relationships/taming reputation
+      (`getRelationshipEntry` always returns null), minions, boss health bar UI (`isBoss()`
+      still affects damage scaling/sound volume, just no visible bar), battle-phase
+      transform/fusion, elemental immunity checks (`hasElement`/`getElements` never ported, so
+      `canBurn`/`canFreeze` only check the `ExtraMobBehaviour` override now), custom navigation
+      - **`CreatureMoveController`/`CreaturePathNavigator`/`CreatureNodeProcessor` are NOT
+      ported**; vanilla `GroundPathNavigation`/default `MoveControl` are used instead (no
+      override of `createNavigation()`/`createMoveController()` at all), so there's no custom
+      swim-bob/fly/climb pathing yet - only plain vanilla ground pathfinding. `DirectNavigator`
+      exists (ported, self-contained) but is fully inert since `useDirectNavigator()` is
+      hard-`false` - no flying "ghost" creature will work until real flight navigation is
+      ported. Most of the natural-spawn eligibility chain (`checkSpawnVanilla`/
+      `environmentSpawnCheck`/light-level/biome/group-limit checks) - `checkSpawnRules()`
+      always returns `true` now, so natural spawning isn't gated the way it should be; fine
+      for `/summon` or spawn-egg testing, not fine for real gameplay balance yet.
+
+      **1.21.1 vanilla/NeoForge API changes found in this pass** (none of these showed up in
+      Phases 0-4c, which never touched `LivingEntity`/`Mob` this deeply):
+        - `Entity.onAddedToWorld()` → `onAddedToLevel()`.
+        - `defineSynchedData()` takes a `SynchedEntityData.Builder` parameter now; use
+          `builder.define(...)`, not `this.getEntityData().define(...)`.
+        - `LivingEntity.getDimensions(Pose)` is now `final`; override
+          `getDefaultDimensions(Pose)` instead. `EntityDimensions` is a record with a private
+          constructor - use `EntityDimensions.scalable(w, h)`/`.fixed(w, h)`, and its `width`
+          field needs `.width()` (record accessor), not `.width`.
+        - `LivingEntity.getExperienceReward()` no longer exists to override - replaced by a
+          `final getExperienceReward(ServerLevel, Entity)` routed through
+          `EventHooks.getExperienceDrop`. Kept the scaling logic as a plain (non-override)
+          helper for later use.
+        - `Mob.finalizeSpawn(...)` dropped its `CompoundTag` parameter (4 params now, not 5).
+        - `Entity.canChangeDimensions()` now takes `(Level oldLevel, Level newLevel)`.
+        - Leashing was refactored into a `Leashable` interface that `Mob` implements directly
+          - `tickLeash()`/`canBeLeashed(Player)` no longer exist to override (`canBeLeashed()`
+          is now no-arg). Dropped the custom leash-restriction AI entirely; vanilla `Leashable`
+          behaviour is used unmodified.
+        - `Mob` now has its OWN `restrictCenter`/`restrictRadius`/`restrictTo()`/
+          `getRestrictCenter()`/`getRestrictRadius()`/`hasRestriction()` - this is the exact
+          system the 1.20.1 port's custom `homePosition`/`homeDistanceMax` fields duplicated,
+          so those were deleted in favor of the vanilla ones (kept a `getHomeDistanceMax()`
+          compat wrapper since the ported goal classes call it).
+        - `BlockPathTypes` renamed to `PathType`.
+        - `Entity.setMaxUpStep(float)` is gone - step height is now the `Attributes.STEP_HEIGHT`
+          attribute (already included in `PathfinderMob.createMobAttributes()`'s base
+          builder).
+        - `LivingEntity.canBreatheUnderwater()` is now `final` and tag-driven
+          (`EntityTypeTags.CAN_BREATHE_UNDER_WATER`, deprecated in favor of NeoForge's
+          `canDrownInFluidType`) - renamed the custom override to
+          `creatureCanBreatheUnderwater()` to avoid the collision.
+        - Custom `Attribute` constants (`DEFENSE`, `RANGED_SPEED`) can no longer be bare
+          `new RangedAttribute(...)` fields - `AttributeSupplier.Builder.add()`/
+          `LivingEntity.getAttribute()` now take `Holder<Attribute>`. Added
+          `core/manager/ModAttributes.java`, a proper `DeferredRegister<Attribute>`
+          (`Registries.ATTRIBUTE`), registered on the mod event bus.
+        - Missing `EntityAttributeCreationEvent` handler: NeoForge requires every `EntityType`
+          extending `LivingEntity` to have an `AttributeSupplier` attached via this event
+          (mod bus, fires after `RegisterEvent`/before common setup) or it throws "Entity ...
+          has no attributes" the moment anything touches its attribute map. Added
+          `RegistryEvents.registerEntityAttributes()`, mirroring the original's Forge-side
+          `EntityAttributeCreationEvent` listener but iterating `BuiltInRegistries.ENTITY_TYPE`
+          instead of `ForgeRegistries.ENTITY_TYPES`.
 - [ ] **Phase 6 — Gameplay systems on top of creatures**: `ProjectileManager`,
       `SpawnerManager`, `StructureSpawnInjector`, `AltarInfo`, `MobEventManager`,
       `DungeonManager`.
@@ -252,7 +356,176 @@ Each phase depends on the ones above it being in place and registered.
 - [ ] **Phase 10 — S202 tuning**: once it's a working straight port, apply the actual
       requested tweaks to fit S202 as the core creature mod.
 
+## S202 redesign decisions (from `LYCANITES-REVIEW.txt`, 2026-09-26)
+
+Glenn's review of the official mod. `LYCANITES-REVIEW.txt` (repo root) is the source of truth; this is the
+port-facing digest. Overall target: cut ~1/3 of the mod. **Cuts = skip while porting; tuning = data, can wait
+for Phase 10; new systems = own phases (below).**
+
+**Cut (don't port):**
+- ~20% of creatures (list TBD — decide before the next Phase 5 batch; 50 of 122 already ported).
+- Creature levels (`levelPerDay`, level multipliers etc.) — Power Scale covers this in S202.
+- Breeding (farming itself stays possible; food stays).
+- Boss-channel *random* events and all holiday events (halloween, rudolph, satanclaws, poopparty).
+- The 8 rare-variant altars (Royal Apollyon, Crimson Epion, Ebon Malwrath, Mottle Abaia, Phosphorescent
+  Chupacabra, Lunar Grue, Celestial Geonach, Umber Cherufe) and altar block formations.
+- Elements down to ~12 or fewer (fusion stays).
+- Many trigger spawners (keep block-type ones like lava/ore; exact keep list TBD — flag `sleep` as a lottery death).
+
+**Tuning (data):**
+- Spawning: biome conditions loosened/cut, dimension conditions kept. Two global spawn-rate values, common and
+  rare, rare >= 65% of common ("Mythic Beasts": see a few of everything). Packs preserved. Common/rare
+  assignment TBD.
+- Variants: base 80%, each rare variant 2%, uncommon variants share the rest (2 uncommon only -> 80/10/10;
+  2 uncommon + 1 rare -> 80/9/9/2). 2-3 variants per mob. Open: astaroth/trite/kathoga have 2 subspecies
+  (forms) x 2 colors — how to treat.
+- Creature types: keep all, rebalance counts; give the currently empty `angel` and `slime` types a few mobs.
+- Dungeons: rarer and smaller. Fluids: kept (key to spawning/attacks). Food: kept.
+- Beastiary: rewritten to match, credit to Lycanite kept.
+
+**New systems (new phases):**
+- **Altars:** only Rahovart/Asmodeus/Amalgalich, summoned with that boss's own soulkey (one key per boss) on
+  the pedestal, no block structure. Boss arenas are still built (the boss events' `StructureBuilder`s).
+- **Mob events:** ~10 total, more varied spawns, more common. ~3 `world` channel (global, one at a time,
+  may set rain/thunder/night via `WorldMobEventEffect`), rest `player` channel (area events, unused in the
+  official data). Rarity half time-based (`MobEventSchedule`: worldDay/dayTime/dimension), half RNG
+  (`RandomMobEventTrigger`) — could align with 202Tweeks' lunar cycle.
+- **Equipment sockets — NOT in the first release (Glenn, 2026-09-26).** Ship the port without the equipment
+  system; parts can exist as materials meanwhile. Planned later: instead of assembled Lycanites weapons, any damaging tool (any mod) gets an imprinted
+  passive from an infused equipment part, managed and leveled at the Equipment Forge.
+
 ## Status
+
+**2026-09-22 (later same day): Phase 5 substrate + first creature compiles, registers, and
+loads clean.** `./gradlew compileJava` and `./gradlew runServer` both succeed with no
+exceptions - log confirms "Registered 1 entity types" (`lycanitesmobs:calpod`) and no "has no
+attributes" error. Deployed to Lycannots (`./gradlew deploy`). **Confirmed crash on summon (2026-09-22, same day):** Glenn tried `/summon lycanitesmobs:calpod`
+in Lycannots - client crashed exactly as predicted:
+`NullPointerException: Cannot invoke "EntityRenderer.shouldRender(...)" because
+"entityrenderer" is null`, in `EntityRenderDispatcher.shouldRender`. Root cause: NeoForge has
+no fallback renderer - every `EntityType<? extends LivingEntity>` needs one registered via
+`EntityRenderersEvent.RegisterRenderers` (client-only mod-bus event) or it NPEs the instant the
+entity enters render range. Fixed by adding `com.lycanitesmobs.client.PlaceholderCreatureRenderer`
+(an `EntityRenderer<BaseCreatureEntity>` with no model - just `getTextureLocation()` pointing at
+a harmless vanilla texture; draws nothing but still handles shadow/name-tag via the base class)
+and `com.lycanitesmobs.client.ClientSetup.registerEntityRenderers()`, which registers it for
+every creature in `CreatureManager`. Wired into `LycanitesMobs`'s constructor behind an
+`FMLEnvironment.dist.isClient()` guard so the client-only `EntityRenderersEvent` class is never
+referenced (and thus never classloaded) on a dedicated server. Creatures are invisible until
+Phase 8 ports real models, but AI/hitbox/combat/sounds all work. Rebuilt, redeployed to
+Lycannots - **not yet re-tested by Glenn after this fix.**
+
+**Missing items/blocks investigated and mostly fixed (2026-09-22, same day):** Glenn noticed
+"quite a few" items and a few blocks missing, plus asked specifically about "charges." Findings:
+- **The 40 food items** (moss_pie, cooked/raw_*_meat, etc) were never actually blocked on any
+  unported system - `ItemInfo`/`GenericItem`/`ItemManager.loadAllFromJson()` (the JSON-driven
+  item pipeline, parallel to `CreatureInfo`) were already fully ported since Phase 4a. The
+  entire gap was missing data: `common/lycanitesmobs/items/` (the JSON definitions) was never
+  copied into our resources. Fixed by copying all 40 JSON files + their item models + textures
+  (scripted, same referential-copy approach as the Phase 4c asset fix) + the 36 real
+  campfire/furnace/smoker cooking recipes (converting 1.20.1's bare-string recipe `"result"` to
+  1.21.1's required `{"id": ...}` object form - a real, verified format break, not an
+  assumption). Skipped two upstream leftovers that aren't part of the real cooking chain
+  (`joustmeatcooked.json`, `cephignismeatcooked.json` - nonsensical shapeless recipes converting
+  a cake/taco into raw meat, clearly stale test data) and one filename-vs-internal-name mismatch
+  (`raw_joust_meat.json`'s `"name"` field is actually `"raw_jouste_meat"` - resolved by reading
+  the internal name, not the filename, same class of upstream quirk as the earlier mobtoken/
+  soulgazer texture reference).
+- **BlockShadowfire** was excluded in Phase 4c specifically because it calls
+  `BaseCreatureEntity.hasElement()`, which didn't exist when BaseCreatureEntity itself didn't
+  exist. Now that Phase 5d ported BaseCreatureEntity (but had dropped `hasElement()`/
+  `getElements()` as part of the aggressive trim), restored both as thin wrappers around
+  `CreatureInfo.getElements(Subspecies)` (already ported), and wired real element checks back
+  into `canBurn()` to match upstream fidelity. Ported `BlockShadowfire` itself (mechanical,
+  same pattern as the other 6 already-ported fire blocks) and added its block+sound
+  registration to `ItemManager.loadItems()`. 118 blocks now register (was 117).
+- **"Charges" (`ChargeItem`) are correctly NOT present** - Glenn's own instinct here was right.
+  They're not a `loadItems()` omission at all; `ChargeItem` instances are created dynamically
+  per-`ProjectileInfo` (`core/data/info/projectile/ProjectileInfo.java:548`,
+  `this.chargeItem = Lazy.of(() -> new ChargeItem(properties, this))`), genuinely gated on
+  Phase 6's `ProjectileManager`. Left a code comment in `ItemManager.loadItems()` explaining
+  this so it's not mistaken for a gap again.
+- **Still genuinely gated** (correctly, not a bug): the ~37 remaining hardcoded items
+  (soulgazer, soulstone, equipment, soulkeys, summoning staves - creature-system/
+  `ExtendedPlayer`/`AltarInfo`-dependent) and the 5 equipment-forge/pedestal blocks (need
+  containers, Phase 6/8).
+
+Rebuilt (118 blocks + 40 more items registering clean via `runServer`, no errors), redeployed
+to Lycannots. **Not yet re-verified by Glenn in-game.**
+
+**Second test creature - Concapede (2026-09-23):** Glenn asked for this one by name. Much
+bigger lift than calpod - both `EntityConcapedeHead` and `EntityConcapedeSegment` extend
+`AgeableCreatureEntity` for real (growth/breeding/multi-segment chaining), not just
+`BaseCreatureEntity`, and that class was still just an empty stub. Ported, trimmed:
+- **`AgeableCreatureEntity`** (real port now, ~300 of the original 470 lines) - kept growth
+  ticking, love/breeding state, NBT persistence, `createChild`/`procreate`. Dropped: the
+  right-click interact-command system (spawn-egg baby spawning, feed-to-breed - needs
+  `ItemCustomSpawnEgg`, not ported, and BaseCreatureEntity never got a command-dispatch base
+  to override), `MateGoal`/`FindParentGoal` (not ported, so breeding only happens if
+  something calls `breed()`/`procreate()` directly, not via AI goals yet), and the
+  `ExtendedPlayer` beastiary-study hook in `procreate()`.
+- **`FollowGoal` + `FollowParentGoal`** ported (goal package now 15 files) - needed for
+  segments to actually follow their parent segment/head.
+- **`DeferredLevelActionManager`** ported, but drastically simplified: the original queues
+  entity spawns to run on a later tick once the target chunk is confirmed loaded (~150 lines
+  of queue/retry plumbing off a Forge tick event). Since every current caller spawns at an
+  already-loaded, actively-ticking parent's position, this is now just an immediate
+  `level.addFreshEntity()` call - port the real deferred-queue version if something ever
+  needs to spawn at a possibly-unloaded position.
+- **`EntityConcapedeHead`/`EntityConcapedeSegment`** ported keeping the actual "centipede
+  body" mechanic (segment-chain spawning on first spawn, growing a new segment periodically,
+  a tail segment growing into a new head when it matures) close to faithful, since that's the
+  point of the creature. Dropped `TemptGoal` (not ported, consistent with dropping it from
+  `BaseCreatureEntity`'s own `registerGoals()` earlier) and the bag/equipment overrides
+  (`getNoBagSize`/`getBagSize` - that subsystem isn't ported).
+- Found and fixed a real gap this surfaced: **`onFirstSpawn()` was never wired into
+  `BaseCreatureEntity.aiStep()`** at all during the Phase 5d trim - the hook existed nowhere,
+  so `EntityConcapedeHead`'s initial segment-spawning would silently never have fired. Added
+  the hook + wired it into `aiStep()` (only calpod existed before this and doesn't use it, so
+  it went unnoticed until a creature that actually needs it showed up).
+- Also restored several small `BaseCreatureEntity` helpers this pulled back in:
+  `getFacingPosition`/`getFacingPositionDouble` (trig helpers, needed for the segment's
+  drag-to-parent positioning and for `FollowGoal`'s behind-target offset), `testLightLevel`/
+  `isDaytime` (concapede is nocturnal-aggressive), `hasParent()`, `isPersistant()`,
+  `inheritSpawnEventFrom()`, `getFallingMod()`, and a trivial base `canDropItem()` for
+  `AgeableCreatureEntity`'s adult-only-drop override to have something to override. Also hit
+  a real 1.21.1 rename: `Entity.portalTime` → `portalCooldown`, and it's `private` now (use
+  `getPortalCooldown()`/`setPortalCooldown()`, not direct field access).
+- **Also fixed a real regression found in the log while working on this:** `BlockShadowfire`
+  had been registered (Java side, from the items/blocks gap fix above) without its client
+  assets ever being copied - `latest.log` showed blockstate-variant and item-model load
+  failures for it. Copied the full asset set (blockstate, 12 block model variants, item
+  model, 2 block textures + mcmeta, sound, particle texture), matching the already-working
+  fire blocks' file set.
+
+Compiles clean, `runServer` shows 3 entity types registered (calpod, concapede,
+concapedesegment), no errors. Redeployed to Lycannots. **Not yet tested in-game** - concapede
+segment-chain spawning, growth, and the shadowfire fix are all unverified beyond
+`runServer`/compile.
+
+**Placeholder renderer upgraded from invisible to visible (2026-09-23):** Glenn tested
+concapede in-game and (correctly, per the above) found it invisible - said he needs to
+actually see creatures while testing to judge what's going on, so real per-creature model
+rendering got pulled forward rather than waiting for a dedicated Phase 8 pass.
+`PlaceholderCreatureRenderer` now extends `MobRenderer<BaseCreatureEntity, PigModel
+<BaseCreatureEntity>>`, reusing vanilla's `PigModel` (generic over `Entity`, not `Pig`
+specifically - confirmed no Pig-specific coupling in `QuadrupedModel.setupAnim`) baked via
+vanilla's own already-registered `ModelLayers.PIG` layer (no need to register a new one) and
+vanilla's pig texture. `MobRenderer`/`LivingEntityRenderer` already scale the model to each
+entity's own `getScale()`/dimensions, so different creatures render at roughly their real
+configured size, just as a pig shape. This is NOT the real model (Lycanites uses a custom
+in-house OBJ model/animation format, not a standard one like GeckoLib - actually porting that
+renderer is still real, separate Phase 8 work) - it's a deliberately cheap stand-in so combat/
+movement/multi-entity behavior (e.g. concapede segments visibly following each other) can
+actually be watched while testing. Compiles clean; not yet visually confirmed in-game (this
+change can only be verified by actually looking at the game, `runServer` never exercises
+client rendering code at all).
+
+See the Phase 5 sub-phase
+breakdown above for exactly what was ported vs. dropped vs. stubbed, and the 1.21.1 API changes
+list - substantial new ground versus Phases 0-4c, since this is the first time the port
+touched `LivingEntity`/`Mob` deeply enough to hit the leashing refactor, the `SynchedEntityData.
+Builder` change, `getDimensions` becoming final, etc.
 
 Phases 0–3 complete, Phase 4a+4b+4c complete — all verified end-to-end
 (`./gradlew runServer` loads clean, no errors). 3 real items (`mobtoken`, `immunizer`,
@@ -309,6 +582,401 @@ yet, so it's inert, not worth chasing now. Same asset-scoping approach should re
 every future content batch: copy what you just registered, then verify referentially, don't
 assume name-matching caught everything.
 
+## Phase 5 continued: calpod/concapede content gaps, then the real OBJ renderer (2026-09-23)
+
+**Calpod summon crash → invisible placeholder renderer.** Summoning calpod crashed with an
+`NullPointerException` in `EntityRenderDispatcher.shouldRender` — NeoForge has no fallback
+renderer, and nothing had registered one for any creature yet. Fixed with
+`PlaceholderCreatureRenderer` (an `EntityRenderer<BaseCreatureEntity>`, initially invisible)
+plus `ClientSetup.registerEntityRenderers()` looping every `CreatureManager` creature, wired
+behind the existing `FMLEnvironment.dist.isClient()` guard so the client-only event class
+never classloads on a dedicated server. Later upgraded `PlaceholderCreatureRenderer` to extend
+`MobRenderer<BaseCreatureEntity, PigModel<BaseCreatureEntity>>`, reusing vanilla's `PigModel`
+(confirmed generic over `Entity`, not `Pig`-specific) so creatures at least render as a
+correctly-scaled pig shape instead of nothing, while real per-creature models are ported
+incrementally.
+
+**Missing items/blocks turned out to be a missing-data problem, not a missing-code one.**
+Glenn pushed back on an earlier (pre-Phase-5) `PORT_PLAN.md` assumption that ~40 remaining
+hardcoded items were "genuinely gated" on unported systems — specifically flagged food items
+as something that should just work. Tracing `ItemManager.startup()`'s actual call graph
+(`loadItems()` (hardcoded) + `loadAllFromJson()` (JSON-driven)) confirmed he was right: 40
+food items are JSON-driven and just needed their JSON/model/texture files copied (one
+filename/internal-name mismatch found: `raw_joust_meat.json`'s internal `"name"` is
+`"raw_jouste_meat"` — fixed by deriving asset lookups from the JSON's internal name, not the
+filename). Also found and fixed a real self-inflicted regression while restoring
+`BlockShadowfire`: its Java registration existed with zero client assets copied
+(blockstate/models/textures/sound/particle — 24 files, mirrored off the already-working
+hellfire block's layout). Recipe JSON also needed a real 1.21.1 format fix, verified against
+a genuine vanilla `cooked_beef.json`: `"result": "ns:item"` (bare string) →
+`"result": {"id": "ns:item"}`.
+
+**Concapede port.** Needed the real `AgeableCreatureEntity` (previously an empty stub), scoped
+down to growth/breeding/segment-chain mechanics while dropping the interact-command system
+(needs `ItemCustomSpawnEgg`, not ported), `MateGoal`/`FindParentGoal` AI (breeding only
+triggers via direct calls for now), and the beastiary-study hook. Ported `FollowGoal`/
+`FollowParentGoal` verbatim (self-contained) and a drastically simplified
+`DeferredLevelActionManager` (just `level.addFreshEntity()` — the original's ~150 lines of
+chunk-load-retry queueing isn't needed since every current caller spawns at an already-loaded
+parent's position). Found and fixed a real gap in `BaseCreatureEntity`: `onFirstSpawn()` was
+never wired into `aiStep()` at all — calpod never exercised that path, but concapede's
+segment-chain spawning depends on it. Restored several other methods
+`BaseCreatureEntity` had lost in the earlier aggressive Phase 5 trim, only discovered once a
+creature actually needed them: `hasParent()`, `isPersistant()`, `inheritSpawnEventFrom()`,
+`getFallingMod()`, `canDropItem()`, the `getFacingPosition`/`getFacingPositionDouble` family,
+`testLightLevel()`/`isDaytime()`. Also fixed `Entity.portalTime` → the 1.21.1
+`getPortalCooldown()`/`setPortalCooldown()` rename (field went private too).
+
+### The real renderer
+
+Glenn: *"How about you port the REAL renderer. That may not be in this step, but it's a
+request for consistent testing."* — explicitly asked for actual OBJ model/animation
+rendering instead of the pig placeholder, so combat/movement/AI work can be watched with real
+visual feedback instead of everything looking like a pig.
+
+**Scope-reduction finding that made this tractable:** the mod ships an extensive
+Iris/Oculus shader-compatibility + custom VBO-batching layer on top of its base OBJ renderer
+(`VBOObjModel`, `IrisStaticMeshBuffer`, `IrisComputeVboBatcher`, `IrisStaticVboBatcher`,
+`VBOBatcher`, `CustomRenderStates`, `RecolorTextureCache` — 2377+ lines). `VBOObjModel
+.renderPart()` falls back to plain immediate-mode `ObjModel.renderPart()` whenever a non-null
+`VertexConsumer` is passed in — so the entire Iris/VBO system is cleanly skippable by using
+plain `ObjModel` and always supplying a real `VertexConsumer`, without touching any of
+`VBOObjModel`'s static-field "render context" pattern. Narrowed the estimate from ~9500 lines
+down to ~4500.
+
+**Two parallel rendering systems discovered mid-investigation:** a modern "template" system
+(`ModelTemplate*` extending `CreatureObjModel`, covering 76/123 creatures — Biped 23,
+Elemental 21, Quadruped 15, Insect 6, Dragon 5, Aquatic 4, Arachnid 2) and an older "legacy"
+system (`CreatureObjModelOld`, covering the other 39/123 including concapede). Calpod uses
+the template/Insect system, so this pass only ports that one — concapede and everything else
+stays on the pig placeholder until `CreatureObjModelOld` gets ported separately.
+
+**Architecture decision — reuse vanilla's render() dispatch instead of hand-porting
+`CreatureRenderer.render()`:** the original `CreatureRenderer` overrides
+`LivingEntityRenderer.render()` wholesale with its own pose-stack rotation/scale/translate
+logic. Read it closely before porting and found a real red flag: it computes body/head yaw
+via `Mth.clamp(yaw, entity.yBodyRotO, entity.yBodyRot)`, where 1.21.1 vanilla's own
+equivalent uses `Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot)` — a clamp is
+not a lerp, so either the reference source predates a real vanilla API this was written
+against, or it's already subtly wrong upstream. Given the confusing swapped `partialTicks`/
+`yaw` parameter naming found in the same method (Java doesn't care about parameter names, but
+a human hand-porting it by name easily could), decided this method was too risky to hand-port
+line-by-line. Instead, `CreatureModel` now hooks into the two calls vanilla's own
+`LivingEntityRenderer.render()` already makes on every model — `setupAnim()` (stash entity +
+animation params, then call `generateAnimationFrames()`) and `renderToBuffer()` (draw, using
+the stashed params) — which gets vanilla's rotation/scale/translate/name-tag/leash handling
+for free and verified-correct, at the cost of per-entity subspecies model swapping (out of
+scope for now; `CreatureRenderer` resolves one fixed model at construction). One real
+consequence: vanilla's `render()` already applies `entity.getScale()` to the whole pose stack
+before calling into the model, so `CreatureObjModel` must NOT re-apply
+`entity.getScale()` itself the way the original code did (the original's own `render()`
+never called `poseStack.scale(entity.getScale())` at the top, since it never reused vanilla's
+dispatch at all) — removed that line from both `generateAnimationFrames()` and `render()` to
+avoid double-scaling every creature.
+
+**Files ported, mostly verbatim, from the "no Iris/rendering-API risk" bottom of the
+dependency chain up:**
+- `core/util/math/Vector3o.java`, `HashMapWithDefault.java` — verbatim.
+- `client/obj/material/Material.java`, `client/obj/geometry/{ObjPart,Vertex,IndexedModel}.java`
+  — verbatim.
+- `client/obj/geometry/Mesh.java` — trimmed: dropped `getVbo()`/`getIrisEntityBuffer()` and
+  all VBO/Iris fields entirely; kept only `indices`/`vertices`/`normals` and
+  `computeVertexNormalsIfNeeded()` (pure math).
+- `client/obj/model/Model.java` — ported verbatim; turned out to be dead code once `ObjModel`
+  was confirmed to not actually extend it, but harmless.
+- `client/loader/OBJLoader.java` — verbatim (the real `.obj` text parser).
+- `client/obj/model/ObjModel.java` — ported with the real 1.21.1 vertex-API fix (see below).
+- `client/model/animation/{IAnimationModel,Animator,ModelObjAnimationFrame,AnimationPart}.java`
+  — verbatim.
+- `client/model/creature/base/ModelObjState.java`,
+  `client/gui/screen/creature/RecolorDebug.java` — verbatim.
+- `client/renderer/layer/creature/LayerCreatureBase.java` — ported with fixes: inlined the two
+  `WHITE`/`ZERO_TEXTURE_OFFSET` constants directly (avoided porting the 475-line
+  `CustomRenderStates.java` just for them), and fixed the abstract `render(...)` override to
+  1.21.1's actual `RenderLayer` signature (reordered params, dropped trailing `float scale`).
+  Its own `render()` body is a no-op — nothing calls into `LayerCreatureBase` instances via the
+  vanilla-dispatch renderer (see architecture decision above), it only still needs to exist as
+  a real type because `CreatureModel`/`CreatureObjModel` method signatures take one.
+- `client/model/creature/base/CreatureModel.java` — the vanilla-dispatch bridge described
+  above; fixed the `Model` base-class constructor (now needs a `RenderType` lookup function)
+  and `renderToBuffer()`'s signature (packed light/overlay/color as one int, not 4 raw floats).
+- `client/model/creature/base/CreatureObjModel.java` — the 628-line "meat" class trimmed to
+  ~450: `ObjModel` instead of `VBOObjModel`, no Iris-variant-recolor branch, no
+  `_animation.json` loading (calpod has none — `ModelAnimation`/`TextureLayerAnimation`/
+  `ModelPartAnimation` don't need porting for this first pass), `entity.getScale()` no longer
+  re-applied (see above).
+- `client/model/template/ModelTemplateInsect.java`,
+  `client/model/creature/insect/ModelCalpod.java` — verbatim (both self-contained, no Iris/
+  layer deps).
+- `client/manager/ModelManager.java` — trimmed from 241 lines: dropped everything projectile/
+  equipment-part (`ProjectileManager`/`ProjectileInfo`/`ProjectileObjModel`/
+  `EquipmentPartManager`/`ItemEquipmentPart`/`ModelEquipmentPart`/`EquipmentModel` — none of
+  those exist in the port yet), and made `createModels()` resilient per-creature (log + skip a
+  missing/broken model class instead of throwing and aborting every other creature's model).
+- `client/renderer/entity/creature/CreatureRenderer.java` — reduced to ~30 lines: constructor
+  resolves the model via `ModelManager`, `getTextureLocation()` returns `entity.getTexture()`,
+  plus a `getMainModel()` accessor kept only because `LayerCreatureBase` still references it.
+  No `render()` override at all (see architecture decision above).
+- `core/entity/base/BaseCreatureEntity.java` — added `getTexture()`/`getTexture(String)`/
+  `getTextureName()` (ported verbatim; builds a texture name from
+  `creatureInfo.getName()` + subspecies/variant suffixes via the already-ported
+  `AssetHelper.entityTexture()`).
+- `client/ClientSetup.java` — now calls `ModelManager.getInstance().createModels()` once up
+  front, then per creature registers the real `CreatureRenderer` when
+  `ModelManager.getCreatureModel()` resolves a model (currently just calpod), falling back to
+  `PlaceholderCreatureRenderer` otherwise.
+
+**1.21.1 rendering API changes hit (none of this had any precedent anywhere else in the port
+— everything before this was server-side):**
+- `VertexConsumer`'s fluent chain changed: old
+  `.vertex(matrix4f,x,y,z).color(...).uv(...).overlayCoords(u,v).uv2(light).normal(matrix3f,x,y,z)
+  .endVertex()` → new `.addVertex(x,y,z).setColor(...).setUv(...).setUv1(u,v).setLight(packed)
+  .setNormal(...)`. No matrix-transform overload on raw position/normal anymore — positions and
+  normals must be transformed manually first via `matrix4f.transformPosition(Vector3f)` /
+  `matrix3f.transform(Vector3f)` (JOML methods, mutate in place) before calling
+  `addVertex`/`setNormal`. `setUv1(u,v)` and `setLight(packedLight)` are the direct 1:1
+  replacements for the old `.overlayCoords(0, overlayV)` / `.uv2(brightness)`.
+- `net.minecraft.client.model.Model` (vanilla — NOT this project's own
+  `client.obj.model.Model`, same simple name, different package/purpose) now takes a
+  `Function<ResourceLocation, RenderType>` constructor arg, and `EntityModel<T>` (which
+  `CreatureModel` extends) forwards that through its own
+  `protected EntityModel(Function<ResourceLocation, RenderType>)` constructor.
+  `renderToBuffer()`'s abstract signature is now `(PoseStack, VertexConsumer, int packedLight,
+  int packedOverlay, int color)` (color packed as one int).
+- `RenderLayer<T,M>`'s abstract `render(...)` reordered its params vs. 1.20.1 and dropped the
+  trailing `float scale` param entirely: 1.21.1 is `(PoseStack, MultiBufferSource, int
+  packedLight, T entity, float limbSwing, float limbSwingAmount, float partialTick, float
+  ageInTicks, float netHeadYaw, float headPitch)`.
+- `new ResourceLocation(namespace, path)` is private now — same break already known from
+  earlier phases, must use `ResourceLocation.fromNamespaceAndPath(namespace, path)`.
+- `com.mojang.math.Axis` confirmed still present/valid in 1.21.1 (`Axis.XP/YP/ZP
+  .rotationDegrees(...)`), no change needed there.
+- `LivingEntity.hurtTime` confirmed still a public field, used directly for the damage-fade
+  calculation same as the original.
+
+**Verification:** `./gradlew compileJava` clean. `./gradlew runServer` starts and reaches
+"Done" with no errors — confirms nothing server-side broke and no client-only class leaked
+into a codepath a dedicated server touches, but (as noted in the Phase 4c postmortem above)
+this does **not** exercise any of the new rendering code itself, since a dedicated server
+never renders. Deployed to Lycannots (`./gradlew deploy` — hardcoded to the Lycannots mods
+folder only, confirmed via JAR timestamp). **Still needs an actual in-game look** to confirm
+calpod renders with real geometry/animation rather than just "didn't crash" — that visual
+confirmation from Glenn is the next real checkpoint, not this write-up.
+
+## Phase 5 mass creature batch: 40 more creatures ported (2026-09-24)
+
+Glenn: "Try porting the other creatures, at least 1/3 of them." Confirmed first that creature
+registration is **100% automatic and JSON-driven** — `CreatureManager` loads every
+`creatures/*.json` and `CreatureBootstrapHelper.registerEntityTypeSuppliers()`/
+`bindRegisteredValues()` (entity type, attributes, sounds) already loops every loaded creature
+generically by reflecting on the JSON's `entityClass` field. Creature groups/types are likewise
+already fully present for every category. **A new creature needs zero shared-file edits** —
+just its own JSON + entity Java class(es). This made the batch both tractable and safely
+parallelizable.
+
+Scoped down hard for this pass: no textures/lang/assets (the placeholder renderer hardcodes
+vanilla's pig texture regardless of what's on disk, so there's zero visible payoff right now),
+and no real OBJ model porting (stays on the pig placeholder, same as everything except calpod).
+Just entity Java + creature JSON, aggressively trimmed the same way concapede was — keep core
+stats/AI (movement, melee, target-finding), drop anything gated on unported infrastructure
+(tame/master/mount/stamina, ranged projectile attacks needing `ProjectileManager`, equipment/
+bag, entity-pickup-and-carry + its `ExtendedEntity`/`ExtendedPlayer` capabilities, interact-
+commands), each with a one-line comment saying what and why.
+
+**Execution:** split into 5 parallel forks (amphibian+aquatic, avian+reptile, beast×2, remaining
+insects — calpod/concapede/concapedesegment already done), each briefed with the automatic-
+registration finding, the trim rules, a hard boundary against editing any shared file
+(`BaseCreatureEntity`, managers, `ClientSetup`, lang, etc. — since forks ran concurrently
+against the same working tree with no git worktree isolation, only strictly additive new-file
+work was safe to parallelize), and the already-known 1.21.1 gotchas list. 4 of 5 forks hit the
+session's rate limit partway through and terminated early; picked up their unfinished creatures
+(6: lacedon, roa, silex, skylus, stryder, wraamon) by hand afterward using the same approach.
+
+**Result: 40 new creatures ported** (43 total now, up from 3) —
+amphibian: aglebemu, ningen, salamander · aquatic: abaia, abtu, cephignis, herma, ioray,
+lacedon, roa, silex, skylus, stryder · avian: raiko, roc, uvaraptor, ventoraptor · reptile:
+arisaur, aspid, geken, khalk, thresher · beast: balayang, barghest, bobeko, brucha, chupacabra,
+conba, dawon, epion, feradon, jabberwock, kobold, makaalpha, maka, maug, warg, wraamon ·
+insect: darkling, erepede, eyewig, gorgomite, joustealpha, jouste, ostimien, vespid, vespidqueen.
+
+**Real gaps found and fixed while integrating the forks' work (all generic, restored to
+`BaseCreatureEntity`, not creature-specific hacks):**
+- `waterContact()` and `getAISpeedModifier()` were missing entirely — used by nearly every
+  aquatic creature for pathing/speed decisions. Restored both (simplified `waterContact()`'s
+  underground check vs. the original, same trim style as `testLightLevel()`), and — this part
+  wasn't just a compile fix — wired `getAISpeedModifier()` into a `setSpeed()` override, since
+  without that a creature's own override of it would compile but silently do nothing at
+  runtime, the same class of bug as `onFirstSpawn()` never being called before concapede.
+- `hitAreaWidthScale`/`hitAreaHeightScale` fields were missing (used by `EntityStryder`).
+- `IGroupBoss`/`IGroupHeavy` marker interfaces (`core/entity/IGroupBoss.java`/`IGroupHeavy.java`)
+  didn't exist at all — trivial empty interfaces, ported both.
+- `EntityDimensions` is a record in 1.21.1, not a class with public `width`/`height` fields —
+  `.width`/`.height` field access must be `.width()`/`.height()` method calls now (hit in
+  `EntityAbaia`/`EntityDarkling`, both doing particle-position math off an entity's hitbox size).
+- `Entity.yRot` is private now — direct field access (`this.yRot = x`) must become
+  `this.setYRot(x)` (hit in `EntityDarkling`'s latch-onto-target facing logic).
+- `Entity.RemovalReason` is a nested enum on `Entity`, not `net.minecraft.world.entity
+  .RemovalReason` — import fix (`EntityJouste`).
+- `Entity.setMaxUpStep(float)` doesn't exist — 1.21.1 replaced it with an overridable
+  `maxUpStep()` getter (already known from the concurrent avian/reptile fork, but several other
+  creatures across other forks used the same old setter and needed the same fix).
+- `Mob.canPickupItems()` doesn't exist — it's `canPickUpLoot()` (`EntityKobold`).
+
+**Verification:** `./gradlew compileJava` clean across all 43 creatures. `./gradlew runServer`
+starts clean and logs **"Registered 43 entity types"** (was 3) — a real registration count, not
+just inferred from a clean load, matching the earlier Phase 4c lesson about verifying counts
+explicitly. Deployed to Lycannots (JAR timestamp confirmed). All 40 new creatures render as the
+pig placeholder, same as everything except calpod — no visual/rendering work was in scope here.
+
+## Post-mass-batch bug fixes: calpod invisible, "no AI" report (2026-09-24)
+
+Glenn: "Calpod rendering doesn't work (invisible) and the entities are all missing AIs; they
+don't move or do anything." Checked logs first per usual — no exceptions anywhere, but two real
+bugs surfaced, both from asset/data gaps rather than logic bugs:
+
+**Calpod invisible - root cause confirmed in `latest.log`:** `Unable to load model:
+lycanitesmobs:modelparts/entity/calpod.obj` / `Unable to load model obj for: calpod` / `Unable
+to load model parts json for: calpod`. The real renderer's Java code was ported in the previous
+session, but the actual `.obj`/`_parts.json` model asset files were never copied - same gap
+class as the earlier `BlockShadowfire` asset regression. Fixed by copying `calpod.obj` and
+`calpod_parts.json` from the official source's `modelParts/entity/` (note: capital P in the
+official tree; copied to lowercase `modelparts/` to match what the Java code requests) into
+`src/main/resources/assets/lycanitesmobs/modelparts/entity/`, plus `calpod.png`/
+`calpod_verdant.png`/`calpod_violet.png` into `textures/entity/` (needed now that calpod uses
+the real `CreatureRenderer`, which calls `entity.getTexture()` - unlike the pig placeholder,
+which hardcodes vanilla's pig texture regardless of what's on disk, so no other creature needed
+this yet).
+
+**"No AI" - investigated by direct empirical testing, not just code reading.**
+`./gradlew runServer`'s console doesn't forward interactive stdin through Gradle's process
+wrapper (confirmed by testing both a raw FIFO redirect and a `tmux`-backed pty - neither
+delivered typed commands to the dedicated server's command dispatcher, even a bare `list`).
+Worked around it by enabling RCON in the dev sandbox's `run/server/server.properties` (gitignored,
+reverted after) and writing a minimal ~40-line Python RCON client
+(`Source/Binary Protocol` packets) to summon creatures and poll `/data get entity ... Pos` on a
+delay, on a flat forceloaded test platform. This confirmed calpod, vespid, abaia, warg, kobold,
+and maka all move normally under test conditions - `registerGoals()`'s construction-order
+(`defineSynchedData()` runs during the `Entity` base constructor, before `Mob`'s constructor
+body calls `registerGoals()`, so goal-index fields are already correctly set), `WanderGoal`,
+`RandomPositionGenerator`, and the default `GroundPathNavigation` are all structurally sound -
+no bug there. (Also confirmed `rollWanderChance()`'s size-based throttle - 0.0005/tick for
+hitbox width >= 3 blocks, ~100 real seconds between wander rolls - is faithful to the original,
+not a porting regression; large creatures are just meant to wander rarely.)
+
+**The real bug this surfaced:** `warg`, `kobold`, `maka`, `maug`, `jabberwock`, `makaalpha`, and
+`feradon` (7 of the "beast batch 2" mass-batch creatures) had their entity Java class written
+and compiling, but **their creature JSON was never copied** - meaning
+`CreatureManager`/`CreatureBootstrapHelper` never registered an `EntityType` for them at all
+(`/summon lycanitesmobs:warg` failed outright: "Can't find element... of type
+'minecraft:entity_type'"). Cross-checked every entity Java class against its expected JSON by
+script (and the reverse direction too, JSON entityClass against Java file existence - clean, no
+other gaps) - this exact family was the only one affected, consistent with that fork getting cut
+off by the session rate limit mid-batch, after finishing all its Java files but before finishing
+its JSON copies. Fixed by copying the 7 missing JSONs from the reference source. Registered
+entity type count went 43 -> 50 confirmed via the startup log line, not just inferred.
+
+So: Glenn was very likely seeing a mix of "calpod is invisible so I can't tell if it's moving"
+and "an unknown chunk of creatures literally didn't exist to summon at all" rather than a
+systemic AI failure - but this needed live testing to be sure, not just reading the goal code.
+**Lesson for future creature batches:** when a fork reports "N of N ported, `compileJava` clean"
+after finishing under time/rate pressure, that only proves the Java side landed - explicitly
+verify the JSON side too (e.g. `find creatures/*.json` count against the batch's expected
+list), don't take "compiles clean" as proof the batch is fully wired up end-to-end.
+
+Verified: `./gradlew compileJava` clean, `runServer` logs "Registered 50 entity types", RCON
+movement test confirms AI works for a representative sample across categories. Deployed to
+Lycannots (JAR timestamp confirmed).
+
+## Calpod still invisible after the asset fix - real root cause (2026-09-24)
+
+Glenn: "Calpod still doesn't render." The asset-copy fix from the previous entry was necessary
+but not sufficient - `latest.log` still showed the same `Unable to load model:
+lycanitesmobs:modelparts/entity/calpod.obj` warning even though the files were confirmed
+present in the deployed jar (`unzip -l` check). `latest.log`/`debug.log` only print the warning
+line, not the actual exception (`ObjModel.initFromResource()` catches it and calls
+`e.printStackTrace()`, which goes to real stderr, not the log4j-backed logs) - had to check
+`<instance>/logs/stdout-logs.txt` instead to see it: `java.util.NoSuchElementException: No
+value present` at `Optional.get()` inside `ObjModel.initFromResource()`, i.e.
+`resourceManager.getResource(resourceLocation)` genuinely can't find the file at that point in
+time, despite it existing in the jar.
+
+**Root cause:** lifecycle ordering. `EntityRenderersEvent.RegisterRenderers` (where
+`ClientSetup` calls `ModelManager.getInstance().createModels()`, which constructs every
+`CreatureModel` and - inside its constructor - immediately tries to load its `.obj`/
+`_parts.json`) fires *before* the mod's own resources are loaded into the client's
+`ResourceManager`. Confirmed by log line order: the "Unable to load model" warning appears
+*before* `[ReloadableResourceManager]: Reloading ResourceManager: vanilla, mod_resources,
+mod/lycanitesmobs, mod/neoforge` in the same log. The official 1.20.1 source never hits this
+because it calls `ModelManager.createModels()` from `FMLClientSetupEvent` (a later phase) *and*
+separately registers a `ModelReloadListener` (a `PreparableReloadListener`) via
+`RegisterClientReloadListenersEvent` that calls `ModelManager.reloadModels(resourceManager)` -
+tying the actual OBJ data load to the real resource-reload lifecycle, not model-object
+construction time. That reload listener was never ported in this port - the constructor's first
+load attempt was destined to fail every time, and nothing ever retried it.
+
+**Fix:** ported `ModelReloadListener` (`client/loader/ModelReloadListener.java`, trimmed - drops
+the Iris/VBO cache-clearing calls, none of that exists in this port), registered via a new
+`ClientSetup.registerReloadListeners(RegisterClientReloadListenersEvent)` method wired in
+`LycanitesMobs.java` alongside the existing renderer registration. `ModelManager.reloadModels()`
+(already ported, previously dead code since nothing called it) now actually runs once resources
+are ready, re-invoking `initModel()` on the *same* already-constructed model instances
+`CreatureRenderer` already references - self-healing, no changes needed to renderer
+registration timing itself.
+
+**Verified live, not just from logs** - `runServer` can't exercise any of this (dedicated
+servers never load client resources or render), so used `./gradlew runClient` directly and
+grepped its log for the fix taking effect. Added a temporary unconditional success log
+(`CreatureObjModel.initModel()`, since downgraded to the existing gated `logDebug("Resources",
+...)` pattern once confirmed) to prove it: log now shows `Loaded model obj for: calpod (11
+parts)` immediately after the `Reloading ResourceManager` line. Confirmed via
+`./gradlew compileJava` (clean) and `./gradlew runServer` (still clean, 50 entity types) that
+nothing server-side broke. Deployed to Lycannots.
+
+Glenn separately asked to eliminate all rendering/AI placeholders "it may be needed to test."
+AI was already re-confirmed real (not placeholder) via the RCON movement testing in the
+previous entry. Rendering is still the pig placeholder for 49/50 creatures (only calpod has a
+real model) - Glenn's call: hold off on porting the rest for now, revisit as its own scoped
+session. **Next real rendering step, when picked back up:** port the "legacy" model system
+(`CreatureObjModelOld`, covers 39/123 creatures including concapede) generically, the same way
+`CreatureObjModel`/`ModelTemplateInsect` were ported for the modern system - that unlocks real
+rendering for a large chunk of already-ported creatures without per-creature model work.
+
+## Calpod renders but as a shattered mosaic - backface culling bug (2026-09-24)
+
+Glenn (with a screenshot, after the reload-listener fix above): calpod now shows real
+geometry, but as a jumble of disconnected-looking angular shards rather than a solid insect
+body - described as "textures don't render in the correct orientation, mosaic of random
+parts." He'd initially said "concapede," but the log showed no concapede was ever summoned that
+session (still on the pig placeholder the whole time, which structurally can't produce this)
+while calpod had extensive say/step/hurt/death sound activity - confirmed with him it was
+actually calpod.
+
+Exhaustively diffed every piece of the OBJ pipeline against the official source before touching
+anything (`OBJLoader`, `IndexedModel.toMesh()`, `Vertex`, `AnimationPart.applyAnimationFrames()`
+bone-hierarchy math, `CreatureObjModel.render()`'s per-part transform sequence) - all identical
+to official, byte-for-byte MD5-matched `calpod.png` and `calpod.obj` against the reference
+source too. None of that was it.
+
+**Real cause: single-sided backface culling.** `CreatureModel`'s constructor hardcoded
+`RenderType::entityCutout` (culls backfaces based on triangle winding) as the render type for
+every OBJ model. The official source's own OBJ render types
+(`CustomRenderStates.OBJ_CUTOUT`/`getObjVBORenderType`) default to **double-sided**
+(`entityCutoutNoCull`), only opting into backface culling per-part via each `ObjPart`'s
+`cullBackfaces` flag - which calpod's `_parts.json` doesn't set on any part. With single-sided
+culling, roughly half of every thin part's triangles (legs, mouth pieces - all thin angular
+insect geometry) get discarded depending on view angle and the quad-to-triangle-fan winding
+order, which is exactly what a "shattered mosaic missing random pieces" look is. Fixed by
+switching `CreatureModel`'s `Function<ResourceLocation, RenderType>` to
+`RenderType::entityCutoutNoCull` to match the official default; per-part opt-in culling (reading
+`cullBackfaces` and switching render type per-part, matching `OBJ_CUTOUT_CULL`) isn't ported -
+not needed until a creature's `_parts.json` actually sets the flag on some part.
+
+**Not independently visually verified this time** - no computer-use/screenshot tooling
+available in this session, so this is diagnosed from the screenshot Glenn shared plus a
+line-by-line pipeline audit that ruled out every other stage, not confirmed working after the
+fix. `compileJava` clean, `runServer` clean (50 entity types, unaffected - purely a client
+render-type change), deployed to Lycannots. Needs Glenn to check again in-game.
+
 ## CI
 
 GitHub Actions (`.github/workflows/build.yml`, came bundled with the NeoForge MDK template)
@@ -319,3 +987,21 @@ removing it; rely on `JAVA_HOME` from the environment instead (CI's `setup-java`
 it correctly; locally, pass `JAVA_HOME=/usr/lib/jvm/java-21-openjdk` explicitly per command,
 same as this plan's other `./gradlew` examples do). Never commit a machine-local
 `org.gradle.java.home` to this repo again.
+
+## Unlogged Sep 24 creature batch found broken + repaired (2026-09-26)
+
+A second mass batch (written 2026-09-24 16:50-16:52, after the last PORT_PLAN update) was never logged and
+left the build **not compiling**: 23 creature classes (grigori, apollyon, remobra, astaroth, trite, ettin,
+behemophet, zoataur, aegis, argus, afrit, arix, cryptkeeper, krake, troll, wildkin, belphegor, morock,
+banshee, spectre, clink, gnekk, geist, ghoul) + 22 JSONs. Same failure class as the earlier beast-batch-2
+cutoff. Repairs:
+- `EntityBanshee` called `strafe(double,double)`, dropped from the trimmed `BaseCreatureEntity` - ported the
+  official method verbatim.
+- `EntityAstaroth`/`EntityTrite` referenced unported `EntityMalwrath`/`EntityAsmodeus` in `canAttack()` -
+  those checks removed with `TODO(port)` comments to restore once both are ported.
+- `gnekk.json`/`ghoul.json` were never copied (Java existed, JSON didn't) - copied from reference.
+Verified: `compileJava --rerun-tasks` clean, `runServer` reaches Done with 0 ERROR/FATAL lines. Only warnings
+are pre-existing "Unable to add food effect" for unported effects. 74 creature JSONs now in resources.
+**Note:** several creatures in these batches were "rebased onto BaseCreatureEntity" because
+`TameableCreatureEntity` is still a stub (5e). Porting the real `TameableCreatureEntity` will mean re-parenting
+them back to their official superclass - track this when 5e is done.

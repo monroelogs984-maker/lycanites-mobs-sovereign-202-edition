@@ -1,0 +1,127 @@
+package com.lycanitesmobs.core.entity.creature.elemental;
+
+import com.lycanitesmobs.core.entity.IGroupBoss;
+import com.lycanitesmobs.core.entity.IGroupHeavy;
+import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
+import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.level.Level;
+
+/**
+ * Trimmed - original extends TameableCreatureEntity (tame/pet-control, not ported); rebased
+ * onto AgeableCreatureEntity. StealthGoal not ported (dropped). Kept the pull-toward-self AoE
+ * mechanic (self-contained) and the underwater/flying abilities.
+ */
+public class EntitySpectre extends AgeableCreatureEntity implements Enemy, IGroupHeavy {
+
+    protected int pullRange = 6;
+    protected int pullEnergy = 0;
+    protected int pullEnergyMax = 2 * 20;
+    protected int pullEnergyRecharge = 0;
+    protected int pullEnergyRechargeMax = 4 * 20;
+    protected boolean pullRecharging = true;
+
+    public EntitySpectre(EntityType<? extends EntitySpectre> entityType, Level world) {
+        super(entityType, world);
+        this.hasAttackSound = true;
+        this.setupMob();
+    }
+
+    @Override
+    public float maxUpStep() {
+        return 1.0F;
+    }
+
+    @Override
+    protected void registerGoals() {
+        super.registerGoals();
+        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(true));
+    }
+
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        if (!this.getCommandSenderWorld().isClientSide) {
+            if (this.pullRecharging) {
+                if (++this.pullEnergyRecharge >= this.pullEnergyRechargeMax) {
+                    this.pullRecharging = false;
+                    this.pullEnergy = this.pullEnergyMax;
+                    this.pullEnergyRecharge = 0;
+                }
+            }
+            this.pullEnergy = Math.min(this.pullEnergy, this.pullEnergyMax);
+            if (this.canPull()) {
+                for (LivingEntity entity : this.getNearbyEntities(LivingEntity.class, null, this.pullRange)) {
+                    if (entity == this || entity == this.getControllingPassenger() || entity instanceof IGroupBoss || entity instanceof IGroupHeavy || !this.canAttack(entity))
+                        continue;
+                    ServerPlayer player = null;
+                    if (entity instanceof ServerPlayer) {
+                        player = (ServerPlayer) entity;
+                        if (player.getAbilities().instabuild)
+                            continue;
+                    }
+                    double xDist = this.position().x() - entity.position().x();
+                    double zDist = this.position().z() - entity.position().z();
+                    double xzDist = Math.max(Mth.sqrt((float) (xDist * xDist + zDist * zDist)), 0.01D);
+                    double factor = 0.1D;
+                    double motionCap = 10;
+                    if (entity.getDeltaMovement().x() < motionCap && entity.getDeltaMovement().x() > -motionCap && entity.getDeltaMovement().z() < motionCap && entity.getDeltaMovement().z() > -motionCap) {
+                        entity.push(
+                                xDist / xzDist * factor + entity.getDeltaMovement().x() * factor,
+                                0,
+                                zDist / xzDist * factor + entity.getDeltaMovement().z() * factor
+                        );
+                    }
+                    if (player != null)
+                        player.connection.send(new ClientboundSetEntityMotionPacket(entity));
+                    else
+                        entity.hurtMarked = true;
+                }
+                if (--this.pullEnergy <= 0) {
+                    this.pullRecharging = true;
+                    this.pullEnergyRecharge = 0;
+                }
+            }
+        }
+
+        if (this.getCommandSenderWorld().isClientSide)
+            for (int i = 0; i < 2; ++i) {
+                this.getCommandSenderWorld().addParticle(ParticleTypes.PORTAL, this.position().x() + (this.random.nextDouble() - 0.5D) * (double) this.getDimensions(Pose.STANDING).width(), this.position().y() + this.random.nextDouble() * (double) this.getDimensions(Pose.STANDING).height(), this.position().z() + (this.random.nextDouble() - 0.5D) * (double) this.getDimensions(Pose.STANDING).width(), 0.0D, 0.0D, 0.0D);
+            }
+    }
+
+    public boolean canPull() {
+        return !this.pullRecharging && this.hasAttackTarget() && this.distanceTo(this.getTarget()) <= (this.pullRange * 3);
+    }
+
+    @Override
+    public boolean isFlying() {
+        return true;
+    }
+
+    @Override
+    public boolean isStrongSwimmer() {
+        return true;
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        if (source.is(DamageTypes.IN_WALL)) return true;
+        return super.isInvulnerableTo(source);
+    }
+
+    @Override
+    public boolean creatureCanBreatheUnderwater() {
+        return true;
+    }
+}

@@ -2,14 +2,21 @@ package com.lycanitesmobs.core.event;
 
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.block.BlockTypeGetter;
+import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
+import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
+import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.neoforged.neoforge.common.util.Lazy;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 import java.util.Map;
@@ -87,5 +94,40 @@ public class RegistryEvents {
                     LMHelperClass.logInfoMessage("Registered " + count + " block items.");
                 }
         );
+    }
+
+    /**
+     * Forces ObjectManager's Lazy-deferred entity types to actually build and register while
+     * the registry is still open - same bug class as registerBlocks() above.
+     * ObjectManager.addEntityType() only ever stored a Lazy in a local map; nothing forced it
+     * to resolve during the registration window until this was added.
+     */
+    public void registerEntityTypes(RegisterEvent event) {
+        event.register(Registries.ENTITY_TYPE, helper -> {
+            int count = 0;
+            for (Map.Entry<String, Lazy<? extends EntityType<?>>> entry : ObjectManager.getEntityTypeEntries()) {
+                helper.register(ResourceLocation.fromNamespaceAndPath(LycanitesMobs.MODID, entry.getKey()), entry.getValue().get());
+                count++;
+            }
+            LMHelperClass.logInfoMessage("Registered " + count + " entity types.");
+        });
+    }
+
+    /**
+     * Attaches an AttributeSupplier (health/damage/speed/etc attribute map) to every
+     * registered creature EntityType. Without this, spawning a creature throws
+     * "Entity ... has no attributes" - getAttribute() calls in applyDynamicAttributes()
+     * would NPE. Fires on the mod event bus after RegisterEvent, before common setup, so
+     * entity types are already registered by the time this runs.
+     */
+    public void registerEntityAttributes(EntityAttributeCreationEvent event) {
+        CreatureManager cm = CreatureManager.getInstance();
+        for (var entry : BuiltInRegistries.ENTITY_TYPE.entrySet()) {
+            ResourceLocation loc = entry.getKey().location();
+            if (!loc.getNamespace().equals(LycanitesMobs.MODID)) continue;
+            CreatureInfo creatureInfo = cm.getCreature(loc.getPath());
+            if (creatureInfo == null) continue;
+            event.put((EntityType<? extends LivingEntity>) entry.getValue(), BaseCreatureEntity.registerCustomAttributes().build());
+        }
     }
 }

@@ -7,8 +7,10 @@ import com.lycanitesmobs.core.data.info.ObjectLists;
 import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
 import com.lycanitesmobs.core.event.RegistryEvents;
+import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.manager.ElementManager;
 import com.lycanitesmobs.core.manager.ItemManager;
+import com.lycanitesmobs.core.manager.ModAttributes;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.core.registries.Registries;
@@ -20,6 +22,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,6 +69,7 @@ public class LycanitesMobs {
         ITEMS.register(modEventBus);
         BLOCKS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
+        ModAttributes.ATTRIBUTES.register(modEventBus);
         ItemManager.register(modEventBus);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
@@ -73,11 +77,24 @@ public class LycanitesMobs {
         // mod constructors run but before registries freeze). Without this, blocks silently
         // never register - see RegistryEvents' class comment for the crash this caused.
         modEventBus.addListener(RegistryEvents.getInstance()::registerBlocks);
+        modEventBus.addListener(RegistryEvents.getInstance()::registerEntityTypes);
+        modEventBus.addListener(RegistryEvents.getInstance()::registerEntityAttributes);
+
+        // NOTE: guarded so com.lycanitesmobs.client.* (references EntityRenderersEvent, a
+        // client-only class) is never classloaded on a dedicated server. Without ANY
+        // registered EntityRenderer, NeoForge has no fallback and crashes the client the
+        // moment a creature enters render range ("Cannot invoke ... because entityrenderer is
+        // null") - see PORT_PLAN.md Phase 5f. Real per-creature model rendering is Phase 8;
+        // this registers an invisible placeholder for every creature so they can be tested
+        // (AI/combat/sounds) before models exist.
+        if (FMLEnvironment.dist.isClient()) {
+            modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerEntityRenderers);
+            modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerReloadListeners);
+        }
 
         modEventBus.addListener(this::commonSetup);
 
         // TODO Phase 4d+: EquipmentPartManager registration - needs ItemEquipmentPart.
-        // TODO Phase 5: CreatureManager registration + bindRegisteredValues().
         // TODO Phase 6: ProjectileManager/SpawnerManager/StructureSpawnInjector/AltarInfo/
         //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
         //       (SpawnerEventListener, CommandManager, GameEventListener, MobEventListener).
@@ -105,6 +122,13 @@ public class LycanitesMobs {
         ElementManager.getInstance().loadAllFromJson(modInfo);
         ObjectLists.createVanillaLists();
         ItemManager.getInstance().startup(modInfo);
+        // NOTE: does NOT call CreatureManager.loadConfig() here - config values can't be read
+        // (ModConfigSpec$ConfigValue.get() throws IllegalStateException) until NeoForge's
+        // ModConfigEvent.Loading has fired, which happens after the mod constructor. JSON
+        // creature definitions don't need config values to parse (only to compute stats at
+        // runtime), so startup() is still safe to call synchronously here alongside the other
+        // registration-touching calls.
+        CreatureManager.getInstance().startup(modInfo);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -112,5 +136,7 @@ public class LycanitesMobs {
         ObjectManager.setCurrentModInfo(modInfo);
         LMHelperClass.fixMaxHealth();
         Material.init();
+        CreatureManager.getInstance().loadConfig();
+        CreatureManager.getInstance().bindRegisteredValues();
     }
 }

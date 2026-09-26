@@ -17,6 +17,7 @@ import com.lycanitesmobs.core.block.fire.BlockHellfire;
 import com.lycanitesmobs.core.block.fire.BlockIcefire;
 import com.lycanitesmobs.core.block.fire.BlockPrimefire;
 import com.lycanitesmobs.core.block.fire.BlockScorchfire;
+import com.lycanitesmobs.core.block.fire.BlockShadowfire;
 import com.lycanitesmobs.core.block.fire.BlockSmitefire;
 import com.lycanitesmobs.core.block.web.BlockFrostweb;
 import com.lycanitesmobs.core.block.web.BlockQuickWeb;
@@ -184,6 +185,8 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addBlock("scorchfire", () -> new BlockScorchfire(brightFireProperties), false);
         ObjectManager.addSound("smitefire", "block.smitefire");
         ObjectManager.addBlock("smitefire", () -> new BlockSmitefire(brightFireProperties), false);
+        ObjectManager.addSound("shadowfire", "block.shadowfire");
+        ObjectManager.addBlock("shadowfire", () -> new BlockShadowfire(fireProperties), false);
 
         Block.Properties cloudProperties = Block.Properties.of().mapColor(MapColor.NONE).randomTicks().noCollission().dynamicShape().sound(SoundType.WOOL).noOcclusion();
         ObjectManager.addSound("frostcloud", "block.frostcloud");
@@ -197,13 +200,18 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addBlock("quickweb", () -> new BlockQuickWeb(webProperties), false);
         ObjectManager.addBlock("frostweb", () -> new BlockFrostweb(webProperties), false);
 
-        // TODO Phase 4d+: the remaining ~38 hardcoded items (soulgazer, soulstone, equipment,
+        // TODO Phase 4d+: the remaining ~37 hardcoded items (soulgazer, soulstone, equipment,
         // soulkeys, summoning staves - all gated on the creature system/ExtendedPlayer
-        // capability/AltarInfo, none of which exist yet), BlockShadowfire (needs
-        // BaseCreatureEntity), and the 5 special equipment/pedestal blocks (need containers,
-        // Phase 6/8). Also EquipmentPartManager/LMEquipmentPartsGroup, LMChargesGroup,
-        // LMBestEquipmentGroup, LMCreaturesGroup - batch these the same way Phase 5's 123
-        // creatures will be batched, not all at once.
+        // capability/AltarInfo, none of which exist yet) and the 5 special equipment/pedestal
+        // blocks (need containers, Phase 6/8). Also EquipmentPartManager/
+        // LMEquipmentPartsGroup, LMChargesGroup, LMBestEquipmentGroup, LMCreaturesGroup -
+        // batch these the same way Phase 5's 123 creatures will be batched, not all at once.
+        // NOTE: the 40 JSON-driven food items (moss_pie, cooked_*_meat, etc, under
+        // common/lycanitesmobs/items/) are NOT hardcoded here - they load via
+        // loadAllFromJson() below using the already-ported ItemInfo/GenericItem pipeline, no
+        // Java class needed per item. "Charges" (ChargeItem) are NOT a loadItems() omission -
+        // they're created dynamically per-ProjectileInfo (core/data/info/projectile/
+        // ProjectileInfo.java:548), genuinely gated on Phase 6's ProjectileManager.
     }
 
     // TODO Phase 4b: getEquipmentSharpnessRepair/getEquipmentManaRepair were dropped here -
