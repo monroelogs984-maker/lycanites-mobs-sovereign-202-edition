@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -17,8 +18,11 @@ import net.minecraft.world.level.block.Blocks;
  * none of the rest. Dropped entirely rather than half-port it. getDamageModifier() also dropped
  * - it's not an actual override point anywhere in this port's damage pipeline. setMaxUpStep()
  * fixed to the 1.21.1 maxUpStep() getter override (no setter exists anymore).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntitySkylus extends AgeableCreatureEntity implements Enemy {
+public class EntitySkylus extends TameableCreatureEntity implements Enemy {
 
     public EntitySkylus(EntityType<? extends EntitySkylus> entityType, Level world) {
         super(entityType, world);

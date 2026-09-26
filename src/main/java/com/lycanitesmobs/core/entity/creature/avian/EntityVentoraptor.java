@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.avian;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -10,8 +11,11 @@ import net.minecraft.world.level.Level;
  * Trimmed - was RideableCreatureEntity (not ported, now AgeableCreatureEntity). Near-identical
  * to EntityUvaraptor with different stat values; dropped mount-ability/stamina/rider-effects and
  * the random-leaping aiStep behaviour (leap() isn't a ported method).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityVentoraptor extends AgeableCreatureEntity {
+public class EntityVentoraptor extends RideableCreatureEntity {
 
     public EntityVentoraptor(EntityType<? extends EntityVentoraptor> entityType, Level world) {
         super(entityType, world);

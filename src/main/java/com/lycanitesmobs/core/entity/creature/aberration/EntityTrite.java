@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -14,8 +15,11 @@ import net.minecraft.world.level.Level;
  * BaseCreatureEntity. Dropped the random leap-at-target in aiStep() (leap(float,double,Entity)
  * doesn't exist on this port's BaseCreatureEntity) and webProof()/getFallResistance() (not real
  * hooks here). canBeAffected() is a vanilla LivingEntity method, kept as-is.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityTrite extends BaseCreatureEntity implements Enemy {
+public class EntityTrite extends TameableCreatureEntity implements Enemy {
 
     public EntityTrite(EntityType<? extends EntityTrite> entityType, Level world) {
         super(entityType, world);

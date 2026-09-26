@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupBoss;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
@@ -22,8 +23,11 @@ import net.minecraft.world.level.block.Blocks;
  * (canWhirlpool/canBreatheAir/isFlying) are dropped - hasSpawnEventType()/extraAnimation01()
  * don't exist on this port's BaseCreatureEntity (spawn-event system not ported). Whirlpool AI
  * mechanic itself kept, just always water-triggered rather than mount-triggered.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityRoa extends AgeableCreatureEntity implements Enemy {
+public class EntityRoa extends RideableCreatureEntity implements Enemy {
 
     protected int whirlpoolRange = 6;
     protected int whirlpoolEnergy = 0;

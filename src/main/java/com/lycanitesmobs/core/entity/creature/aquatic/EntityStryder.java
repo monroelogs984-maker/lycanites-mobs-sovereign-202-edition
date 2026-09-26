@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -20,8 +21,11 @@ import net.minecraft.world.level.pathfinder.PathType;
  * overrides also dropped - not real hooks in this port's BaseCreatureEntity/damage pipeline.
  * setMaxUpStep() fixed to the 1.21.1 maxUpStep() getter override, BlockPathTypes renamed to
  * PathType.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityStryder extends AgeableCreatureEntity implements IGroupHeavy {
+public class EntityStryder extends RideableCreatureEntity implements IGroupHeavy {
 
     public EntityStryder(EntityType<? extends EntityStryder> entityType, Level world) {
         super(entityType, world);

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.util.helpers.AssetHelper;
@@ -25,8 +26,11 @@ import net.neoforged.api.distmarker.OnlyIn;
  * isRareVariant()). The self-contained "explodes in daylight unless tamed/rare" mechanic and the
  * custom-name vampire-bat texture swap are both kept since they only need vanilla APIs plus
  * already-ported BaseCreatureEntity hooks.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityEpion extends BaseCreatureEntity implements Enemy {
+public class EntityEpion extends RideableCreatureEntity implements Enemy {
 
     protected boolean griefing = true;
 

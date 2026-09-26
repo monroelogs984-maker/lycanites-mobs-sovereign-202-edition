@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -13,8 +14,11 @@ import net.minecraft.world.level.Level;
  * projectiles), with melee explicitly disabled as a fallback - ProjectileManager isn't ported at
  * all yet, so the ranged goal is dropped, and the melee goal is left ENABLED instead of disabled
  * (unlike the original) so this creature isn't completely toothless with no attack at all.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityBrucha extends BaseCreatureEntity implements Enemy {
+public class EntityBrucha extends TameableCreatureEntity implements Enemy {
 
     public EntityBrucha(EntityType<? extends EntityBrucha> entityType, Level world) {
         super(entityType, world);

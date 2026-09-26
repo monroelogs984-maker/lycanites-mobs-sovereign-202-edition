@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.manager.CreatureManager;
@@ -18,8 +19,11 @@ import net.minecraft.world.level.Level;
  * summonMinion()/setTemporary() don't exist on this port's BaseCreatureEntity, so spawned trites
  * are plain permanent entities added directly via addFreshEntity() instead of temporary minions.
  * setMaxUpStep() fixed to the 1.21.1 maxUpStep() getter override.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityAstaroth extends BaseCreatureEntity implements Enemy {
+public class EntityAstaroth extends TameableCreatureEntity implements Enemy {
 
     public EntityAstaroth(EntityType<? extends EntityAstaroth> entityType, Level world) {
         super(entityType, world);

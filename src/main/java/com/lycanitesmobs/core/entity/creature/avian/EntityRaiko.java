@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.avian;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -14,8 +15,11 @@ import net.minecraft.world.level.Level;
  * off" identity, out of scope for a batch port), the land/fly state machine that gated on it,
  * and mount-ability/stamina. isFlying() already comes for free generically from
  * BaseCreatureEntity (JSON "flying" flag via extraMobBehaviour), so no override needed here.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityRaiko extends AgeableCreatureEntity implements Enemy {
+public class EntityRaiko extends RideableCreatureEntity implements Enemy {
 
     public EntityRaiko(EntityType<? extends EntityRaiko> entityType, Level world) {
         super(entityType, world);

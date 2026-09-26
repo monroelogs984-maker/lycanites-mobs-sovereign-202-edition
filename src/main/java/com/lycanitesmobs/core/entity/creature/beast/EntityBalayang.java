@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.damagesource.DamageSource;
@@ -14,8 +15,11 @@ import net.minecraft.world.level.Level;
  * BaseCreatureEntity directly, dropping the MobType.UNDEFINED attribute assignment
  * (BaseCreatureEntity's `attribute` field was dropped in the Phase 5 trim) and the bag-size
  * overrides (getNoBagSize/getBagSize - equipment/bag subsystem isn't ported).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityBalayang extends BaseCreatureEntity implements Enemy {
+public class EntityBalayang extends TameableCreatureEntity implements Enemy {
 
     public EntityBalayang(EntityType<? extends EntityBalayang> entityType, Level world) {
         super(entityType, world);

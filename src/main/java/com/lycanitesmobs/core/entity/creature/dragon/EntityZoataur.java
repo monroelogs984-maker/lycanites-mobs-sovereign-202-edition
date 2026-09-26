@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.dragon;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.damagesource.DamageSource;
@@ -16,8 +17,11 @@ import net.minecraft.world.level.Level;
  * and getFallResistance() dropped - not real hooks on this port's BaseCreatureEntity. Random
  * blocking-on-damage mechanic (isBlocking()/setBlocking()/currentBlockingTime) is generic and
  * already on BaseCreatureEntity, kept as-is.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityZoataur extends AgeableCreatureEntity implements Enemy {
+public class EntityZoataur extends RideableCreatureEntity implements Enemy {
 
     public EntityZoataur(EntityType<? extends EntityZoataur> entityType, Level world) {
         super(entityType, world);

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.amphibian;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -18,8 +19,11 @@ import net.minecraft.world.level.pathfinder.PathType;
  * bag-size overrides and petControlsEnabled (equipment/tame systems not ported), the random-leap
  * behaviour and water AI-speed-boost (leap()/getAISpeedModifier()/waterContact() hooks aren't
  * present on the trimmed BaseCreatureEntity - not worth restoring them there just for flavour).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityAglebemu extends AgeableCreatureEntity implements Enemy {
+public class EntityAglebemu extends TameableCreatureEntity implements Enemy {
 
     public EntityAglebemu(EntityType<? extends EntityAglebemu> entityType, Level world) {
         super(entityType, world);

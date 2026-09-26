@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.elemental;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.particles.ParticleTypes;
@@ -15,8 +16,11 @@ import net.minecraft.world.level.Level;
  * ported - see EntityAegis). StealthGoal dropped (not ported, same as EntityWraamon). Ranged
  * chaosorb attack (AttackRangedGoal/attackRanged/fireProjectile) dropped - needs
  * ProjectileManager, not ported at all yet; Argus ends up melee-only.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityArgus extends BaseCreatureEntity implements Enemy {
+public class EntityArgus extends TameableCreatureEntity implements Enemy {
 
     public EntityArgus(EntityType<? extends EntityArgus> entityType, Level world) {
         super(entityType, world);

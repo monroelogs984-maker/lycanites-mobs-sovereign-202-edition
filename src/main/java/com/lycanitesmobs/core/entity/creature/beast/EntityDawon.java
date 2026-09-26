@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -12,8 +13,11 @@ import net.minecraft.world.level.Level;
  * Also dropped: the random-leap aiStep behavior (leap() isn't on BaseCreatureEntity - not added
  * here since this batch must not touch shared base-entity files while other creatures are being
  * ported in parallel) and the getFallResistance() immunity override (same reason).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityDawon extends BaseCreatureEntity {
+public class EntityDawon extends TameableCreatureEntity {
 
     public EntityDawon(EntityType<? extends EntityDawon> entityType, Level world) {
         super(entityType, world);

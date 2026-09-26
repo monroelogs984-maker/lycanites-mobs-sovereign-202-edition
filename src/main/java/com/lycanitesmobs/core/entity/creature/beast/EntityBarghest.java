@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -15,8 +16,11 @@ import net.minecraft.world.level.Level;
  * BaseCreatureEntity either, not added here since this batch must not touch shared base-entity
  * files while other creatures are being ported in parallel), getNoBagSize/getBagSize/
  * petControlsEnabled (bag/tame, same as EntityBalayang), and getFallResistance().
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityBarghest extends AgeableCreatureEntity {
+public class EntityBarghest extends RideableCreatureEntity {
 
     public EntityBarghest(EntityType<? extends EntityBarghest> entityType, Level world) {
         super(entityType, world);

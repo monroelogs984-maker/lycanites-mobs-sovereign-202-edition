@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -14,8 +15,11 @@ import net.minecraft.world.level.Level;
  * stamina-gated mount ability, speed-boost terrain tags, passenger riding offset). None of the
  * ride/mount/stamina/projectile subsystems are ported, so this is reduced to a plain ground
  * melee attacker - still walks around and fights, just can't be ridden or shoot mud.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityErepede extends BaseCreatureEntity {
+public class EntityErepede extends RideableCreatureEntity {
 
     public EntityErepede(EntityType<? extends EntityErepede> entityType, Level world) {
         super(entityType, world);

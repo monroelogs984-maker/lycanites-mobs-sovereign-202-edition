@@ -41,6 +41,17 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import com.lycanitesmobs.core.entity.util.CreatureRelationshipEntry;
+import com.lycanitesmobs.core.entity.util.CreatureRelationships;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import java.util.HashMap;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -154,8 +165,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     private LivingEntity fixateTarget;
     private LivingEntity perchTarget;
 
+    /** The Creature's relationships, for advanced memory and taming. Ported in Phase 5e. */
+    protected CreatureRelationships relationships;
+
     protected BaseCreatureEntity(EntityType<? extends BaseCreatureEntity> entityType, Level world) {
         super(entityType, world);
+        this.relationships = new CreatureRelationships(this);
         this.initializePathing();
     }
 
@@ -255,10 +270,28 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return this.extraMobBehaviour;
     }
 
-    // NOTE: relationships/taming-reputation subsystem not ported - always returns null,
-    // which callers treat as "no reputation restriction" (see FindAttackTargetGoal).
-    public Object getRelationshipEntry(LivingEntity entity) {
-        return null;
+    public int getTamingReputation() {
+        return this.creatureInfo.getTamingReputation();
+    }
+
+    public int getFriendlyReputation() {
+        return this.creatureInfo.getFriendlyReputation();
+    }
+
+    public CreatureRelationships getRelationships() {
+        return this.relationships;
+    }
+
+    @Nullable
+    public CreatureRelationshipEntry getRelationshipEntry(LivingEntity entity) {
+        if (this.relationships == null) {
+            return null;
+        }
+        return this.relationships.getEntry(entity);
+    }
+
+    public CreatureRelationshipEntry getOrCreateRelationshipEntry(Player player) {
+        return this.relationships.getOrCreateEntry(player);
     }
 
     public CreatureType getCreatureType() {
@@ -350,6 +383,16 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return false;
     }
 
+    /**
+     * Phase 5e: the official despawn system (despawnCheck/canDespawnNaturally) isn't ported, so route this port's
+     * isPersistant() (true for tamed creatures, see TameableCreatureEntity) into vanilla's persistence check -
+     * otherwise tamed pets would despawn like wild mobs.
+     **/
+    @Override
+    public boolean requiresCustomPersistence() {
+        return this.isPersistant() || super.requiresCustomPersistence();
+    }
+
     public void configureExtraBehaviourGoals(boolean attackPlayers, boolean defendAnimals) {
         this.targetSelector.removeGoal(this.aiTargetPlayer);
         if (attackPlayers) {
@@ -409,6 +452,14 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     public int claimFindTargetGoalIndex() {
         return this.nextFindTargetIndex++;
+    }
+
+    public int claimReactTargetGoalIndex() {
+        return this.nextReactTargetIndex++;
+    }
+
+    public int claimSpecialTargetGoalIndex() {
+        return this.nextSpecialTargetIndex++;
     }
 
     /**
@@ -882,6 +933,218 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return false;
     }
 
+    // ==================================================
+    //                      Damage
+    // ==================================================
+    /**
+     * Trimmed (Phase 5e): the official hurt() also clears dropsRequirePlayerDamage, calls onDamage() and tracks
+     * boss player damage - none of those exist in this port yet. Only the relationship reputation hit is kept.
+     **/
+    @Override
+    public boolean hurt(DamageSource damageSrc, float damageAmount) {
+        if (super.hurt(damageSrc, damageAmount)) {
+            this.updateAttackerReputation(damageSrc);
+            return true;
+        }
+        return false;
+    }
+
+    private void updateAttackerReputation(DamageSource damageSrc) {
+        Entity entity = damageSrc.getDirectEntity();
+        if (entity instanceof ThrowableProjectile projectile) {
+            entity = projectile.getOwner();
+        }
+
+        if (entity instanceof LivingEntity livingEntity && this.getRider() != entity && this.getVehicle() != entity) {
+            if (entity != this) {
+                this.setLastHurtByMob(livingEntity);
+
+                int reputationAmount = 50 + this.getRandom().nextInt(50);
+                this.relationships.getOrCreateEntry(entity).decreaseReputation(reputationAmount);
+            }
+        }
+    }
+
+    // ==================================================
+    //                    Interaction
+    // ==================================================
+    // Ported in Phase 5e (the taming/pet command chain runs through this). Changes from the official
+    // source: canBeLeashed(Player) -> 1.21's no-arg canBeLeashed(); the Soulgazer command is omitted
+    // (TODO(port): add back with ItemSoulgazer / the Beastiary knowledge system).
+
+    /**
+     * The main interact method that is called when a player right clicks this entity.
+     **/
+    @Override
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (this.hasPerchTarget()) {
+            return InteractionResult.FAIL;
+        }
+        ItemStack itemStack = player.getItemInHand(hand);
+        if (this.assessInteractCommand(this.getInteractCommands(player, itemStack), player, itemStack, hand)) {
+            return InteractionResult.SUCCESS;
+        }
+        return super.mobInteract(player, hand);
+    }
+
+    /**
+     * Performs the best possible command and returns true or false if there isn't one.
+     **/
+    public boolean assessInteractCommand(HashMap<Integer, String> commands, Player player, ItemStack itemStack, InteractionHand hand) {
+        Integer priority = this.getTopInteractCommandPriority(commands);
+        if (priority == null) {
+            return false;
+        }
+        return this.performCommand(commands.get(priority), player, itemStack, hand);
+    }
+
+    private Integer getTopInteractCommandPriority(HashMap<Integer, String> commands) {
+        if (commands.isEmpty()) {
+            return null;
+        }
+        int priority = 100;
+        for (int testPriority : commands.keySet()) {
+            if (testPriority < priority) {
+                priority = testPriority;
+            }
+        }
+        return commands.containsKey(priority) ? priority : null;
+    }
+
+    /**
+     * Gets a map of all possible interact events with the key being the priority, lower is better.
+     **/
+    public HashMap<Integer, String> getInteractCommands(Player player, @Nonnull ItemStack itemStack) {
+        HashMap<Integer, String> commands = new HashMap<>();
+
+        if (!itemStack.isEmpty()) {
+            if (itemStack.getItem() == Items.LEAD && this.canBeLeashed()) {
+                commands.put(COMMAND_PIORITIES.ITEM_USE.id, "Leash");
+            }
+
+            if (itemStack.getItem() == Items.NAME_TAG) {
+                if (this.canNameTag(player)) {
+                    return new HashMap<>();
+                }
+                commands.put(COMMAND_PIORITIES.ITEM_USE.id, "Name Tag");
+            }
+
+            if (this.canBeColored(player) && itemStack.getItem() instanceof DyeItem) {
+                commands.put(COMMAND_PIORITIES.ITEM_USE.id, "Color");
+            }
+        }
+
+        return commands;
+    }
+
+    /**
+     * Performs the given interact command. Could be used outside of the interact method if needed.
+     *
+     * @return True if the player's item should not activate, false if it should.
+     */
+    public boolean performCommand(String command, Player player, ItemStack itemStack, InteractionHand hand) {
+        if ("Leash".equals(command)) {
+            this.setLeashedTo(player, true);
+            this.consumePlayersItem(player, itemStack);
+            return true;
+        }
+
+        if ("Color".equals(command) && itemStack.getItem() instanceof DyeItem dye) {
+            DyeColor color = dye.getDyeColor();
+            if (color != this.getColor()) {
+                this.setColor(color);
+                this.consumePlayersItem(player, itemStack);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns true if this mob can be given a new name with a name tag by the provided player entity.
+     **/
+    public boolean canNameTag(Player player) {
+        return true;
+    }
+
+    /**
+     * Returns true if this mob can be dyed by the provided player.
+     **/
+    public boolean canBeColored(Player player) {
+        return false;
+    }
+
+    /**
+     * Consumes 1 item from the the item stack currently held by the specified player.
+     **/
+    public void consumePlayersItem(Player player, ItemStack itemStack) {
+        this.consumePlayersItem(player, itemStack, 1);
+    }
+
+    /**
+     * Consumes the specified amount from the item stack currently held by the specified player.
+     **/
+    public void consumePlayersItem(Player player, ItemStack itemStack, int amount) {
+        if (!player.getAbilities().invulnerable) {
+            itemStack.shrink(amount);
+        }
+    }
+
+    /**
+     * Replaces 1 of the specified itemstack with a new itemstack.
+     **/
+    public void replacePlayersItem(Player player, InteractionHand hand, ItemStack itemStack, ItemStack newStack) {
+        player.setItemInHand(hand, ItemUtils.createFilledResult(itemStack, player, newStack));
+    }
+
+    /**
+     * Replaces the specified itemstack and amount with a new itemstack.
+     **/
+    public void replacePlayersItem(Player player, InteractionHand hand, ItemStack itemStack, int amount, ItemStack newStack) {
+        if (!player.getAbilities().invulnerable) {
+            itemStack.shrink(amount);
+        }
+
+        if (itemStack.isEmpty()) {
+            player.setItemInHand(hand, newStack);
+        } else if (!player.getInventory().add(newStack)) {
+            player.drop(newStack, false);
+        }
+    }
+
+    /**
+     * Called by pet/creature GUIs via a network packet. TODO(port): GUI refresh scheduling (guiViewers)
+     * comes with the creature GUIs in Phase 8.
+     **/
+    public void performGUICommand(Player player, int guiCommandID) {
+    }
+
+    public enum COMMAND_PIORITIES {
+        OVERRIDE(0), IMPORTANT(1), EQUIPPING(2), ITEM_USE(3), EMPTY_HAND(4), MAIN(5);
+        public final int id;
+
+        COMMAND_PIORITIES(int value) {
+            this.id = value;
+        }
+
+        public int getValue() {
+            return id;
+        }
+    }
+
+    /**
+     * A list of GUI command IDs to be used by pet or creature GUIs via a network packet.
+     **/
+    public enum GUI_COMMAND {
+        CLOSE((byte) 0), SITTING((byte) 1), FOLLOWING((byte) 2), PASSIVE((byte) 3), STANCE((byte) 4), PVP((byte) 5), TELEPORT((byte) 6), SPAWNING((byte) 7), RELEASE((byte) 8);
+        public final byte id;
+
+        GUI_COMMAND(byte i) {
+            id = i;
+        }
+    }
+
     // NOTE: 1.21.1's vanilla Mob now has its own restrictCenter/restrictRadius/restrictTo()/
     // getRestrictCenter()/getRestrictRadius()/hasRestriction() - the original 1.20.1 port's
     // custom homePosition/homeDistanceMax fields duplicated this, so they're dropped in favor
@@ -900,6 +1163,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             return true;
         }
         return this.getDistanceFromHome(x, y, z) < this.getRestrictRadius();
+    }
+
+    /** Distance from this creature's current position to its home (vanilla restriction center), 0 if it has none. */
+    public double getDistanceFromHome() {
+        return this.getDistanceFromHome(this.getBlockX(), this.getBlockY(), this.getBlockZ());
     }
 
     public double getDistanceFromHome(int x, int y, int z) {
@@ -932,6 +1200,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
 
         if (this.isAlliedTo(targetEntity)) {
+            return false;
+        }
+
+        CreatureRelationshipEntry relationshipEntry = this.relationships.getEntry(targetEntity);
+        if (relationshipEntry != null && !relationshipEntry.canAttack()) {
             return false;
         }
 
@@ -1550,6 +1823,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
 
         this.firstSpawn = !nbt.contains("FirstSpawn") || nbt.getBoolean("FirstSpawn");
+        this.relationships.load(nbt);
         if (nbt.contains("Size")) {
             this.setSizeScale(nbt.getDouble("Size"));
         }
@@ -1595,6 +1869,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
 
         nbt.putBoolean("FirstSpawn", this.firstSpawn);
+        this.relationships.save(nbt);
         nbt.putByte("Subspecies", (byte) this.getSubspeciesIndex());
         nbt.putByte("Variant", (byte) this.getVariantIndex());
         nbt.putDouble("Size", this.sizeScale);

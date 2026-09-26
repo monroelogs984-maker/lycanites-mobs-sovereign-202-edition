@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.elemental;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupBoss;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
@@ -20,8 +21,11 @@ import net.minecraft.world.level.Level;
  * Trimmed - original extends TameableCreatureEntity (tame/pet-control, not ported); rebased
  * onto AgeableCreatureEntity. StealthGoal not ported (dropped). Kept the pull-toward-self AoE
  * mechanic (self-contained) and the underwater/flying abilities.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntitySpectre extends AgeableCreatureEntity implements Enemy, IGroupHeavy {
+public class EntitySpectre extends TameableCreatureEntity implements Enemy, IGroupHeavy {
 
     protected int pullRange = 6;
     protected int pullEnergy = 0;

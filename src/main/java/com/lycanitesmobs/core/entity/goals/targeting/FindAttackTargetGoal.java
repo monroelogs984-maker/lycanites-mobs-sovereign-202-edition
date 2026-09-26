@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.goals.targeting;
 
+import com.lycanitesmobs.core.entity.util.CreatureRelationshipEntry;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.world.entity.Entity;
@@ -118,9 +119,11 @@ public class FindAttackTargetGoal extends TargetingGoal {
             return false;
         }
 
-        // NOTE: original also checked a CreatureRelationshipEntry (taming reputation) here.
-        // CreatureRelationships subsystem not ported (deferred, only relevant for tameable
-        // creatures with reputation tracking) - skipped for now.
+        // Relationships Check:
+        CreatureRelationshipEntry relationshipEntry = this.host.getRelationshipEntry(target);
+        if (relationshipEntry != null && !relationshipEntry.canHunt()) {
+            return false;
+        }
 
         if (this.requirePack && !this.host.isInPack()) {
             return false;

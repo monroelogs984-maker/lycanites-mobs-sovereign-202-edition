@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -18,8 +19,11 @@ import net.minecraft.world.level.Level;
  * of that (tame system, dungeon structures, ally spawning) is ported, so this is reduced to a
  * bigger, tougher flying melee attacker with no hive/home/taming behavior at all - see
  * EntityVespid.java for the same trim on the worker side.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityVespidQueen extends AgeableCreatureEntity implements Enemy {
+public class EntityVespidQueen extends TameableCreatureEntity implements Enemy {
 
     public EntityVespidQueen(EntityType<? extends EntityVespidQueen> entityType, Level world) {
         super(entityType, world);

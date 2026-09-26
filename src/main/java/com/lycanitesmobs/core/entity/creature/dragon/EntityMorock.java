@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.dragon;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -12,8 +13,11 @@ import net.minecraft.world.level.Level;
  * state machine (wantsToLand/isLanded), pickup-and-carry, leap(), mount ability, and rider
  * effect-clearing - none of that (mount/tame/pickup system, leap()) exists on this port's
  * BaseCreatureEntity. Reduced to a plain always-flying melee attacker.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityMorock extends AgeableCreatureEntity implements Enemy, IGroupHeavy {
+public class EntityMorock extends RideableCreatureEntity implements Enemy, IGroupHeavy {
 
     public EntityMorock(EntityType<? extends EntityMorock> entityType, Level world) {
         super(entityType, world);

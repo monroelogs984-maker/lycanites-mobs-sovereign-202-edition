@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.avian;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -13,8 +14,11 @@ import net.minecraft.world.level.Level;
  * mechanic depends on the unported entity-pickup system/ExtendedEntity capability (same gap as
  * EntityRaiko), so it's dropped entirely here; kept the creeper-hunting target goal since that's
  * cheap and still flavorful even without the carry-and-drop payoff.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityRoc extends AgeableCreatureEntity implements Enemy {
+public class EntityRoc extends RideableCreatureEntity implements Enemy {
 
     protected boolean creeperDropping = true;
 

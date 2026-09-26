@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.demon;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -20,8 +21,11 @@ import net.minecraft.world.level.block.state.BlockState;
  * not ported), and the client-side hellfire-orb visual sync (EntityRahovart.updateHellfireOrbs
  * is a rendering helper, not ported). Kept the self-contained hellfire ground-trail effect and
  * the Krampus custom-name texture swap, both pure asset/block calls with no missing deps.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityBehemophet extends BaseCreatureEntity implements Enemy {
+public class EntityBehemophet extends TameableCreatureEntity implements Enemy {
 
     public EntityBehemophet(EntityType<? extends EntityBehemophet> entityType, Level world) {
         super(entityType, world);

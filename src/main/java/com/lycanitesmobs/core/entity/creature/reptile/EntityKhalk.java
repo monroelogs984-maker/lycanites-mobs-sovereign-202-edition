@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -16,8 +17,11 @@ import net.minecraft.world.level.pathfinder.PathType;
  * griefing on death is flavor, not core identity). canBreatheUnderwater() renamed to
  * creatureCanBreatheUnderwater() (LivingEntity.canBreatheUnderwater() is final in 1.21.1) - but
  * khalk only overrode canBreatheUnderlava/canBreatheAir, not that one, so unaffected.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityKhalk extends AgeableCreatureEntity implements Enemy {
+public class EntityKhalk extends TameableCreatureEntity implements Enemy {
 
     public EntityKhalk(EntityType<? extends EntityKhalk> entityType, Level world) {
         super(entityType, world);

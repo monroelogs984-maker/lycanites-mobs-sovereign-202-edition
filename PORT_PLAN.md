@@ -239,7 +239,9 @@ Each phase depends on the ones above it being in place and registered.
               trimmed port, not a faithful one - see "Phase 5d/5f status" below for exactly
               what was dropped and why. Also needed a full pass of 1.21.1 API changes beyond
               anything seen in Phases 0-4c (see below) - this file is where they all surfaced.
-        - [~] **5e**: `TameableCreatureEntity`/`AgeableCreatureEntity`/`RideableCreatureEntity`
+        - [x] **5e (taming core, done 2026-09-26 - see "Phase 5e" in Status)**: real
+              `TameableCreatureEntity`; `RideableCreatureEntity` is still a stub (now on top of the
+              real tameable class). Original note, kept for history: `TameableCreatureEntity`/`AgeableCreatureEntity`/`RideableCreatureEntity`
               exist ONLY as empty stub classes (just a constructor) so `CreatureInfo`'s
               `Class.isAssignableFrom()` checks compile - no taming/aging/riding behaviour is
               ported. ~69 of 123 creatures extend `TameableCreatureEntity` and will need the
@@ -1005,3 +1007,42 @@ are pre-existing "Unable to add food effect" for unported effects. 74 creature J
 **Note:** several creatures in these batches were "rebased onto BaseCreatureEntity" because
 `TameableCreatureEntity` is still a stub (5e). Porting the real `TameableCreatureEntity` will mean re-parenting
 them back to their official superclass - track this when 5e is done.
+
+## Phase 5e: TameableCreatureEntity + taming core (2026-09-26)
+
+Ported (verified: `compileJava` clean, `runServer` + RCON summon/tick/save of 10 tameable and rideable
+creatures incl. re-parented ones, 0 ERROR/FATAL; deployed to Lycannots; **taming itself needs an in-game
+player test - not verified headless**):
+- **Treat items** (`CreatureTypeItem`, `CreatureTreatItem`, `CreatureManager.registerItems()` - treats only;
+  saddle/spawn egg/filled soulstone still TODO). 19 treat models + textures copied.
+- **Base interaction chain** in `BaseCreatureEntity`: `mobInteract` -> `getInteractCommands`/
+  `assessInteractCommand`/`performCommand` (Leash/Name Tag/Color), consume/replace item helpers,
+  `COMMAND_PIORITIES`, `GUI_COMMAND`, `performGUICommand` stub. Soulgazer command omitted (TODO).
+- **Relationships**: `CreatureRelationships`/`CreatureRelationshipEntry` copied verbatim; base field + NBT,
+  `getTamingReputation`/`getFriendlyReputation`, relationship check in `canAttack` and
+  `FindAttackTargetGoal`, and a trimmed `hurt()` override that lowers the attacker's reputation.
+- **Owner goals**: `BegGoal`, `FollowOwnerGoal`, `StayGoal`, `CopyOwnerAttackTargetGoal` (ExtendedEntity
+  fallback dropped), `DefendOwnerGoal`, `RevengeOwnerGoal`, plus `MinionEntityDamageSource`.
+- **`TameableCreatureEntity`**: ownership (implements vanilla `OwnableEntity`), treat taming via reputation,
+  sit/follow/passive/aggressive/assist/PvP bits, owner kill credit, pet teams/alliance/PvP rules, owner
+  damage immunity, owner effects, feeding, hunger/stamina, NBT, sounds, tame particles via entity events.
+- Base: `claimReactTargetGoalIndex`/`claimSpecialTargetGoalIndex`, `getDistanceFromHome()`, `strafe()`,
+  and `requiresCustomPersistence()` -> `isPersistant()` so tamed pets don't despawn.
+
+**Deviations from the official behaviour (all marked `TODO(port)`):**
+- Taming does **not** yet require Beastiary knowledge rank >= 2 (needs `ExtendedPlayer`).
+- The owner's sneak-right-click (empty hand) **toggles sitting** instead of opening the pet GUI (Phase 8).
+- Leashing: any tamed creature can be leashed (1.21 `canBeLeashed()` has no player argument).
+- Not ported: pets system hooks (PetEntry/SummonSet/temporary minions/soulstone), charge/equip commands,
+  perching, ranged owner kill credit, mob-event spawn tracking, boss health bar hide, portal-time clamp,
+  breeding owner copy (S202 cuts breeding).
+
+**Superclass debt paid:** 44 ported creatures had been parked on `BaseCreatureEntity`/`AgeableCreatureEntity`
+because the tameable class was a stub (PORT_PLAN previously undercounted this as 21). All 44 now extend their
+official superclass (29 `TameableCreatureEntity`, 15 `RideableCreatureEntity`); a full audit shows **0
+superclass mismatches** vs official, and every override of a tameable-relevant method calls `super`. Each file
+got a "PHASE 5e UPDATE" note in its class Javadoc. `EntityDarkling.canAttackType` forced the tameable
+override to use `EntityType<?>`.
+
+**Next candidates:** `RideableCreatureEntity` (15 mounts), custom navigation (fly/swim/climb), or the pets
+system (`ExtendedPlayer` + PetEntry + soulstones + Beastiary knowledge) which also restores the rank-2 rule.

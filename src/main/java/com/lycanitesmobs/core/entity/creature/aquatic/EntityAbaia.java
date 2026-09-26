@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -22,8 +23,11 @@ import java.util.List;
  * block did nothing but increment a counter (its actual damage line was already commented out
  * upstream) - dropped entirely; kept the particle-effect half of aiStep(), replacing the
  * tame-only isPetType("familiar") tick-rate check with a fixed 40.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityAbaia extends AgeableCreatureEntity implements Enemy {
+public class EntityAbaia extends TameableCreatureEntity implements Enemy {
 
     public EntityAbaia(EntityType<? extends EntityAbaia> entityType, Level world) {
         super(entityType, world);

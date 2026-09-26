@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -16,8 +17,11 @@ import net.minecraft.world.level.Level;
  * Dropped canBreatheUnderwater (LivingEntity.canBreatheUnderwater() is final/tag-driven in
  * 1.21.1, can't be overridden - see BaseCreatureEntity's own note on this), getFallResistance
  * and petControlsEnabled (not on BaseCreatureEntity), and the tame-gated isAggressive branch.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityEyewig extends BaseCreatureEntity {
+public class EntityEyewig extends RideableCreatureEntity {
 
     public EntityEyewig(EntityType<? extends EntityEyewig> entityType, Level world) {
         super(entityType, world);

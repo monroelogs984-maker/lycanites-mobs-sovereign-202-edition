@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.creature.insect.EntityVespid;
 import com.lycanitesmobs.core.entity.creature.insect.EntityVespidQueen;
@@ -30,8 +31,11 @@ import net.minecraft.world.level.Level;
  * NOTE: depends on EntityVespid/EntityVespidQueen (ported by a parallel fork in this same batch
  * of work) for the canAttack() immunity check - if those aren't compiled yet this won't build
  * standalone, but should resolve once all batches land.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityConba extends BaseCreatureEntity implements Enemy {
+public class EntityConba extends TameableCreatureEntity implements Enemy {
 
     public EntityConba(EntityType<? extends EntityConba> entityType, Level world) {
         super(entityType, world);

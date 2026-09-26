@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.elemental;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.damagesource.DamageSource;
@@ -16,8 +17,11 @@ import net.minecraft.world.level.Level;
  * override points on this port's BaseCreatureEntity. The blocking/shield mechanic
  * (setBlocking/isBlocking/canAttackWhileBlocking) is already a real generic system on
  * BaseCreatureEntity, kept as-is with Aegis's own randomized setBlocking() override.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityAegis extends BaseCreatureEntity {
+public class EntityAegis extends TameableCreatureEntity {
 
     public EntityAegis(EntityType<? extends EntityAegis> entityType, Level world) {
         super(entityType, world);

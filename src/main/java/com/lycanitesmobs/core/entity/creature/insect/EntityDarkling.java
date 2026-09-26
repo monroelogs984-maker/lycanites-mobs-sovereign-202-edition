@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -28,8 +29,11 @@ import org.joml.Vector3d;
  * melee hit instead of leaping in first. The latch-onto-target mechanic itself (the creature's
  * actual identity) is kept close to verbatim since it's self-contained synced-entity-data logic,
  * just ported to 1.21.1's SynchedEntityData.Builder pattern (see defineSynchedData below).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityDarkling extends BaseCreatureEntity implements Enemy {
+public class EntityDarkling extends TameableCreatureEntity implements Enemy {
 
     protected static final EntityDataAccessor<Integer> LATCH_TARGET = SynchedEntityData.defineId(EntityDarkling.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Float> LATCH_HEIGHT = SynchedEntityData.defineId(EntityDarkling.class, EntityDataSerializers.FLOAT);

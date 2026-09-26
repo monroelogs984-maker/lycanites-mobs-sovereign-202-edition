@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.damagesource.DamageSource;
@@ -18,8 +19,11 @@ import net.minecraft.world.level.Level;
  * double, Entity) doesn't exist on this port's BaseCreatureEntity). getFallResistance() also
  * dropped - not a real hook in this port's damage pipeline. The knockback-disable melee attack
  * trick and isInvulnerableTo(IN_WALL) are both self-contained vanilla API and kept as-is.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityWraamon extends BaseCreatureEntity implements Enemy {
+public class EntityWraamon extends TameableCreatureEntity implements Enemy {
 
     public EntityWraamon(EntityType<? extends EntityWraamon> entityType, Level world) {
         super(entityType, world);

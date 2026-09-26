@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.amphibian;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -15,8 +16,11 @@ import net.minecraft.world.level.pathfinder.PathType;
  * AgeableCreatureEntity, attribute/spawnsOnLand/spawnsInWater/bag/petControlsEnabled dropped,
  * getAISpeedModifier()/waterContact() water-speed-boost hooks aren't on the trimmed
  * BaseCreatureEntity so dropped rather than restored just for this).
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityNingen extends AgeableCreatureEntity implements Enemy {
+public class EntityNingen extends TameableCreatureEntity implements Enemy {
 
     public EntityNingen(EntityType<? extends EntityNingen> entityType, Level world) {
         super(entityType, world);

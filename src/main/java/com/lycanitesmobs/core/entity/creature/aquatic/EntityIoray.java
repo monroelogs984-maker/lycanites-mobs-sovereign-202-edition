@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -16,8 +17,11 @@ import net.minecraft.world.level.block.Blocks;
  * attackRanged()/mountAbility()/riderEffects()/onDismounted()/getPassengersRidingOffset() (all
  * projectile- or mount-specific). Kept the melee attack goal and all aquatic stat/immunity
  * config - ends up melee-only rather than the original's ranged water-jet attacker.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityIoray extends AgeableCreatureEntity implements Enemy {
+public class EntityIoray extends RideableCreatureEntity implements Enemy {
 
     public EntityIoray(EntityType<? extends EntityIoray> entityType, Level world) {
         super(entityType, world);

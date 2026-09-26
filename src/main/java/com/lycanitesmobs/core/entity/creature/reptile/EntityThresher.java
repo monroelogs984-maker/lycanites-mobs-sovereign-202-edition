@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -21,8 +22,11 @@ import net.minecraft.world.level.block.Blocks;
  * getPassengersRidingOffset) and the getControllingPassenger()-gated "mountedWhirlpool" branch.
  * canBreatheUnderwater() renamed to creatureCanBreatheUnderwater() since LivingEntity's own
  * canBreatheUnderwater() is final/tag-driven in 1.21.1.
+ * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
+ * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
+ * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
  */
-public class EntityThresher extends AgeableCreatureEntity implements Enemy {
+public class EntityThresher extends RideableCreatureEntity implements Enemy {
     protected int whirlpoolRange = 8;
     protected int whirlpoolEnergy = 0;
     protected int whirlpoolEnergyMax = 5 * 20;
