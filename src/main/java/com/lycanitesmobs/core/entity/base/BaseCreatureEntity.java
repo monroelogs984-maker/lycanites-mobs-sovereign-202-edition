@@ -41,6 +41,14 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.control.MoveControl;
+import net.minecraft.world.entity.MoverType;
+import com.lycanitesmobs.core.entity.navigation.CreaturePathNavigator;
+import com.lycanitesmobs.core.entity.navigation.CreatureMoveController;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
@@ -89,6 +97,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected static final EntityDataAccessor<Float> STEALTH = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.FLOAT);
     protected static final EntityDataAccessor<Boolean> BABY = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BOOLEAN);
     protected static final EntityDataAccessor<Byte> COLOR = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
+    protected static final EntityDataAccessor<Byte> CLIMBING = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
     protected static final EntityDataAccessor<Integer> LEVEL = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Integer> EXPERIENCE = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Byte> SUBSPECIES = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
@@ -171,6 +180,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected BaseCreatureEntity(EntityType<? extends BaseCreatureEntity> entityType, Level world) {
         super(entityType, world);
         this.relationships = new CreatureRelationships(this);
+
+        // Movement (Phase 5g): vanilla has no createMoveController() hook, the official source assigns it here.
+        this.moveControl = this.createMoveController();
         this.initializePathing();
     }
 
@@ -210,6 +222,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         builder.define(STEALTH, 0.0F);
         builder.define(BABY, false);
         builder.define(COLOR, (byte) 0);
+        builder.define(CLIMBING, (byte) 0);
         builder.define(LEVEL, 1);
         builder.define(EXPERIENCE, 0);
         builder.define(SUBSPECIES, (byte) 0);
@@ -509,9 +522,25 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     private void initializePathing() {
         if (!this.canBurn()) {
             this.setPathfindingMalus(PathType.DANGER_FIRE, 0.0F);
+            if (this.canBreatheUnderlava()) {
+                this.setPathfindingMalus(PathType.LAVA, 1.0F);
+                if (!this.canBreatheAir()) {
+                    this.setPathfindingMalus(PathType.LAVA, 8.0F);
+                }
+            }
         }
+
         if (this.waterDamage()) {
             this.setPathfindingMalus(PathType.WATER, -1.0F);
+        } else if (this.creatureCanBreatheUnderwater()) {
+            this.setPathfindingMalus(PathType.WATER, 1.0F);
+            if (!this.canBreatheAir()) {
+                this.setPathfindingMalus(PathType.WATER, 8.0F);
+            }
+        }
+
+        if (this.canWade() && this.getNavigation() instanceof CreaturePathNavigator pathNavigator) {
+            pathNavigator.setCanFloat(true);
         }
     }
 
@@ -872,6 +901,36 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return false;
     }
 
+    /**
+     * Returns true if this entity should use swimming movement.
+     **/
+    public boolean shouldSwim() {
+        if (!this.isInWater() && !this.isInLava()) {
+            return false;
+        }
+        if (this.canWade() && this.creatureCanBreatheUnderwater()) {
+            boolean targetInWater = true;
+            if (this.getTarget() != null) {
+                targetInWater = this.getTarget().isInWater();
+            } else if (this.getParentTarget() != null) {
+                targetInWater = this.getParentTarget().isInWater();
+            } else if (this.getMasterTarget() != null) {
+                targetInWater = this.getMasterTarget().isInWater();
+            }
+            if (!targetInWater) {
+                BlockState blockState = this.getCommandSenderWorld().getBlockState(this.blockPosition().above());
+                if (blockState.isAir()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return this.isStrongSwimmer();
+    }
+
+    /**
+     * Moves the entity, redirects to the direct navigator, swimming or flying movement when appropriate.
+     **/
     @Override
     public void travel(Vec3 direction) {
         if (this.useDirectNavigator()) {
@@ -879,7 +938,50 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             this.updateLimbSwing();
             return;
         }
-        super.travel(direction);
+
+        if (this.shouldSwim()) {
+            this.travelSwimming(direction);
+        } else if (this.isFlying()) {
+            this.travelFlying(direction);
+        } else {
+            super.travel(direction);
+        }
+    }
+
+    public void travelFlying(Vec3 direction) {
+        double flightDampening = 0.91F;
+        if (this.onGround()) {
+            BlockPos below = this.blockPosition().below();
+            flightDampening = this.getCommandSenderWorld().getBlockState(below).getFriction(this.getCommandSenderWorld(), below, this) * 0.91F;
+        }
+        this.move(MoverType.SELF, this.getDeltaMovement());
+        this.setDeltaMovement(this.getDeltaMovement().multiply(flightDampening, flightDampening, flightDampening));
+        this.updateLimbSwing();
+    }
+
+    public void travelSwimming(Vec3 direction) {
+        this.moveRelative(0.1F, direction);
+        this.move(MoverType.SELF, this.getDeltaMovement());
+        this.setDeltaMovement(this.getDeltaMovement().scale(0.9D));
+        if (!this.isMoving() && this.getTarget() == null && !this.isFlying()) {
+            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.005D, 0.0D));
+        }
+        this.updateLimbSwing();
+    }
+
+    /**
+     * Called when this entity is constructed for initial navigator.
+     **/
+    @Override
+    protected PathNavigation createNavigation(Level world) {
+        return new CreaturePathNavigator(this, world);
+    }
+
+    /**
+     * Called from the constructor for the initial move controller (not a vanilla hook).
+     **/
+    protected MoveControl createMoveController() {
+        return new CreatureMoveController(this);
     }
 
     public void updateLimbSwing() {
@@ -1556,6 +1658,96 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return false;
     }
 
+    /**
+     * S202 fix (not in the official source): true when in water, or in lava for lava creatures. The official
+     * navigator only checked isInWater(), so lava creatures never pathed in lava. Lava fish still don't move -
+     * open issue, see PORT_PLAN.md "Phase 5g".
+     **/
+    public boolean isInSwimmableFluid() {
+        return this.isInWater() || (this.isLavaCreature() && this.isInLava());
+    }
+
+    /**
+     * Returns true if this entity should swim to the liquid surface when pathing, by default entities that can't breathe underwater will try to surface.
+     **/
+    public boolean shouldFloat() {
+        return !this.creatureCanBreatheUnderwater() && !this.canBreatheUnderlava();
+    }
+
+    /**
+     * Returns true if this entity should dive underwater/underlava when pathing, by default entities that can breathe underwater or underlava will try to dive.
+     **/
+    public boolean shouldDive() {
+        return this.creatureCanBreatheUnderwater() || this.canBreatheUnderlava();
+    }
+
+    /**
+     * Returns true if this mob should be damaged by the sun.
+     **/
+    public boolean daylightBurns() {
+        return false;
+    }
+
+    /**
+     * Returns true if this mob should be damaged by extreme cold such as from ooze.
+     **/
+    public boolean canFreeze() {
+        for (com.lycanitesmobs.core.data.info.element.ElementInfo element : this.getElements()) {
+            if (!element.canFreeze()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if this entity is climbing a ladder or wall, can be used for animation.
+     **/
+    @Override
+    public boolean onClimbable() {
+        if (this.isFlying() || (this.isStrongSwimmer() && this.isInWater())) {
+            return false;
+        }
+        if (this.canClimb()) {
+            return this.isBesideClimbableBlock();
+        }
+        return super.onClimbable();
+    }
+
+    /**
+     * Flying creatures take no fall damage. Trimmed (Phase 5g): TODO(port) the official getFallResistance()
+     * reduction for non-flyers.
+     **/
+    @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+        if (this.isFlying()) {
+            return false;
+        }
+        return super.causeFallDamage(fallDistance, damageMultiplier, source);
+    }
+
+    /**
+     * Returns whether or not this mob is next to a climbable block.
+     **/
+    public boolean isBesideClimbableBlock() {
+        return (this.getByteFromDataManager(CLIMBING) & 1) != 0;
+    }
+
+    /**
+     * Used to set whether this mob is climbing up a block or not.
+     **/
+    public void setBesideClimbableBlock(boolean collided) {
+        if (this.canClimb()) {
+            byte climbing = this.getByteFromDataManager(CLIMBING);
+            if (collided) {
+                climbing = (byte) (climbing | 1);
+            } else {
+                climbing &= -2;
+            }
+            this.getEntityData().set(CLIMBING, climbing);
+        }
+    }
+
     public java.util.List<com.lycanitesmobs.core.data.info.element.ElementInfo> getElements() {
         return this.creatureInfo.getElements(this.getSubspecies());
     }
@@ -1592,6 +1784,60 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     public boolean canBreatheUnderlava() {
         return true;
+    }
+
+    /**
+     * Phase 5g fix: 1.21 routes drowning through NeoForge's canDrownInFluidType() instead of an overridable
+     * canBreatheUnderwater(), so without this every water-breathing creature drowned in water.
+     **/
+    @Override
+    public boolean canDrownInFluidType(FluidType type) {
+        if (type == NeoForgeMod.WATER_TYPE.value()) {
+            return !this.creatureCanBreatheUnderwater();
+        }
+        if (type == NeoForgeMod.LAVA_TYPE.value()) {
+            return !this.canBreatheUnderlava();
+        }
+        return super.canDrownInFluidType(type);
+    }
+
+    /**
+     * Returns the amount of air gained for the tick. Drowning in water is handled by LivingEntity and this isn't called in that case.
+     **/
+    @Override
+    protected int increaseAirSupply(int currentAir) {
+        if (this.creatureCanBreatheUnderwater() && this.waterContact()) {
+            return super.increaseAirSupply(currentAir);
+        }
+        if (this.canBreatheUnderlava() && this.lavaContact()) {
+            return super.increaseAirSupply(currentAir);
+        }
+        if (this.canBreatheAir()) {
+            return super.increaseAirSupply(currentAir);
+        }
+        return this.decreaseAirSupply(currentAir);
+    }
+
+    /**
+     * Trimmed (Phase 5g) from the official tickEnvironmentalState(): water damage and suffocation out of water for
+     * creatures that can't breathe air. TODO(port): daylight burning (tickDaylightBurn).
+     **/
+    void tickEnvironmentalState(boolean isClient) {
+        if (isClient) {
+            return;
+        }
+
+        if (this.waterDamage() && this.isInWaterOrRain() && !this.isInLava()) {
+            this.hurt(this.level().damageSources().drown(), 1.0F);
+        }
+
+        if (this.isAlive() && !this.canBreatheAir()) {
+            this.setAirSupply(this.increaseAirSupply(this.getAirSupply()));
+            if (this.getAirSupply() <= -200) {
+                this.setAirSupply(-160);
+                this.hurt(this.level().damageSources().drown(), 1.0F);
+            }
+        }
     }
 
     public boolean lavaContact() {
@@ -1807,7 +2053,27 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
         this.tickBlockingState();
         this.tickTargetRuntime();
+        this.tickMovementRuntime(this.getCommandSenderWorld().isClientSide);
+        this.tickEnvironmentalState(this.getCommandSenderWorld().isClientSide);
         this.updateTick++;
+    }
+
+    /**
+     * Trimmed (Phase 5g) from the official tickMovementRuntime(): fire clearing, land-lock for non-walkers and the
+     * climbing flag. TODO(port): fly sounds (playFlySound) and the flyer attack leap (leap()).
+     **/
+    void tickMovementRuntime(boolean isClient) {
+        if (this.isOnFire() && !this.canBurn()) {
+            this.clearFire();
+        }
+
+        if ((!this.canWalk() && !this.isFlying() && !this.isInWater() && this.isMoving()) || !this.canMove()) {
+            this.clearMovement();
+        }
+
+        if (!isClient || this.isControlledByLocalInstance()) {
+            this.setBesideClimbableBlock(this.horizontalCollision);
+        }
     }
 
     /**

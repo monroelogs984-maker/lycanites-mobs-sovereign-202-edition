@@ -1046,3 +1046,40 @@ override to use `EntityType<?>`.
 
 **Next candidates:** `RideableCreatureEntity` (15 mounts), custom navigation (fly/swim/climb), or the pets
 system (`ExtendedPlayer` + PetEntry + soulstones + Beastiary knowledge) which also restores the rank-2 rule.
+
+## Phase 5g: custom navigation + movement layer (2026-09-26)
+
+Ported `CreaturePathNavigator`, `CreatureNodeProcessor`, `CreatureMoveController` (+ `ICreatureNodeProcessor`) for
+1.21.1 and the base-class movement layer. Arena node classes (`ArenaNode*`) deferred to the boss/arena phase.
+
+**1.21.1 pathfinding API changes:** `NodeEvaluator.getGoal()` -> `getTarget()`; `getBlockPathType(BlockGetter,x,y,z,Mob)`
+-> `getPathTypeOfMob(PathfindingContext,x,y,z,Mob)`; evaluator `level` field gone -> `currentContext.getBlockState()`;
+`BlockPathTypes` -> `PathType`; `BlockState.isPathfindable(level,pos,type)` -> `isPathfindable(type)`; MoveControl's
+`getBlockPathType(level,...)` -> `NodeEvaluator.getPathType(Mob, BlockPos)`. Vanilla has no `createMoveController()`
+hook - assigned in the constructor like the official source.
+
+**Base class:** `createNavigation()` -> `CreaturePathNavigator`, `createMoveController()`, `shouldSwim()`, `travel()` now
+routes to `travelSwimming()`/`travelFlying()` (fliers bypass vanilla gravity, like the official), full water/lava
+pathfinding malus in `initializePathing()`, `shouldFloat()`/`shouldDive()`, `daylightBurns()`, `canFreeze()`,
+`onClimbable()` + `CLIMBING` synced flag + `setBesideClimbableBlock()`, trimmed `tickMovementRuntime()` (fire clear,
+non-walker land-lock, climb flag), `causeFallDamage()` (fliers immune; fall resistance TODO).
+
+**Pre-existing bug found + fixed - all water creatures drowned:** the earlier port renamed `canBreatheUnderwater()` to
+`creatureCanBreatheUnderwater()` (1.21 made the vanilla one final/tag-driven) but never hooked the replacement, so
+vanilla drowned every fish in water (Silex/Abaia died in ~20s). Fixed with NeoForge `canDrownInFluidType()` + the
+official `increaseAirSupply()` override + trimmed `tickEnvironmentalState()` (water damage, suffocation on land for
+non-air-breathers; daylight burning TODO).
+
+**Verified headless (runServer + RCON, 0 ERROR/FATAL):** fliers (Vespid x3, Epion, Grigori) stay airborne and wander;
+strong swimmers (Abaia, Ioray, Silex) survive in a sealed water tank with full air and move; walker (Warg) lands and
+wanders; Cephignis (lava fish) correctly dies in water. **Not verified:** climbing (needs a target to path to), client
+visuals (limb swing/animation).
+
+**OPEN ISSUE - lava fish don't move in lava:** Cephignis survives in lava (breathing OK) but stays at its spawn point.
+Two S202 fixes applied (not in the official source, which likely has the same bug): `isInSwimmableFluid()` so the
+navigator/node processor treat lava as swimmable for lava creatures, and lava nodes accepted in
+`isSwimmablePathNode()` (vanilla `LiquidBlock.isPathfindable()` is always false for lava). Still static - next
+suspects: `WanderGoal`/`RandomPositionGenerator` target choice in lava, or path following. Only affects lava
+swimmers (Cephignis); park unless Glenn keeps it.
+
+Silex swims along the tank floor rather than mid-water - may be normal wander targeting, unconfirmed.
