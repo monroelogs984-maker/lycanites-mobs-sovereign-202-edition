@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
 import com.lycanitesmobs.core.data.info.creature.CreatureSpawnConfig;
 import com.lycanitesmobs.core.data.info.creature.Subspecies;
@@ -76,8 +77,7 @@ public final class CreatureBootstrapHelper {
         ObjectManager.addSound(creatureInfo.getName() + suffix + "_attack", "entity." + creatureInfo.getName() + suffix + ".attack");
         ObjectManager.addSound(creatureInfo.getName() + suffix + "_jump", "entity." + creatureInfo.getName() + suffix + ".jump");
         ObjectManager.addSound(creatureInfo.getName() + suffix + "_fly", "entity." + creatureInfo.getName() + suffix + ".fly");
-        // NOTE: TameableCreatureEntity not ported yet - dropped from this check for now.
-        if (creatureInfo.isSummonable() || creatureInfo.isTameable()) {
+        if (creatureInfo.isSummonable() || creatureInfo.isTameable() || creatureInfo.isEntityClassAssignableTo(TameableCreatureEntity.class)) {
             ObjectManager.addSound(creatureInfo.getName() + suffix + "_tame", "entity." + creatureInfo.getName() + suffix + ".tame");
             ObjectManager.addSound(creatureInfo.getName() + suffix + "_beg", "entity." + creatureInfo.getName() + suffix + ".beg");
         }

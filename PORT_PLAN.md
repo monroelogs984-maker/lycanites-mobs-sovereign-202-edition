@@ -1128,3 +1128,14 @@ projectiles render as sprites), `ProjectileEquipmentFeature`.
 
 **Known gap found:** creature sounds - the port had no `sounds.json`, so all creature sounds are silent; only
 projectile/block entries were added here (creature .ogg files not copied yet, ~19 MB).
+
+## Creature sounds (2026-09-26)
+
+Server side was already fine: `CreatureBootstrapHelper.registerSounds()` adds every creature's say/hurt/death/step/
+attack/jump/fly (+ tame/beg/eat/mount/phase) sound, and - like the official source, whose `registerSounds` RegisterEvent
+is commented out - sound events aren't registry-registered; vanilla sends them to the client directly by id. The client
+had nothing to play: no `sounds.json` and no creature `.ogg` files. Copied `sounds/entity` (819 files), `item`, `effect`
+and the rest of `block`; `sounds.json` now has 884 entries, all resolving to real files (checked). Every ported creature
+has say/hurt/death entries. Mob-event sounds (33 entries, 16 MB) intentionally left until the mob events phase.
+Also restored the `isEntityClassAssignableTo(TameableCreatureEntity.class)` condition for tame/beg sounds (dropped
+earlier because the class was a stub). Jar grows to ~22 MB. Not audibly verified (headless) - needs an in-game listen.
