@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.base;
 
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
@@ -17,6 +18,18 @@ public abstract class RideableCreatureEntity extends TameableCreatureEntity {
 
     /** Official field toggled by mount abilities. Kept on the stub so mount creatures compile (riding not ported). */
     protected boolean abilityToggled = false;
+
+    /**
+     * Continuous effects applied to the rider. No-op until RideableCreatureEntity is ported (creatures override it).
+     **/
+    public void riderEffects(LivingEntity rider) {
+    }
+
+    /**
+     * The mount's special ability, triggered by the rider. No-op until RideableCreatureEntity is ported.
+     **/
+    public void mountAbility(Entity rider) {
+    }
 
     /**
      * Returns true if targetEntity is riding this creature, directly or nested (rider of a rider).

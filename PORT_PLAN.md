@@ -1176,3 +1176,25 @@ Deferred inside batch 1: Shade's `EntityFear.spawnForPlayer` haunt entity (with 
 Verified: runServer - "Registered 26 mob effects", "Registered 141 entity types" (102 creatures + 39 projectiles),
 0 food effect warnings; all 28 summoned and ticked 20s together at night (27 alive - Spriggan died in the melee brawl,
 survives fine alone); paralysis applies to a villager; 0 ERROR/FATAL.
+
+## Remaining creatures - batch 2 of 3 (2026-09-26)
+
+15 creatures: crusk, ika, zephyr, kathoga, jengu, pixen, umibas, serpix, cherufe, cinder, grue, geonach, ignibus, yale,
+quetzodracl. (Amalgalich and Malwrath moved to batch 3 - boss infrastructure / Asmodeus reference.)
+
+**Shared pieces ported:** StealthGoal, TemptGoal, EatBlockGoal, FindNearbyPlayersGoal, CopyMasterAttackTargetGoal,
+PlayerControlGoal, IFusable, CustomItemEntity, RapidFireProjectileEntity, WormBurrowTerrain.
+**Old (hardcoded) projectile support:** `ProjectileManager` now registers old projectiles through ObjectManager and binds
+their types after registration; `rapidfire` is the first (boss ones come in batch 3). Client sprite renderer registered.
+Port improvement: rapidfire uses its fired projectile's launch sound (the official looked up an unregistered name ->
+silent volley + "Null Sound" log).
+**Base helpers:** onEat, applyDropEffects, dropItem, canStealth/startStealth, canBeTempted, shouldCreatureGroupFlee,
+hasRiderTarget, clearPlayerTargets, getNearestEntity, getPickupOffset, pickupEntity/canPickupEntity (capability-carrying
+TODO), transform() (solo + basic fusion state; minion/temporary/level copying TODO), spawnsInBlock. Rideable stub:
+no-op riderEffects/mountAbility (mount creatures' overrides now genuinely override).
+**1.21 notes:** Yale -> NeoForge IShearable (no fortune param), CraftingInput + RecipeHolder for dye mixing,
+DyeColor.getTextureDiffuseColor() int; canBeLeashed(Player) -> canBeLeashed(); BlockPathTypes -> PathType.
+
+Verified: runServer - "Registered 157 entity types" (117 creatures + 39 JSON projectiles + rapidfire); all 15 summon and
+tick; Ignibus/Serpix triggered via pig revenge fire rapidfire without crashing; the 3 that died in the 15-creature brawl
+(pixen, serpix, geonach) survive alone. 0 errors after the rapidfire sound fix (the only error was that null sound).

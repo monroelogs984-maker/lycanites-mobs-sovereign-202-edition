@@ -41,6 +41,12 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.vehicle.Minecart;
+import net.minecraft.world.entity.vehicle.Boat;
+import com.lycanitesmobs.core.entity.IGroupHeavy;
+import com.lycanitesmobs.core.entity.IGroupBoss;
+import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.CommonHooks;
@@ -137,6 +143,8 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected float renderTick = 0;
     protected boolean isAggressiveByDefault = true;
     protected boolean spreadFire = false;
+    /** If true, this creature's spawn check ignores block collision (e.g. Cinder spawning in fire). */
+    protected boolean spawnsInBlock = false;
     /** Health percentage below which this creature flees (0 = never). Read by flee/avoid AI. */
     protected float fleeHealthPercent = 0;
     /** If true, other entities collide with this creature as if it were solid. */
@@ -1640,6 +1648,196 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             }
             this.getCommandSenderWorld().destroyBlock(breakPos, drop);
         });
+    }
+
+    /**
+     * Called by EatBlockGoal after this creature eats a block (e.g. Yale regrowing wool).
+     **/
+    public void onEat() {
+    }
+
+    /**
+     * Applies effects to an item this creature drops (e.g. fire immunity for items dropped by fire creatures).
+     **/
+    public void applyDropEffects(CustomItemEntity entityItem) {
+    }
+
+    public void dropItem(ItemStack itemStack) {
+        this.spawnAtLocation(itemStack, 0.0F);
+    }
+
+    public boolean canStealth() {
+        return this.extraMobBehaviour != null && this.extraMobBehaviour.stealthOverride();
+    }
+
+    /**
+     * Called by StealthGoal when this creature starts stealthing.
+     **/
+    public void startStealth() {
+    }
+
+    /**
+     * Returns true if this creature can be lured with its treat (TemptGoal).
+     **/
+    public boolean canBeTempted() {
+        if (this.isRareVariant() || this.spawnedAsBoss) {
+            return false;
+        }
+        if (this.creatureInfo.isFarmable()) {
+            return true;
+        }
+        if (this.isInPack() && !CreatureManager.getInstance().getConfig().packTreatLuring()) {
+            return false;
+        }
+        return this.creatureInfo.isTameable();
+    }
+
+    /**
+     * Returns true if this creature should flee the target based on its creature groups.
+     **/
+    public boolean shouldCreatureGroupFlee(LivingEntity target) {
+        if (this.isBoss() || this.isRareVariant() || this.isTamed()) {
+            return false;
+        }
+        boolean shouldFlee = false;
+        boolean shouldPackHunt = false;
+        for (CreatureGroup group : this.creatureInfo.getGroups()) {
+            if (group.shouldFlee(target)) {
+                shouldFlee = true;
+            }
+            if (group.shouldPackHunt(target)) {
+                shouldPackHunt = true;
+            }
+        }
+        return shouldFlee && !(shouldPackHunt && this.isInPack());
+    }
+
+    public boolean hasRiderTarget() {
+        return this.getControllingPassenger() != null;
+    }
+
+    public void clearPlayerTargets() {
+        this.playerTargets.clear();
+    }
+
+    /**
+     * Returns the nearest entity of the given class within range, optionally only ones this creature can attack.
+     **/
+    @Nullable
+    public <T extends Entity> T getNearestEntity(Class<? extends T> clazz, com.google.common.base.Predicate<Entity> predicate, double range, boolean canAttack) {
+        List<T> aoeTargets = this.getNearbyEntities(clazz, predicate, range);
+        double nearestDistance = range + 10;
+        T nearestEntity = null;
+        for (T targetEntity : aoeTargets) {
+            if (targetEntity == this || !(targetEntity instanceof LivingEntity livingEntity)) {
+                continue;
+            }
+            if (canAttack && !this.canAttack(livingEntity)) {
+                continue;
+            }
+            if (targetEntity == this.getControllingPassenger()) {
+                continue;
+            }
+            double distance = this.distanceTo(targetEntity);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestEntity = targetEntity;
+            }
+        }
+        return nearestEntity;
+    }
+
+    /**
+     * Offset (x, y, z) at which a picked-up entity is held.
+     **/
+    public double[] getPickupOffset(Entity entity) {
+        return new double[]{0, 0, 0};
+    }
+
+    /**
+     * Picks up the given entity. TODO(port): the official also sets the target's ExtendedEntity pickedUpByEntity,
+     * which is what actually carries the entity along - capability not ported, so carrying doesn't move it yet.
+     **/
+    public void pickupEntity(LivingEntity entity) {
+        this.pickupEntity = entity;
+        this.clearMovement();
+    }
+
+    /**
+     * Returns true if this creature may pick up the entity. TODO(port): the official also requires the target's
+     * ExtendedEntity (capability) and that it isn't already picked up.
+     **/
+    public boolean canPickupEntity(LivingEntity entity) {
+        if (this.getPickupEntity() == entity || entity instanceof IGroupBoss || entity.isSpectator()) {
+            return false;
+        }
+        if (entity instanceof Player player && player.isCreative()) {
+            return false;
+        }
+        if (entity instanceof BaseCreatureEntity targetCreature && targetCreature.hasPickupEntity()) {
+            return false;
+        }
+        CreatureGroup bossGroup = CreatureManager.getInstance().getCreatureGroup("boss");
+        if (bossGroup != null && bossGroup.hasEntity(entity)) {
+            return false;
+        }
+        boolean heavyTarget = entity instanceof IGroupHeavy || entity.getBbHeight() >= 4 || entity.getBbWidth() >= 4;
+        if (heavyTarget && !(this instanceof IGroupHeavy)) {
+            return false;
+        }
+        if ((entity.getVehicle() != null && !(entity.getVehicle() instanceof Boat) && !(entity.getVehicle() instanceof Minecart)) || entity.getControllingPassenger() != null) {
+            return false;
+        }
+        Holder<MobEffect> weight = ObjectManager.getEffectHolder("weight");
+        if (weight != null && entity.hasEffect(weight)) {
+            return false;
+        }
+        Holder<MobEffect> repulsion = ObjectManager.getEffectHolder("repulsion");
+        return repulsion == null || !entity.hasEffect(repulsion);
+    }
+
+    /**
+     * Transforms this creature into another entity type (elemental fusion, or a solo transformation).
+     * Trimmed from the official: temporary/minion/master state copying, fusion minion registration and fusion
+     * level/taming maths are TODO(port) (minions not ported; S202 drops creature levels).
+     **/
+    @Nullable
+    public LivingEntity transform(EntityType<? extends LivingEntity> transformType, Entity partner, boolean destroyPartner) {
+        if (transformType == null) {
+            return null;
+        }
+        LivingEntity transformedEntity = transformType.create(this.getCommandSenderWorld());
+        if (transformedEntity == null) {
+            return null;
+        }
+
+        if (transformedEntity instanceof BaseCreatureEntity transformedCreature) {
+            transformedCreature.firstSpawn = false;
+            transformedCreature.setSubspecies(this.getSubspeciesIndex());
+            if (partner instanceof BaseCreatureEntity partnerCreature) {
+                Variant fusionVariant = transformedCreature.getSubspecies() != null
+                        ? transformedCreature.getSubspecies().getChildVariant(this, this.getVariant(), partnerCreature.getVariant()) : null;
+                transformedCreature.applyVariant(fusionVariant != null ? fusionVariant.getIndex() : 0);
+                transformedCreature.setSizeScale(this.sizeScale + partnerCreature.sizeScale);
+            } else {
+                transformedCreature.applyVariant(this.getVariantIndex());
+                transformedCreature.setSizeScale(this.sizeScale);
+            }
+            if (transformedCreature instanceof TameableCreatureEntity fusionTameable && this instanceof TameableCreatureEntity tameableSource
+                    && tameableSource.getOwner() instanceof Player owner) {
+                fusionTameable.setPlayerOwner(owner);
+                tameableSource.copyPetBehaviourTo(fusionTameable);
+            }
+        }
+
+        transformedEntity.moveTo(this.getX(), this.getY(), this.getZ(), this.yRotO, this.xRotO);
+        DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, transformedEntity, () -> {
+            this.remove(Entity.RemovalReason.DISCARDED);
+            if (partner != null && destroyPartner) {
+                partner.remove(Entity.RemovalReason.DISCARDED);
+            }
+        });
+        return transformedEntity;
     }
 
     /**

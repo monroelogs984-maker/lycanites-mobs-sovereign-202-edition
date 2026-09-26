@@ -64,5 +64,13 @@ public class ClientSetup {
                 event.registerEntityRenderer(entityType, ProjectileSpriteRenderer::new);
             }
         }
+        // Old (hardcoded) sprite projectiles, e.g. rapidfire.
+        for (java.util.Map.Entry<String, Class<? extends net.minecraft.world.entity.Entity>> entry : ProjectileManager.getInstance().getOldSpriteProjectileEntries()) {
+            EntityType<? extends BaseProjectileEntity> entityType =
+                    (EntityType<? extends BaseProjectileEntity>) (EntityType<?>) ObjectManager.getEntityType(entry.getKey());
+            if (entityType != null) {
+                event.registerEntityRenderer(entityType, ProjectileSpriteRenderer::new);
+            }
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.data.info.projectile.ProjectileInfo;
 import com.lycanitesmobs.core.entity.projectile.generic.ModelProjectileEntity;
+import com.lycanitesmobs.core.entity.projectile.generic.RapidFireProjectileEntity;
 import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.JSONLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
@@ -103,7 +104,14 @@ public class ProjectileManager extends JSONLoader {
             // Port: registered through ObjectManager like creatures (forced during RegisterEvent, see RegistryEvents).
             ObjectManager.addEntityType(projectileInfo.getName(), builder);
         }
-        // TODO(port): old sprite/model projectiles (none registered yet, see loadOldProjectiles()).
+        // Old (hardcoded) projectiles: registered the same way; their types are bound in bindRegisteredTypes().
+        for (Map.Entry<Class<? extends BaseProjectileEntity>, OldProjectileRegistration> entry : this.oldProjectileRegistrations.entrySet()) {
+            OldProjectileRegistration registration = entry.getValue();
+            String name = this.oldProjectileNames.get(entry.getKey());
+            EntityType.Builder<BaseProjectileEntity> builder = EntityType.Builder.<BaseProjectileEntity>of(registration::create, MobCategory.MISC)
+                    .clientTrackingRange(40).updateInterval(3).sized(0.25F, 0.25F);
+            ObjectManager.addEntityType(name, builder);
+        }
     }
 
 
@@ -139,6 +147,12 @@ public class ProjectileManager extends JSONLoader {
     }
 
     public void bindRegisteredTypes() {
+        for (Map.Entry<Class<? extends Entity>, String> entry : this.oldProjectileNames.entrySet()) {
+            EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(AssetHelper.modResource(entry.getValue()));
+            if (type != null) {
+                this.oldProjectileTypes.put(entry.getKey(), (EntityType<? extends BaseProjectileEntity>) type);
+            }
+        }
         for (ProjectileInfo projectileInfo : this.projectiles.values()) {
             ResourceLocation id = AssetHelper.modResource(projectileInfo.getName());
             EntityType<?> t = BuiltInRegistries.ENTITY_TYPE.get(id);
@@ -210,8 +224,12 @@ public class ProjectileManager extends JSONLoader {
      * Called during early start up, loads all items.
      **/
     public void loadOldProjectiles() {
-        // TODO(port): hardcoded "old" projectiles - summoningportal (summoning), rapidfire + laserend (lasers),
-        // shadowfire/hellfire/devilgatling/hellshield/helllaser (boss projectiles). Not ported yet.
+        this.addOldProjectile("rapidfire", RapidFireProjectileEntity.class,
+                RapidFireProjectileEntity::new,
+                null,
+                null);
+        // TODO(port): summoningportal (summoning), laserend (lasers), and the boss projectiles
+        // (shadowfirebarrier, hellfire*, devilgatling, hellshield, helllaser*).
     }
 
     public void addOldProjectile(String name, Class<? extends BaseProjectileEntity> entityClass, OldProjectileBaseFactory baseFactory, OldProjectileOwnerFactory ownerFactory, OldProjectilePositionFactory positionFactory) {
