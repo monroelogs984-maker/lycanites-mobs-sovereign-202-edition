@@ -1231,3 +1231,24 @@ hellfireorb/hellfireball may render as missing-texture sprites (their own textur
 **Leftover TODOs across the creature batches:** mount overrides marked `TODO(port): restore @Override`
 (RideableCreatureEntity), effect behaviour (ExtendedEntity/FearHandler) incl. EntityFear, pickup carrying,
 minion temporary/spawn-event state, transform fusion levels/minions, spawner trigger in destroyArea.
+
+## Real models for all 121 creatures (2026-09-27)
+
+Ported the 6 remaining templates (aquatic, arachnid, biped, dragon, elemental, quadruped), all 84 remaining
+new-format model classes, and the legacy `CreatureObjModelOld` system plus its 39 models. The leaf models port
+verbatim (only the distmarker import changes). `CreatureObjModelOld` got the same trims as `CreatureObjModel`: plain
+`ObjModel` instead of `VBOObjModel`, `ResourceLocation.fromNamespaceAndPath`, and **no `entity.getScale()`
+re-application** (vanilla's renderer already scales the pose stack). Legacy models animate immediately at render
+time (doAngle/doRotate), so they needed no changes to the `setupAnim`/`renderToBuffer` hooks. `ModelManager
+.reloadModels()` now reloads legacy models as well.
+
+Verified: compile clean; 124/124 model class refs in creature/subspecies JSON resolve; every `initModel` path has its
+`.obj` (only concapede segment lacks a `_parts.json`, which is optional for legacy models); every base/subspecies
+texture exists. In `runClient` with the `resources`/`models` debug keys on, after the resource reload 85/85 new-format
+and 39/39 legacy models loaded with zero failures (the constructor-time "Unable to load" warnings before the reload
+are expected). **Glenn confirmed in-game that all creatures render with correct textures.** The placeholder
+renderer now only covers creatures whose model fails to load.
+
+Still not ported on the client side: equipment/saddle layers (`addCustomLayers` in CreatureModel), projectile OBJ
+models (all projectiles render as sprites), `_animation.json` support, and per-entity subspecies model swapping
+(CreatureRenderer resolves a single model when it's constructed).

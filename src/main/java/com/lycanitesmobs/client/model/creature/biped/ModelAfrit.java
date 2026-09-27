@@ -1,0 +1,28 @@
+package com.lycanitesmobs.client.model.creature.biped;
+
+
+import com.lycanitesmobs.LycanitesMobs;
+import com.lycanitesmobs.client.model.template.ModelTemplateBiped;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
+@OnlyIn(Dist.CLIENT)
+public class ModelAfrit extends ModelTemplateBiped {
+
+    // ==================================================
+    //                    Constructors
+    // ==================================================
+    public ModelAfrit() {
+        this(1.0F);
+    }
+
+    public ModelAfrit(float shadowSize) {
+        // Load Model:
+        this.initModel("afrit", LycanitesMobs.modInfo, "entity/afrit");
+
+        this.clampNegativeFlightBobNearGround = true;
+
+        // Trophy:
+        this.trophyScale = 1.8F;
+    }
+}

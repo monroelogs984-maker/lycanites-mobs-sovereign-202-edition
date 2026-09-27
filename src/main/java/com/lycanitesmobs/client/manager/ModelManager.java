@@ -1,6 +1,7 @@
 package com.lycanitesmobs.client.manager;
 
 import com.lycanitesmobs.client.model.creature.base.CreatureObjModel;
+import com.lycanitesmobs.client.model.creature.base.CreatureObjModelOld;
 import com.lycanitesmobs.client.model.creature.base.CreatureModel;
 import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
 import com.lycanitesmobs.core.manager.CreatureManager;
@@ -16,8 +17,7 @@ import java.util.Map;
 /**
  * Trimmed - projectile models (ProjectileManager/ProjectileInfo/ProjectileObjModel) and equipment
  * part models (EquipmentPartManager/ItemEquipmentPart/ModelEquipmentPart/EquipmentModel) aren't
- * ported yet, so all of that has been dropped. CreatureObjModelOld (the "legacy" model system used
- * by 39/123 creatures) isn't ported yet either - reloadModels() only handles CreatureObjModel.
+ * ported yet, so all of that has been dropped.
  *
  * createModels() is also made resilient per-creature (try/catch + log + skip) rather than the
  * original's throw-on-first-failure, since most of the 123 creatures don't have a ported model
@@ -48,6 +48,8 @@ public class ModelManager {
             if (model instanceof CreatureObjModel obj) {
                 LMHelperClass.logDebug("Resources", "ModelManager.reloadModels: reloading base model " + obj.getClass().getName());
                 obj.reloadModel(resourceManager);
+            } else if (model instanceof CreatureObjModelOld old) {
+                old.reloadModel(resourceManager);
             }
         }
 
@@ -55,6 +57,8 @@ public class ModelManager {
             if (model instanceof CreatureObjModel obj) {
                 LMHelperClass.logDebug("Resources", "ModelManager.reloadModels: reloading subspecies model " + obj.getClass().getName());
                 obj.reloadModel(resourceManager);
+            } else if (model instanceof CreatureObjModelOld old) {
+                old.reloadModel(resourceManager);
             }
         }
 
