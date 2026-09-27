@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.data.info.item;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -91,14 +92,17 @@ public class ItemInfo {
                         LMHelperClass.logWarningMessage("Unable to add food effect: " + effectId);
                         continue;
                     }
-                    Holder<MobEffect> effectHolder = Holder.direct(effect);
-                    MobEffectInstance effectInstance = new MobEffectInstance(effectHolder, foodEffectJson.get("duration").getAsInt() * 20, foodEffectJson.get("amplifier").getAsInt());
+                    int duration = foodEffectJson.get("duration").getAsInt() * 20;
+                    int amplifier = foodEffectJson.get("amplifier").getAsInt();
 
                     float chance = 1F;
                     if (foodEffectJson.has("chance"))
                         chance = foodEffectJson.get("chance").getAsFloat();
 
-                    foodBuilder.effect(() -> effectInstance, chance);
+                    // Resolved when eaten: items are parsed before effects are registered, and a MobEffectInstance holding a
+                    // direct (unregistered) holder crashes the player save ("Unregistered holder in mob_effect").
+                    MobEffect finalEffect = effect;
+                    foodBuilder.effect(() -> new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(finalEffect), duration, amplifier), chance);
                 }
             }
 

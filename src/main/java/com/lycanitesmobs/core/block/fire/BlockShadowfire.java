@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.block.fire;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.block.base.BlockFireBase;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -76,7 +77,7 @@ public class BlockShadowfire extends BlockFireBase {
         if (entity instanceof LivingEntity livingEntity) {
             MobEffect decay = ObjectManager.getEffect("decay");
             if (decay != null) {
-                MobEffectInstance effect = new MobEffectInstance(Holder.direct(decay), 5 * 20, 0);
+                MobEffectInstance effect = new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(decay), 5 * 20, 0);
                 if (livingEntity.canBeAffected(effect))
                     livingEntity.addEffect(effect);
             }

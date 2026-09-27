@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.item.consumable.utility;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.item.base.BaseItem;
 import net.minecraft.core.Holder;
@@ -37,7 +38,7 @@ public class ItemCleansingCrystal extends BaseItem {
 
         MobEffect cleansed = ObjectManager.getEffect("cleansed");
         if (!world.isClientSide && cleansed != null) {
-            player.addEffect(new MobEffectInstance(Holder.direct(cleansed), 10 * 20));
+            player.addEffect(new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(cleansed), 10 * 20));
         }
 
         return new InteractionResultHolder<>(InteractionResult.SUCCESS, itemStack);

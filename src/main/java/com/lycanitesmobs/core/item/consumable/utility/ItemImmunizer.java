@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.item.consumable.utility;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.item.base.BaseItem;
 import net.minecraft.core.Holder;
@@ -37,7 +38,7 @@ public class ItemImmunizer extends BaseItem {
 
         MobEffect immunization = ObjectManager.getEffect("immunization");
         if (!world.isClientSide && immunization != null) {
-            player.addEffect(new MobEffectInstance(Holder.direct(immunization), 10 * 20));
+            player.addEffect(new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(immunization), 10 * 20));
         }
 
         return new InteractionResultHolder<>(InteractionResult.SUCCESS, itemStack);

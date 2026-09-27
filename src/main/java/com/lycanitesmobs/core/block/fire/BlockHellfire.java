@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.block.fire;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.block.base.BlockFireBase;
@@ -45,7 +46,7 @@ public class BlockHellfire extends BlockFireBase {
         if (entity instanceof LivingEntity) {
             MobEffect decay = ObjectManager.getEffect("decay");
             if (decay != null) {
-                MobEffectInstance effect = new MobEffectInstance(Holder.direct(decay), 5 * 20, 0);
+                MobEffectInstance effect = new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(decay), 5 * 20, 0);
                 LivingEntity entityLiving = (LivingEntity) entity;
                 if (entityLiving.canBeAffected(effect))
                     entityLiving.addEffect(effect);

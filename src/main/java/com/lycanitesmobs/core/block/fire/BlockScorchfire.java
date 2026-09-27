@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.block.fire;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.block.base.BlockFireBase;
 import com.lycanitesmobs.core.manager.ItemManager;
@@ -49,7 +50,7 @@ public class BlockScorchfire extends BlockFireBase {
         if (entity instanceof LivingEntity) {
             MobEffect penetration = ObjectManager.getEffect("penetration");
             if (penetration != null) {
-                MobEffectInstance effect = new MobEffectInstance(Holder.direct(penetration), 3 * 20, 0);
+                MobEffectInstance effect = new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(penetration), 3 * 20, 0);
                 LivingEntity entityLiving = (LivingEntity) entity;
                 if (entityLiving.canBeAffected(effect))
                     entityLiving.addEffect(effect);

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.block.fire;
 
+import net.minecraft.core.registries.BuiltInRegistries;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.block.base.BlockFireBase;
 import com.lycanitesmobs.core.manager.ItemManager;
@@ -47,7 +48,7 @@ public class BlockPrimefire extends BlockFireBase {
         if (entity instanceof LivingEntity) {
             MobEffect effect = ObjectManager.getEffect("smouldering");
             if (effect != null) {
-                MobEffectInstance effectInstance = new MobEffectInstance(Holder.direct(effect), 10 * 20, 0);
+                MobEffectInstance effectInstance = new MobEffectInstance(BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect), 10 * 20, 0);
                 LivingEntity entityLiving = (LivingEntity) entity;
                 if (entityLiving.canBeAffected(effectInstance))
                     entityLiving.addEffect(effectInstance);
