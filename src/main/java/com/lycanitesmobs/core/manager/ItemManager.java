@@ -1,5 +1,9 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.item.summoningstaff.*;
+import com.lycanitesmobs.core.item.special.ItemSoulgazer;
+import com.lycanitesmobs.core.item.special.ItemSoulContract;
+import com.lycanitesmobs.core.item.consumable.utility.ItemSoulstone;
 import com.lycanitesmobs.core.block.building.HiveBlock;
 import com.lycanitesmobs.core.item.block.ItemBlockPlacer;
 import com.google.gson.JsonObject;
@@ -165,6 +169,20 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addItem("mobtoken", () -> new ItemMobToken(new Item.Properties()));
         ObjectManager.addItem("immunizer", () -> new ItemImmunizer(itemProperties));
         ObjectManager.addItem("cleansingcrystal", () -> new ItemCleansingCrystal(itemProperties));
+
+        // Pets:
+        Item.Properties itemPropertiesNoStack = new Item.Properties().stacksTo(1);
+        ObjectManager.addItem("soulgazer", () -> new ItemSoulgazer(itemPropertiesNoStack));
+        ObjectManager.addItem("soul_contract", () -> new ItemSoulContract(itemPropertiesNoStack));
+        ObjectManager.addItem("soulstone", () -> new ItemSoulstone(itemProperties, null));
+
+        // Summoning Staffs:
+        Item.Properties summoningStaffProperties = new Item.Properties().stacksTo(1).durability(500);
+        ObjectManager.addItem("summoningstaff", () -> new ItemStaffSummoning(summoningStaffProperties, "summoningstaff", "summoningstaff"));
+        ObjectManager.addItem("stablesummoningstaff", () -> new ItemStaffStable(summoningStaffProperties, "stablesummoningstaff", "staffstable"));
+        ObjectManager.addItem("bloodsummoningstaff", () -> new ItemStaffBlood(summoningStaffProperties, "bloodsummoningstaff", "staffblood"));
+        ObjectManager.addItem("sturdysummoningstaff", () -> new ItemStaffSturdy(summoningStaffProperties, "sturdysummoningstaff", "staffsturdy"));
+        ObjectManager.addItem("savagesummoningstaff", () -> new ItemStaffSavage(summoningStaffProperties, "savagesummoningstaff", "staffsavage"));
 
         // Special (place their effect block on use):
         ObjectManager.addItem("frostyfur", () -> new ItemBlockPlacer(itemProperties, "frostyfur", "frostcloud"));

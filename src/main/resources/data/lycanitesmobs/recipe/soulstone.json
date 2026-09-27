@@ -1,0 +1,23 @@
+{
+  "result": {
+    "id": "lycanitesmobs:soulstone",
+    "count": 1
+  },
+  "pattern": [
+    "DPD",
+    "PSP",
+    "DPD"
+  ],
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "P": {
+      "item": "minecraft:ender_pearl"
+    },
+    "S": {
+      "item": "lycanitesmobs:soulgazer"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  }
+}

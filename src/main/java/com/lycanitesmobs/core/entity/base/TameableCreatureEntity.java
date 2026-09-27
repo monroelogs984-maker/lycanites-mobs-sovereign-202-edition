@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.base;
 
+import com.lycanitesmobs.core.item.consumable.utility.ItemSoulstone;
+import com.lycanitesmobs.core.data.info.creature.CreatureKnowledge;
+import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
 import com.lycanitesmobs.core.data.info.creature.CreatureType;
 import com.lycanitesmobs.core.entity.damagesources.MinionEntityDamageSource;
 import com.lycanitesmobs.core.entity.goals.actions.BegGoal;
@@ -51,11 +54,7 @@ import java.util.UUID;
  *
  * <p>Deliberately left out until their systems are ported (each marked TODO(port) where it would go):
  * <ul>
- *   <li>Pets system (ExtendedPlayer / PetEntry / SummonSet / temporary minions): getPetEntry(), isTemporary(),
- *       isPetType(), despawnCheck() for bound pets, soulstone command, summonMinion() owner copy.</li>
- *   <li>Beastiary knowledge: the official tame() requires creature knowledge rank >= 2 and grants treat
- *       knowledge via ExtendedPlayer.studyCreature(). Until the pets/Beastiary phase, taming only needs
- *       reputation.</li>
+ *   <li>summonMinion() owner copy.</li>
  *   <li>Creature GUI (Phase 8): the owner's sneak-right-click opens it officially. Until then the same action
  *       toggles sitting so pets are controllable at all.</li>
  *   <li>Projectiles (doRangedDamage owner credit), ChargeItem (charge
@@ -176,7 +175,22 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     // ==================================================
     //                     Spawning
     // ==================================================
-    // TODO(port): official despawnCheck() also despawns pets whose PetEntry owner is gone (pets system).
+    /**
+     * The official despawnCheck() bound-pet rules (the despawn system itself isn't ported): a bound pet is removed if its
+     * entry has spawned a different entity, or if the entry's owner is gone (saving the entity's data to the entry first).
+     **/
+    protected boolean checkBoundPetDespawn() {
+        if (this.getCommandSenderWorld().isClientSide || this.getPetEntry() == null)
+            return false;
+        if (this.getPetEntry().getEntity() != this && this.getPetEntry().getEntity() != null)
+            return true;
+        if (this.getPetEntry().getOwner() == null || !this.getPetEntry().getOwner().isAlive()) {
+            this.getPetEntry().saveEntityNBT();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public boolean isPersistant() {
         return this.isTamed() || super.isPersistant();
@@ -198,6 +212,10 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     // ==================================================
     @Override
     public void aiStep() {
+        if (this.checkBoundPetDespawn()) {
+            this.remove(RemovalReason.DISCARDED);
+            return;
+        }
         super.aiStep();
         this.staminaUpdate();
 
@@ -241,14 +259,19 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     }
 
     /**
-     * Returns true if this is a standard pet: tamed with a player owner and not a mount.
-     * TODO(port): the official also excludes temporary minions and non-"pet" PetEntry types (pets system).
+     * Returns true if this is a standard pet: tamed with a player owner, not a mount, minion or other pet entry type.
      */
     public boolean isPet() {
         if (!this.isTamed() || this.getPlayerOwner() == null) {
             return false;
         }
-        return !this.creatureInfo.isMountable();
+        if (this.creatureInfo.isMountable()) {
+            return false;
+        }
+        if (this.isTemporary()) {
+            return false;
+        }
+        return this.getPetEntry() == null || this.isPetType("pet");
     }
 
     /**
@@ -310,7 +333,12 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             }
         }
 
-        // TODO(port): "Charge" (ChargeItem) and "Soulstone" (pets system). Unequipping needs the creature GUI.
+        // Soulstone: claims the interaction so the soulstone item's own interactLivingEntity binds the pet.
+        if (itemStack.getItem() instanceof ItemSoulstone && this.isTamed()) {
+            commands.put(BaseCreatureEntity.COMMAND_PIORITIES.ITEM_USE.id, "Soulstone");
+        }
+
+        // TODO(port): "Charge" (ChargeItem). Unequipping needs the creature GUI.
     }
 
     private Boolean performTameableCommand(String command, Player player, ItemStack itemStack) {
@@ -326,6 +354,10 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             this.spawnFeedParticles();
             this.consumePlayersItem(player, itemStack);
             return true;
+        }
+
+        if ("Soulstone".equals(command)) {
+            return false;
         }
 
         if ("Equip Item".equals(command)) {
@@ -437,7 +469,10 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             this.setFollowing(false);
         }
 
-        // TODO(port): petEntry.getSummonSet().updateBehaviour(this) (pets system).
+        if (this.petEntry != null && this.petEntry.getSummonSet() != null) {
+            this.petEntry.getSummonSet().updateBehaviour(this);
+        }
+
         super.performGUICommand(player, guiCommandID);
     }
 
@@ -705,11 +740,21 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             return this.isTamed();
         }
 
-        // TODO(port): official first calls ExtendedPlayer.studyCreature(this, creatureTreatKnowledge) and refuses to
-        // tame unless the player's CreatureKnowledge rank for this creature is >= 2 (Beastiary, pets phase).
+        ExtendedPlayer extendedPlayer = ExtendedPlayer.getForPlayer(player);
+        if (extendedPlayer == null) {
+            return this.isTamed();
+        }
+
+        // Each treat studies the creature; taming needs rank 2 knowledge of it.
+        extendedPlayer.studyCreature(this, CreatureManager.getInstance().getConfig().creatureTreatKnowledge(), true, true);
 
         if (this.isTamed()) {
             return true;
+        }
+
+        CreatureKnowledge creatureKnowledge = extendedPlayer.getBeastiary().getCreatureKnowledge(this.creatureInfo.getName());
+        if (creatureKnowledge == null || creatureKnowledge.getRank() < 2) {
+            return this.isTamed();
         }
 
         CreatureRelationshipEntry relationshipEntry = this.relationships.getOrCreateEntry(player);
@@ -719,6 +764,7 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         if (this.creatureInfo.isTameable() && relationshipEntry.getReputation() >= this.creatureInfo.getTamingReputation()) {
             this.setPlayerOwner(player);
             this.onTamedByPlayer();
+            this.unsetTemporary();
             MutableComponent tameMessage = Component.translatable("message.pet.tamed.prefix")
                     .append(" ")
                     .append(this.getSpeciesName())

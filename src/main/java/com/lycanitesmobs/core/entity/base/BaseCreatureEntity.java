@@ -2,6 +2,9 @@ package com.lycanitesmobs.core.entity.base;
 
 import net.minecraft.world.entity.Pose;
 import com.lycanitesmobs.core.container.creature.CreatureInventory;
+import com.lycanitesmobs.core.data.info.creature.CreatureKnowledge;
+import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
+import com.lycanitesmobs.core.entity.pets.PetEntry;
 import java.util.Collection;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -162,6 +165,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     // Minions / bosses (ported 2026-09-26 for the boss batch):
     private final List<LivingEntity> minions = new ArrayList<>();
     protected boolean isMinion = false;
+    /** The pet entry (soulbound pet, mount, summoned minion, familiar) this creature belongs to, if any. **/
+    protected PetEntry petEntry;
+    /** Set when a creature saved as a bound pet is loaded without its pet entry - it's discarded, as the entry respawns its own. **/
+    protected boolean boundPetOrphan = false;
+    /** If true, this mob is temporary and will despawn once temporaryDuration reaches 0. **/
+    protected boolean isTemporary = false;
+    protected int temporaryDuration = 0;
     /** Centre of a boss arena, if this creature has one. */
     protected BlockPos arenaCenter = null;
     /** Maximum damage taken from a single hit (0 = no cap). */
@@ -665,11 +675,139 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Returns true if this creature is a pet bound to a player's pet entry. TODO(port): pet entries (soulstones /
-     * Beastiary) aren't ported, so no creature is a bound pet yet.
+     * Returns true if this mob has a pet entry and is thus bound to another entity.
      **/
     public boolean isBoundPet() {
+        return this.hasPetEntry();
+    }
+
+    /**
+     * Gets the entity that owns this creature, overridden by tameable creatures.
+     **/
+    public LivingEntity getOwner() {
+        return null;
+    }
+
+    public boolean hasPetEntry() {
+        return this.getPetEntry() != null;
+    }
+
+    public PetEntry getPetEntry() {
+        return this.petEntry;
+    }
+
+    /**
+     * Sets the pet entry for this mob. Mobs with Pet Entries are removed when the world is reloaded, as the Pet Entry
+     * spawns a new instance of them on load.
+     **/
+    public void setPetEntry(PetEntry petEntry) {
+        this.petEntry = petEntry;
+    }
+
+    /**
+     * Make this mob temporary where it will despawn once the specified duration (in ticks) reaches 0.
+     **/
+    public void setTemporary(int duration) {
+        this.temporaryDuration = duration;
+        this.isTemporary = true;
+    }
+
+    public void unsetTemporary() {
+        this.isTemporary = false;
+        this.temporaryDuration = 0;
+    }
+
+    public boolean isTemporary() {
+        return this.isTemporary;
+    }
+
+    public int getTemporaryDuration() {
+        return this.temporaryDuration;
+    }
+
+    boolean shouldDropInventoryOnDespawn() {
+        return !this.isBoundPet() || this.isTemporary;
+    }
+
+    /**
+     * Temporary mobs (summoned minions) count down and despawn. The official does this in despawnCheck(), which isn't
+     * ported (vanilla despawning is used), so it runs here.
+     **/
+    private boolean tickTemporaryDespawn() {
+        if (this.getCommandSenderWorld().isClientSide || !this.isTemporary || this.temporaryDuration-- > 0) {
+            return false;
+        }
+        if (this.shouldDropInventoryOnDespawn()) {
+            this.inventory.dropInventory();
+        }
+        this.remove(Entity.RemovalReason.DISCARDED);
+        return true;
+    }
+
+    private boolean discardIfOrphanedBoundPet() {
+        if (this.boundPetOrphan && !this.hasPetEntry()) {
+            this.discard();
+            return true;
+        }
         return false;
+    }
+
+    private boolean handleFirstSpawnPetEntry() {
+        if (!this.hasPetEntry()) {
+            return false;
+        }
+        PetEntry petEntry = this.getPetEntry();
+        if (petEntry.getSummonSet() != null && petEntry.getSummonSet().getPlayerExt() != null) {
+            petEntry.getSummonSet().getPlayerExt().sendPetEntryToPlayer(petEntry);
+        }
+        return true;
+    }
+
+    // ==================================================
+    //                 Beastiary Knowledge
+    // ==================================================
+    /**
+     * Scales Beastiary knowledge experience gained from this creature (bosses and variants give more).
+     **/
+    public int scaleKnowledgeExperience(int knowledgeExperience) {
+        if (this.isBoss()) {
+            knowledgeExperience = Math.round((float) CreatureManager.getInstance().getConfig().creatureBossKnowledgeScale() * knowledgeExperience);
+        } else if (this.getVariant() != null) {
+            knowledgeExperience = Math.round((float) CreatureManager.getInstance().getConfig().creatureVariantKnowledgeScale() * knowledgeExperience);
+        }
+        return knowledgeExperience;
+    }
+
+    /**
+     * Players within 10 blocks discover this creature (rank 1 knowledge) if they don't know it yet.
+     **/
+    private void tickBeastiaryProximityDiscovery(Level world, boolean isClient) {
+        if (isClient || this.updateTick % 20 != 0) {
+            return;
+        }
+        for (Player player : world.players()) {
+            if (this.distanceToSqr(player) > 10.0 * 10.0) {
+                continue;
+            }
+            ExtendedPlayer extendedPlayer = ExtendedPlayer.getForPlayer(player);
+            if (extendedPlayer == null) {
+                continue;
+            }
+            CreatureKnowledge creatureKnowledge = extendedPlayer.getBeastiary().getCreatureKnowledge(this.creatureInfo.getName());
+            if (creatureKnowledge == null || creatureKnowledge.getRank() < 1) {
+                extendedPlayer.studyCreature(this, CreatureManager.getInstance().getConfig().creatureProximityKnowledge(), false, false);
+            }
+        }
+    }
+
+    private void studyCreatureKillForPlayer(Player player) {
+        if (this.isTamed()) {
+            return;
+        }
+        ExtendedPlayer extendedPlayer = ExtendedPlayer.getForPlayer(player);
+        if (extendedPlayer != null) {
+            extendedPlayer.studyCreature(this, CreatureManager.getInstance().getConfig().creatureKillKnowledge(), false, false);
+        }
     }
 
     /**
@@ -1648,10 +1786,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Returns true if this creature is a pet of the given PetEntry type ("pet", "mount", "minion", "familiar").
-     * TODO(port): always false until the pets system (PetEntry) is ported.
      **/
     public boolean isPetType(String type) {
-        return false;
+        if (!this.hasPetEntry())
+            return false;
+        return type.equals(this.getPetEntry().getType());
     }
 
     public LivingEntity getPickupEntity() {
@@ -2118,7 +2257,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Spawns the provided minion around this creature at the given angle and distance and registers it.
-     * TODO(port): the official also copies temporary/spawn-event state (not ported).
+     * TODO(port): the official also copies spawn-event state (mob events not ported).
      **/
     public void summonMinion(LivingEntity minion, double angle, double distance) {
         double angleRadians = Math.toRadians(angle);
@@ -2132,6 +2271,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, minion, () -> {
             if (minion instanceof BaseCreatureEntity creatureMinion) {
                 creatureMinion.setMinion(true);
+                if (this.isTemporary) {
+                    creatureMinion.setTemporary(this.temporaryDuration);
+                }
                 if (!this.isRareVariant()) {
                     creatureMinion.applyVariant(this.getVariantIndex());
                 }
@@ -2212,6 +2354,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     public void die(DamageSource damageSource) {
         if (this.getMasterTarget() instanceof BaseCreatureEntity masterCreature) {
             masterCreature.onMinionDeath(this, damageSource);
+        }
+        if (!this.level().isClientSide && damageSource.getEntity() instanceof Player killer) {
+            this.studyCreatureKillForPlayer(killer);
         }
         if (!this.level().isClientSide && !this.isBoundPet()) {
             this.inventory.dropInventory();
@@ -3331,10 +3476,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * Called on this creature's first server tick. Restored from the official source 2026-09-26 - the earlier port had
      * trimmed it to just clearing the flag, so no creature ever got its starting level (which refreshes stats and heals
      * to the new max health - every creature spawned at 20 HP, bosses included), no uncommon/rare variant ever spawned
-     * naturally, and sizes never varied. TODO(port): the official first checks handleFirstSpawnPetEntry() (pets system).
+     * naturally, and sizes never varied.
      **/
     public void onFirstSpawn() {
         this.firstSpawn = false;
+        if (this.handleFirstSpawnPetEntry()) {
+            return;
+        }
         if (this.isMinion()) {
             return;
         }
@@ -3350,6 +3498,27 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (this.sizeScale == 1.0D && CreatureManager.getInstance().getConfig().randomSizes()) {
             this.getRandomSize();
         }
+    }
+
+    private void readBindingFlags(CompoundTag nbt) {
+        if (nbt.contains("IsMinion")) {
+            this.setMinion(nbt.getBoolean("IsMinion"));
+        }
+        if (nbt.contains("IsTemporary") && nbt.getBoolean("IsTemporary") && nbt.contains("TemporaryDuration")) {
+            this.setTemporary(nbt.getInt("TemporaryDuration"));
+        } else {
+            this.unsetTemporary();
+        }
+        if (nbt.contains("IsBoundPet") && nbt.getBoolean("IsBoundPet") && !this.hasPetEntry()) {
+            this.boundPetOrphan = true;
+        }
+    }
+
+    private void writeBindingFlags(CompoundTag nbt) {
+        nbt.putBoolean("IsMinion", this.isMinion());
+        nbt.putBoolean("IsTemporary", this.isTemporary);
+        nbt.putInt("TemporaryDuration", this.temporaryDuration);
+        nbt.putBoolean("IsBoundPet", this.isBoundPet());
     }
 
     public int getStartingLevel() {
@@ -3405,7 +3574,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.tickMovementRuntime(this.getCommandSenderWorld().isClientSide);
         this.tickMinionLifecycle();
         this.updateBattlePhase();
+        if (this.tickTemporaryDespawn() || this.discardIfOrphanedBoundPet()) {
+            return;
+        }
         this.tickBossHealth(this.getCommandSenderWorld().isClientSide);
+        this.tickBeastiaryProximityDiscovery(this.getCommandSenderWorld(), this.getCommandSenderWorld().isClientSide);
         this.enforceDamageLimit(this.getCommandSenderWorld().isClientSide);
         this.tickEnvironmentalState(this.getCommandSenderWorld().isClientSide);
         this.updateTick++;
@@ -3444,6 +3617,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.firstSpawn = !nbt.contains("FirstSpawn") || nbt.getBoolean("FirstSpawn");
         this.relationships.load(nbt);
         this.inventory.load(nbt);
+        this.readBindingFlags(nbt);
         if (nbt.contains("Size")) {
             this.setSizeScale(nbt.getDouble("Size"));
         }
@@ -3500,6 +3674,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         nbt.putBoolean("FirstSpawn", this.firstSpawn);
         this.relationships.save(nbt);
         this.inventory.save(nbt);
+        this.writeBindingFlags(nbt);
         nbt.putByte("Subspecies", (byte) this.getSubspeciesIndex());
         nbt.putByte("Variant", (byte) this.getVariantIndex());
         nbt.putDouble("Size", this.sizeScale);

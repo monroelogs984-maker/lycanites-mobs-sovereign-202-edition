@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.item.consumable.utility.ItemSoulstoneFilled;
 import com.lycanitesmobs.core.item.consumable.entity.ItemCustomSpawnEgg;
 import com.lycanitesmobs.core.item.equipment.CreatureSaddleItem;
 import net.neoforged.neoforge.common.util.Lazy;
@@ -182,6 +183,10 @@ public class CreatureManager extends JSONLoader {
             Lazy<Item> spawnEgg = Lazy.of(() -> new ItemCustomSpawnEgg(new Item.Properties(), creatureType));
             creatureType.setSpawnEggItem(spawnEgg);
             ObjectManager.addItem(creatureType.getSpawnEggName(), spawnEgg);
+
+            Lazy<Item> soulstone = Lazy.of(() -> new ItemSoulstoneFilled(new Item.Properties(), creatureType));
+            creatureType.setSoulstoneItem(soulstone);
+            ObjectManager.addItem(creatureType.getSoulstoneName(), soulstone);
         }
     }
 

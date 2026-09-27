@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.entity.special.PortalEntity;
 import com.lycanitesmobs.core.entity.projectile.misc.EntityDevilGatling;
 import com.lycanitesmobs.core.entity.projectile.hellfire.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -226,6 +227,10 @@ public class ProjectileManager extends JSONLoader {
      * Called during early start up, loads all items.
      **/
     public void loadOldProjectiles() {
+        this.addOldProjectile("summoningportal", PortalEntity.class,
+                (type, world) -> new PortalEntity((EntityType<? extends PortalEntity>) type, world),
+                null,
+                null);
         this.addOldProjectile("rapidfire", RapidFireProjectileEntity.class,
                 RapidFireProjectileEntity::new,
                 null,
@@ -238,7 +243,7 @@ public class ProjectileManager extends JSONLoader {
         this.addOldProjectile("hellfirebarrier", EntityHellfireBarrier.class, EntityHellfireBarrier::new, EntityHellfireBarrier::new, EntityHellfireBarrier::new, false);
         this.addOldProjectile("hellfirebarrierpart", EntityHellfireBarrierPart.class, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, false);
         this.addOldProjectile("devilgatling", EntityDevilGatling.class, EntityDevilGatling::new, EntityDevilGatling::new, EntityDevilGatling::new, false);
-        // TODO(port): summoningportal (summoning), laserend (lasers), shadowfirebarrier, hellshield, helllaser/helllaserend
+        // TODO(port): laserend (lasers), shadowfirebarrier, hellshield, helllaser/helllaserend
         // (not used by any ported creature yet).
     }
 

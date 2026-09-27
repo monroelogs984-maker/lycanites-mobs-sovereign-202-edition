@@ -50,7 +50,7 @@ public class CreatureType {
     /**
      * The soulstone item this type uses.
      **/
-    protected Lazy<Item> soulstone; // TODO Phase 5b+: ItemSoulstone not ported yet, using Item until it is
+    protected Lazy<Item> soulstone;
 
     /**
      * The spawn egg item this type uses.

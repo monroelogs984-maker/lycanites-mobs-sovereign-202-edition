@@ -46,6 +46,10 @@ public class ClientSetup {
         event.registerReloadListener(ModelReloadListener.INSTANCE);
     }
 
+    public static void setClientPlayerSupplier() {
+        com.lycanitesmobs.LycanitesMobs.CLIENT_PLAYER = () -> net.minecraft.client.Minecraft.getInstance().player;
+    }
+
     /**
      * Spawn egg tints (one egg item per creature type, colored per creature).
      */

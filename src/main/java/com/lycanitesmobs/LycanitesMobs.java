@@ -44,6 +44,9 @@ public class LycanitesMobs {
     public static final String MODID = "lycanitesmobs";
     public static final String name = "Lycanites Mobs";
     public static final String versionNumber = "0.1.0-neoforge-alpha";
+    public static final com.lycanitesmobs.core.network.PacketManager PACKET_MANAGER = new com.lycanitesmobs.core.network.PacketManager();
+    /** The client's own player, or null on a server. Set during client setup (replaces the original's PROXY.getClientPlayer()). **/
+    public static java.util.function.Supplier<net.minecraft.world.entity.player.Player> CLIENT_PLAYER = () -> null;
     public static final String versionMC = "1.21.1";
     public static final String version = versionNumber + " - MC " + versionMC;
     public static final String website = "https://lycanitesmobs.com";
@@ -77,6 +80,8 @@ public class LycanitesMobs {
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
         modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
+        com.lycanitesmobs.core.manager.DeferredLevelActionManager.register();
+        com.lycanitesmobs.core.event.PlayerEventListener.register();
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -98,6 +103,7 @@ public class LycanitesMobs {
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerEntityRenderers);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerReloadListeners);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerItemColors);
+            com.lycanitesmobs.client.ClientSetup.setClientPlayerSupplier();
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerClientExtensions);
             modEventBus.addListener(com.lycanitesmobs.client.manager.KeyManager::registerKeyMappings);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onClientTick);
