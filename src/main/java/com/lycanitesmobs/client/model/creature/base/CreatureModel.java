@@ -3,6 +3,8 @@ package com.lycanitesmobs.client.model.creature.base;
 import com.lycanitesmobs.client.model.animation.IAnimationModel;
 import com.lycanitesmobs.client.renderer.entity.creature.CreatureRenderer;
 import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureBase;
+import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureEquipment;
+import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureSaddle;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,10 +20,6 @@ import org.joml.Vector2f;
 import org.joml.Vector4f;
 
 /**
- * Trimmed - addCustomLayers() is a no-op for now (the original adds LayerCreatureEquipment/
- * LayerCreatureSaddle here; neither the equipment system nor those layer classes are ported -
- * see PORT_PLAN.md).
- *
  * Architecture change vs. the original: instead of porting the original CreatureRenderer's own
  * from-scratch render() override (which reimplements pose-stack rotation/scale/translate setup
  * that 1.21.1's LivingEntityRenderer.render() already does - and whose reference source uses a
@@ -109,6 +107,8 @@ public abstract class CreatureModel<T extends BaseCreatureEntity> extends Entity
     public abstract void render(T entity, PoseStack matrixStack, VertexConsumer vertexBuilder, LayerCreatureBase layer, float time, float distance, float loop, float lookY, float lookX, float scale, int brightness, int fade);
 
     public void addCustomLayers(CreatureRenderer renderer) {
+        renderer.addLayer(new LayerCreatureEquipment(renderer, "chest"));
+        renderer.addLayer(new LayerCreatureSaddle(renderer));
     }
 
     public boolean canRenderPart(String partName, Entity entity, LayerCreatureBase layer, boolean trophy) {

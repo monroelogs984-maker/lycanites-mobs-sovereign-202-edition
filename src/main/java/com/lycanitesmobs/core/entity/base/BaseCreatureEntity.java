@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.base;
 
+import net.minecraft.world.entity.Pose;
+import com.lycanitesmobs.core.container.creature.CreatureInventory;
 import java.util.Collection;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -125,6 +127,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected static final EntityDataAccessor<Integer> EXPERIENCE = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Byte> SUBSPECIES = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
     protected static final EntityDataAccessor<Byte> VARIANT = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_HEAD = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_CHEST = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_LEGS = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_FEET = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_BAG = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
+    public static final EntityDataAccessor<ItemStack> EQUIPMENT_SADDLE = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
 
     private static int BOSS_DAMAGE_LIMIT = 50;
 
@@ -227,9 +235,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     /** The Creature's relationships, for advanced memory and taming. Ported in Phase 5e. */
     protected CreatureRelationships relationships;
 
+    /** Equipment (armor/saddle/bag) and bag item storage. */
+    protected CreatureInventory inventory;
+
     protected BaseCreatureEntity(EntityType<? extends BaseCreatureEntity> entityType, Level world) {
         super(entityType, world);
         this.relationships = new CreatureRelationships(this);
+        this.inventory = new CreatureInventory(this.creatureInfo.getName(), this);
 
         // Movement (Phase 5g): vanilla has no createMoveController() hook, the official source assigns it here.
         this.moveControl = this.createMoveController();
@@ -277,6 +289,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         builder.define(EXPERIENCE, 0);
         builder.define(SUBSPECIES, (byte) 0);
         builder.define(VARIANT, (byte) 0);
+        CreatureInventory.registerData(builder);
 
         this.loadCreatureFlags();
         this.creatureSize = EntityDimensions.scalable((float) this.creatureInfo.getWidth(), (float) this.creatureInfo.getHeight());
@@ -427,6 +440,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     public boolean hasSpawnEvent() {
         return !"".equals(this.spawnEventType);
+    }
+
+    public boolean hasSpawnEventType(String eventType) {
+        return this.spawnEventType.equalsIgnoreCase(eventType);
     }
 
     public void applySpawnEvent(String spawnEventType, int spawnEventCount) {
@@ -1783,6 +1800,123 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.spawnAtLocation(itemStack, 0.0F);
     }
 
+    // ==================================================
+    //                  Inventory / Equipment
+    // ==================================================
+    public CreatureInventory getCreatureInventory() {
+        return this.inventory;
+    }
+
+    /**
+     * Returns the current size of this mob's inventory. (Some mob inventories can vary in size such as mounts with and without bag items equipped.)
+     **/
+    public int getInventorySize() {
+        return this.inventory.getContainerSize();
+    }
+
+    /**
+     * Returns the maximum possible size of this mob's inventory. (The creature inventory is not actually resized, instead some slots are locked and made unavailable.)
+     **/
+    public int getInventorySizeMax() {
+        return Math.max(this.getNoBagSize(), this.getBagSize());
+    }
+
+    public boolean hasBag() {
+        return !this.inventory.getEquipmentStack("bag").isEmpty();
+    }
+
+    /**
+     * Returns the size of this mob's inventory when it doesn't have a bag item equipped.
+     **/
+    public int getNoBagSize() {
+        if (this.extraMobBehaviour != null && this.extraMobBehaviour.inventorySizeOverride() > 0) {
+            return this.extraMobBehaviour.inventorySizeOverride();
+        }
+        return 0;
+    }
+
+    /**
+     * Returns the size that this mob's inventory increases by when it is provided with a bag item.
+     **/
+    public int getBagSize() {
+        if (this.creatureInfo != null) {
+            return this.creatureInfo.getBagSize();
+        }
+        return 5;
+    }
+
+    public int getSpaceForStack(ItemStack pickupStack) {
+        return this.inventory.getSpaceForStack(pickupStack);
+    }
+
+    /**
+     * Returns true if the player is allowed to equip this creature with items such as armor or saddles.
+     **/
+    public boolean canEquip() {
+        return this.creatureInfo.isTameable();
+    }
+
+    /**
+     * Returns the equipment grade name for a slot (e.g. "chestIron"), used for armor texturing.
+     **/
+    public String getEquipmentName(String type) {
+        if (this.inventory.getEquipmentGrade(type) != null) {
+            return type + this.inventory.getEquipmentGrade(type);
+        }
+        return null;
+    }
+
+    @Override
+    public int getArmorValue() {
+        return super.getArmorValue() + this.inventory.getArmorValue();
+    }
+
+    /**
+     * Returns the texture for an equipment layer, e.g. "saddle" -> textures/entity/warg_saddle.png (subspecies aware).
+     **/
+    public ResourceLocation getEquipmentTexture(String equipmentName) {
+        if (!this.canEquip()) {
+            return this.getTexture();
+        }
+        if (this.getSubspecies() != null && this.getSubspecies().getName() != null) {
+            equipmentName = this.getSubspecies().getName() + "_" + equipmentName;
+        }
+        return this.getSubTexture(equipmentName);
+    }
+
+    // ==================================================
+    //                   Mount Offsets
+    // ==================================================
+    // 1.21.1 dropped Entity.getPassengersRidingOffset()/getMyRidingOffset() (replaced by entity attachment
+    // points). These are kept as Lycanites' own methods, used by RideableCreatureEntity.positionRider(), so the
+    // per-creature offsets tuned for the original still apply unchanged.
+
+    /**
+     * A Y Offset used to position the mob that is riding this mob.
+     **/
+    public double getPassengersRidingOffset() {
+        return (double) this.getDimensions(Pose.STANDING).height() * this.getMountOffset().y();
+    }
+
+    /**
+     * A Z Offset used to position the mob that is riding this mob.
+     **/
+    public double getMountedZOffset() {
+        return (double) this.getDimensions(Pose.STANDING).width() * this.getMountOffset().z();
+    }
+
+    private Vector3d getMountOffset() {
+        Subspecies subspecies = this.getSubspecies();
+        if (subspecies != null && subspecies.getMountOffset() != null) {
+            return subspecies.getMountOffset();
+        }
+        return this.creatureInfo.getMountOffset();
+    }
+
+    protected void moveWithDirectNavigator(double strafe, double forward) {
+        this.directNavigator.flightMovement(strafe, forward);
+    }
+
     /**
      * The vanilla item drop method, overridden to make use of the CustomItemEntity class (see applyDropEffects).
      **/
@@ -2016,6 +2150,14 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.isMinion = minion;
     }
 
+    /**
+     * Returns true if this mob has a Master Target. TODO(port): the official reads the synced TARGET bits on the
+     * client; target-bit syncing isn't ported yet, so this is only accurate server side.
+     **/
+    public boolean hasMaster() {
+        return this.getMasterTarget() != null;
+    }
+
     public boolean isMinion() {
         return this.isMinion;
     }
@@ -2070,6 +2212,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     public void die(DamageSource damageSource) {
         if (this.getMasterTarget() instanceof BaseCreatureEntity masterCreature) {
             masterCreature.onMinionDeath(this, damageSource);
+        }
+        if (!this.level().isClientSide && !this.isBoundPet()) {
+            this.inventory.dropInventory();
         }
         super.die(damageSource);
     }
@@ -3286,7 +3431,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Used when loading this mob from a saved chunk.
-     * Trimmed: relationships/inventory/saved-drops/extra-behaviour/constraint/fixate/minion
+     * Trimmed: saved-drops/extra-behaviour/constraint/fixate/minion
      * persistence not ported - only progression (level/experience/subspecies/variant/size).
      */
     @Override
@@ -3298,6 +3443,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
         this.firstSpawn = !nbt.contains("FirstSpawn") || nbt.getBoolean("FirstSpawn");
         this.relationships.load(nbt);
+        this.inventory.load(nbt);
         if (nbt.contains("Size")) {
             this.setSizeScale(nbt.getDouble("Size"));
         }
@@ -3353,6 +3499,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
         nbt.putBoolean("FirstSpawn", this.firstSpawn);
         this.relationships.save(nbt);
+        this.inventory.save(nbt);
         nbt.putByte("Subspecies", (byte) this.getSubspeciesIndex());
         nbt.putByte("Variant", (byte) this.getVariantIndex());
         nbt.putDouble("Size", this.sizeScale);

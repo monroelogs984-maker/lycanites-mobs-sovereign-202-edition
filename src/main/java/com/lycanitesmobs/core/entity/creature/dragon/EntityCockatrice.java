@@ -212,21 +212,21 @@ public class EntityCockatrice extends RideableCreatureEntity implements Enemy {
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() { return 0; }
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() { return this.creatureInfo.getBagSize(); }
 
 
     // ==================================================
     //                      Movement
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double)this.getBbHeight() * 0.7D;
     }
 
-	// TODO(port): restore @Override once RideableCreatureEntity is ported
+	@Override
 	public double getMountedZOffset() {
 		return -(double)this.getBbWidth() * 0.01D;
 	}
@@ -235,7 +235,7 @@ public class EntityCockatrice extends RideableCreatureEntity implements Enemy {
     // ==================================================
     //                   Mount Ability
     // ==================================================
-	// TODO(port): restore @Override once RideableCreatureEntity is ported
+	@Override
 	public void mountAbility(Entity rider) {
 		if(this.getCommandSenderWorld().isClientSide)
 			return;

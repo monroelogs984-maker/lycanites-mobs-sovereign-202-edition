@@ -65,7 +65,7 @@ public class EntityMalwrath extends RideableCreatureEntity {
         super.aiStep();
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void riderEffects(LivingEntity rider) {
         if (rider.hasEffect(MobEffects.WITHER))
             rider.removeEffect(MobEffects.WITHER);
@@ -122,12 +122,12 @@ public class EntityMalwrath extends RideableCreatureEntity {
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }
@@ -173,7 +173,7 @@ public class EntityMalwrath extends RideableCreatureEntity {
     // ==================================================
     //                      Movement
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double) this.getBbHeight() * 0.9D;
     }
@@ -182,7 +182,7 @@ public class EntityMalwrath extends RideableCreatureEntity {
     // ==================================================
     //                   Mount Ability
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;

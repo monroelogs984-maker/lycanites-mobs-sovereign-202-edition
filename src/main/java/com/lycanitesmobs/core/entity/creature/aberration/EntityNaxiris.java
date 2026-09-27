@@ -56,7 +56,7 @@ public class EntityNaxiris extends RideableCreatureEntity {
     // ==================================================
     //                      Updates
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void riderEffects(LivingEntity rider) {
         if (rider.hasEffect(MobEffects.DIG_SLOWDOWN))
             rider.removeEffect(MobEffects.DIG_SLOWDOWN);
@@ -120,12 +120,12 @@ public class EntityNaxiris extends RideableCreatureEntity {
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }
@@ -162,12 +162,12 @@ public class EntityNaxiris extends RideableCreatureEntity {
     // ==================================================
     //                      Movement
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double) this.getBbHeight() * 0.9D;
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getMountedZOffset() {
         return (double) this.getBbWidth() * -0.2D;
     }
@@ -176,7 +176,7 @@ public class EntityNaxiris extends RideableCreatureEntity {
     // ==================================================
     //                   Mount Ability
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;

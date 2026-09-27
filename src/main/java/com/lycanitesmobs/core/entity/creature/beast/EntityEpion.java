@@ -1,56 +1,45 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
-import net.minecraft.world.entity.Entity;
-import org.joml.Vector3d;
-import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import com.lycanitesmobs.core.entity.base.BaseProjectileEntity;
 import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
-import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
-import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
+import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
+import com.lycanitesmobs.core.data.info.projectile.ProjectileInfo;
+import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
+import com.lycanitesmobs.core.manager.ProjectileManager;
 import com.lycanitesmobs.core.util.helpers.AssetHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.joml.Vector3d;
 
-/**
- * Heavily trimmed - the original extends RideableCreatureEntity (mount subsystem not ported)
- * and attacks purely at range via ProjectileManager (not ported either). Substituted a plain
- * AttackMeleeGoal so this creature isn't completely inert (the original never had a melee
- * fallback). Dropped entirely: attackRanged/fireProjectile, the whole mount-ability/stamina
- * system, getStrafeSpeed (ranged-strafe-only hook), and isMinion()/hasMaster() checks in
- * shouldExplodeInDaylight() (tame/master system not ported - replaced with just isTamed()/
- * isRareVariant()). The self-contained "explodes in daylight unless tamed/rare" mechanic and the
- * custom-name vampire-bat texture swap are both kept since they only need vanilla APIs plus
- * already-ported BaseCreatureEntity hooks.
- * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
- * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
- * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
- * PHASE 6a UPDATE (2026-09-26): ranged attack restored (projectiles ported) - any wording above about a
- * substituted melee attack or ProjectileManager being unported is outdated.
- */
 public class EntityEpion extends RideableCreatureEntity implements Enemy {
 
     protected boolean griefing = true;
 
+    // ==================================================
+    //                    Constructor
+    // ==================================================
     public EntityEpion(EntityType<? extends EntityEpion> entityType, Level world) {
         super(entityType, world);
+
+        // Setup:
         this.hasAttackSound = false;
         this.flySoundSpeed = 20;
-        this.setupMob();
-    }
 
-    // NOTE: 1.21.1 replaced the old setMaxUpStep(float) setter with an overridable
-    // maxUpStep() getter (default 0.0F on Entity) - override it directly instead.
-    @Override
-    public float maxUpStep() {
-        return 1.0F;
+        this.setupMob();
+
+        this.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(1.0F);
     }
 
     @Override
@@ -65,9 +54,19 @@ public class EntityEpion extends RideableCreatureEntity implements Enemy {
     }
 
     @Override
+    public float getStrafeSpeed() {
+        return 1F;
+    }
+
+    // ==================================================
+    //                      Updates
+    // ==================================================
+    // ========== Living Update ==========
+    @Override
     public void aiStep() {
         super.aiStep();
 
+        // Particles:
         if (this.getCommandSenderWorld().isClientSide)
             for (int i = 0; i < 2; ++i) {
                 this.getCommandSenderWorld().addParticle(ParticleTypes.WITCH, this.position().x() + (this.random.nextDouble() - 0.5D) * (double) this.getDimensions(Pose.STANDING).width(), this.position().y() + this.random.nextDouble() * (double) this.getDimensions(Pose.STANDING).height(), this.position().z() + (this.random.nextDouble() - 0.5D) * (double) this.getDimensions(Pose.STANDING).width(), 0.0D, 0.0D, 0.0D);
@@ -82,6 +81,29 @@ public class EntityEpion extends RideableCreatureEntity implements Enemy {
     }
 
     @Override
+    public boolean hasLineOfSight(Entity target) {
+        if (this.isRareVariant()) {
+            return true;
+        }
+        return super.hasLineOfSight(target);
+    }
+
+
+    // ==================================================
+    //                      Attacks
+    // ==================================================
+    // ========== Ranged Attack ==========
+    @Override
+    public void attackRanged(Entity target, float range) {
+        this.fireProjectile("bloodleech", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
+        super.attackRanged(target, range);
+    }
+
+
+    // ==================================================
+    //                     Abilities
+    // ==================================================
+    @Override
     public boolean isFlying() {
         if (this.getCommandSenderWorld().isClientSide) return true;
         if (this.shouldExplodeInDaylight())
@@ -90,7 +112,7 @@ public class EntityEpion extends RideableCreatureEntity implements Enemy {
     }
 
     protected boolean shouldExplodeInDaylight() {
-        if (this.isTamed() || this.isRareVariant())
+        if (this.isTamed() || this.isMinion() || this.isRareVariant())
             return false;
         if (!this.daylightBurns() || !this.getCommandSenderWorld().isDay())
             return false;
@@ -110,13 +132,88 @@ public class EntityEpion extends RideableCreatureEntity implements Enemy {
         return this.griefing ? Level.ExplosionInteraction.MOB : Level.ExplosionInteraction.NONE;
     }
 
-    // NOTE: daylightBurns() isn't a real hook on BaseCreatureEntity/PathfinderMob - kept as a
-    // plain helper (not an @Override) purely for shouldExplodeInDaylight() above to call.
-    public boolean daylightBurns() {
-        return !this.isTamed() && !this.isRareVariant();
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 
     @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+    // ==================================================
+    //                     Immunities
+    // ==================================================
+
+    /**
+     * Returns true if this mob should be damaged by the sun.
+     **/
+    @Override
+    public boolean daylightBurns() {
+        return !this.isMinion() && !this.hasMaster() && !this.isTamed() && !this.isRareVariant();
+    }
+
+    @Override
+    public float getFallResistance() {
+        return 100;
+    }
+
+
+    // ==================================================
+    //                   Mount Ability
+    // ==================================================
+    public void mountAbility(Entity rider) {
+        if (this.getCommandSenderWorld().isClientSide)
+            return;
+
+        if (this.getStamina() < this.getStaminaCost())
+            return;
+
+        if (rider instanceof Player) {
+            Player player = (Player) rider;
+            ProjectileInfo projectileInfo = ProjectileManager.getInstance().getProjectile("bloodleech");
+            if (projectileInfo != null) {
+                BaseProjectileEntity projectile = projectileInfo.createProjectile(this.getCommandSenderWorld(), player);
+                DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, projectile);
+                this.playSound(projectile.getLaunchSound(), 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
+                this.triggerAttackCooldown();
+            }
+        }
+
+        this.applyStaminaCost();
+    }
+
+    public float getStaminaCost() {
+        return 2;
+    }
+
+    public int getStaminaRecoveryWarmup() {
+        return 0;
+    }
+
+    public float getStaminaRecoveryMax() {
+        return 1.0F;
+    }
+
+
+    // ==================================================
+    //                       Visuals
+    // ==================================================
+
+    /**
+     * Returns this creature's main texture. Also checks for for subspecies.
+     **/
     public ResourceLocation getTexture() {
         if (!this.hasCustomName() || !"Vampire Bat".equals(this.getCustomName().getString()))
             return super.getTexture();
@@ -125,14 +222,13 @@ public class EntityEpion extends RideableCreatureEntity implements Enemy {
         return AssetHelper.entityTexture(textureName);
     }
 
+    // ========== Rendering Distance ==========
+
+    /**
+     * Returns a larger bounding box for rendering this large entity.
+     **/
     @OnlyIn(Dist.CLIENT)
     public AABB getBoundingBoxForCulling() {
         return this.getBoundingBox().inflate(10, 10, 10).move(0, -5, 0);
-    }
-
-    @Override
-    public void attackRanged(Entity target, float range) {
-        this.fireProjectile("bloodleech", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
-        super.attackRanged(target, range);
     }
 }

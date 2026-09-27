@@ -44,12 +44,12 @@ public class EntityGrell extends RideableCreatureEntity {
         return true;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }
@@ -65,12 +65,12 @@ public class EntityGrell extends RideableCreatureEntity {
         return false;
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double) this.getBbHeight() * 1.1D;
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;

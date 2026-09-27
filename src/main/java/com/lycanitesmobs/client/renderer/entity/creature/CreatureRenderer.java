@@ -17,15 +17,16 @@ import net.neoforged.api.distmarker.OnlyIn;
  * see CreatureModel's class doc), this relies entirely on vanilla's own
  * LivingEntityRenderer.render() dispatch, which already calls into CreatureModel's
  * setupAnim()/renderToBuffer() hooks to drive the actual OBJ rendering. That also means:
- * NeoForge RenderLivingEvent/RenderNameTagEvent posting, per-layer effect rendering
- * (LayerCreatureEquipment/etc.), and per-entity subspecies model swapping are NOT ported here -
- * none of those systems exist yet in this port (see PORT_PLAN.md).
+ * NeoForge RenderLivingEvent/RenderNameTagEvent posting and per-entity subspecies model swapping
+ * are NOT ported here (see PORT_PLAN.md).
  */
 @OnlyIn(Dist.CLIENT)
 public class CreatureRenderer<T extends BaseCreatureEntity> extends MobRenderer<T, CreatureModel<T>> {
 
     public CreatureRenderer(String entityID, EntityRendererProvider.Context context, float shadowSize) {
         super(context, ModelManager.getInstance().getCreatureModel(CreatureManager.getInstance().getCreature(entityID), null), shadowSize);
+        // The official renderer adds these once its model is resolved; the port's model is fixed here.
+        this.model.addCustomLayers(this);
     }
 
     @Override

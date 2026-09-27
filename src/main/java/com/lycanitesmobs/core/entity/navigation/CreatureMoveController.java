@@ -20,8 +20,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * fish-like movement; flyers get direct 3D velocity steering.
  *
  * <p>1.21.1: NodeEvaluator.getBlockPathType(level, x, y, z) -> getPathType(Mob, BlockPos); BlockPathTypes -> PathType.
- * isControlledByRider() uses getControllingPassenger() only - TODO(port): also require canBeControlledByRider()
- * once RideableCreatureEntity is ported.
  */
 public class CreatureMoveController extends MoveControl {
 
@@ -66,7 +64,7 @@ public class CreatureMoveController extends MoveControl {
      * Returns true if the entity is controlled by its rider.
      **/
     public boolean isControlledByRider() {
-        return this.entityCreature != null && this.entityCreature.getControllingPassenger() instanceof Player;
+        return this.entityCreature != null && this.entityCreature.getControllingPassenger() instanceof Player && this.entityCreature.canBeControlledByRider();
     }
 
     /**

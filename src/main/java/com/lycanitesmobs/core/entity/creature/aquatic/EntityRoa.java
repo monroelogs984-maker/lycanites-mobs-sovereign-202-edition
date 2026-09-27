@@ -1,42 +1,41 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
-import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
+import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.IGroupBoss;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
-import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
+import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
-/**
- * Trimmed - original extends RideableCreatureEntity (mount/stamina/pet-control system, not
- * ported); rebased onto AgeableCreatureEntity, dropping mountAbility/riderEffects/
- * onDismounted/getPassengersRidingOffset/bag/pet-control. The "sharknado" spawn-event branches
- * (canWhirlpool/canBreatheAir/isFlying) are dropped - hasSpawnEventType()/extraAnimation01()
- * don't exist on this port's BaseCreatureEntity (spawn-event system not ported). Whirlpool AI
- * mechanic itself kept, just always water-triggered rather than mount-triggered.
- * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
- * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
- * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
- */
 public class EntityRoa extends RideableCreatureEntity implements Enemy {
 
     protected int whirlpoolRange = 6;
+
     protected int whirlpoolEnergy = 0;
     protected int whirlpoolEnergyMax = 5 * 20;
     protected boolean whirlpoolRecharging = true;
+    protected int mountedWhirlpool = 0;
 
+    // ==================================================
+    //                    Constructor
+    // ==================================================
     public EntityRoa(EntityType<? extends EntityRoa> entityType, Level world) {
         super(entityType, world);
+
+        // Setup:
         this.hasAttackSound = true;
+
         this.babySpawnChance = 0D;
         this.canGrow = true;
         this.setupMob();
@@ -53,10 +52,16 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
         this.whirlpoolRange = this.creatureInfo.getFlag("whirlpoolRange", this.whirlpoolRange);
     }
 
+
+    // ==================================================
+    //                      Updates
+    // ==================================================
+    // ========== Living Update ==========
     @Override
     public void aiStep() {
         super.aiStep();
 
+        // Whirlpool:
         if (!this.getCommandSenderWorld().isClientSide) {
             if (this.whirlpoolRecharging) {
                 if (++this.whirlpoolEnergy >= this.whirlpoolEnergyMax)
@@ -68,14 +73,10 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
                     if (entity == this || entity.getClass() == this.getClass() || entity == this.getControllingPassenger() || entity instanceof IGroupBoss || entity instanceof IGroupHeavy)
                         continue;
                     if (entity instanceof LivingEntity) {
-                        // NOTE: original also skipped entities with the "weight" mod effect
-                        // (ObjectManager.getEffect() returns a raw MobEffect, but
-                        // LivingEntity.hasEffect() now needs a Holder<MobEffect> in 1.21.1 -
-                        // dropped rather than guess at the right wrapping helper).
                         LivingEntity entityLivingBase = (LivingEntity) entity;
-                        if (!this.canAttack(entityLivingBase))
+                        if (entityLivingBase.hasEffect(ObjectManager.getEffectHolder("weight")) || !this.canAttack(entityLivingBase))
                             continue;
-                        if (!entity.isInWater())
+                        if (!entity.isInWater() && !this.hasSpawnEventType("sharknado"))
                             continue;
                     }
                     ServerPlayer player = null;
@@ -105,15 +106,59 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
                     this.whirlpoolRecharging = true;
             }
         }
+
+        if (this.mountedWhirlpool > 0)
+            this.mountedWhirlpool--;
     }
 
+    @Override
+    public void riderEffects(LivingEntity rider) {
+        rider.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, (5 * 20) + 5, 1));
+        super.riderEffects(rider);
+    }
+
+    // ========== Extra Animations ==========
+
+    /**
+     * An additional animation boolean that is passed to all clients through the animation mask.
+     **/
+    public boolean extraAnimation01() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return super.extraAnimation01();
+        }
+        return this.canWhirlpool();
+    }
+
+    // ========== Whirlpool ==========
     public boolean canWhirlpool() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return this.extraAnimation01();
+        }
+
+        // Sharknado:
+        if (this.hasSpawnEventType("sharknado")) {
+            return true;
+        }
+
+        // Out of Water:
         if (!this.isInWater()) {
             return false;
         }
+
+        // Mounted:
+        if (this.getControllingPassenger() != null && this.mountedWhirlpool > 0) {
+            return true;
+        }
+
+        // Attack Target:
         return !this.whirlpoolRecharging && this.hasAttackTarget() && this.distanceTo(this.getTarget()) <= (this.whirlpoolRange * 3);
     }
 
+
+    // ==================================================
+    //                      Movement
+    // ==================================================
+    // Pathing Weight:
     @Override
     public float getBlockPathWeight(int x, int y, int z) {
         int waterWeight = 10;
@@ -132,16 +177,37 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
         return super.getBlockPathWeight(x, y, z);
     }
 
+    // Swimming:
     @Override
     public boolean isStrongSwimmer() {
         return true;
     }
 
+    // Walking:
     @Override
     public boolean canWalk() {
         return false;
     }
 
+    // Flying:
+    @Override
+    public boolean isFlying() {
+        if (this.hasSpawnEventType("sharknado")) {
+            return true;
+        }
+        return super.isFlying();
+    }
+
+    // ========== Mounted Offset ==========
+    @Override
+    public double getPassengersRidingOffset() {
+        return (double) this.getDimensions(Pose.STANDING).height() * 0.25D;
+    }
+
+
+    // ==================================================
+    //                     Immunities
+    // ==================================================
     @Override
     public boolean creatureCanBreatheUnderwater() {
         return true;
@@ -149,6 +215,70 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
 
     @Override
     public boolean canBreatheAir() {
-        return false;
+        return this.hasSpawnEventType("sharknado");
+    }
+
+
+    // ==================================================
+    //                   Mount Ability
+    // ==================================================
+    @Override
+    public void mountAbility(Entity rider) {
+        if (this.getCommandSenderWorld().isClientSide)
+            return;
+
+        if (this.getStamina() < this.getStaminaCost()) {
+            return;
+        }
+
+        this.applyStaminaCost();
+        this.mountedWhirlpool = 20;
+    }
+
+    @Override
+    public float getStaminaCost() {
+        return 2;
+    }
+
+    @Override
+    public int getStaminaRecoveryWarmup() {
+        return 4 * 20;
+    }
+
+    @Override
+    public float getStaminaRecoveryMax() {
+        return 2.0F;
+    }
+
+    // Dismount:
+    @Override
+    public void onDismounted(Entity entity) {
+        super.onDismounted(entity);
+        if (entity != null && entity instanceof LivingEntity) {
+            ((LivingEntity) entity).addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, 5 * 20, 1));
+        }
+    }
+
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    @Override
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

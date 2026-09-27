@@ -58,8 +58,8 @@ import java.util.UUID;
  *       reputation.</li>
  *   <li>Creature GUI (Phase 8): the owner's sneak-right-click opens it officially. Until then the same action
  *       toggles sitting so pets are controllable at all.</li>
- *   <li>Inventory/equipment (equip command), projectiles (doRangedDamage owner credit), ChargeItem (charge
- *       command - also moot since S202 drops creature levels), perching, riding (canBeControlledByRider),
+ *   <li>Projectiles (doRangedDamage owner credit), ChargeItem (charge
+ *       command - also moot since S202 drops creature levels), perching,
  *       mob-event spawn tracking, boss health bars, portal-time clamp.</li>
  * </ul>
  * Breeding hooks (onCreateBaby/createChild owner copy) are omitted: S202 cuts breeding.
@@ -302,7 +302,15 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             commands.put(BaseCreatureEntity.COMMAND_PIORITIES.ITEM_USE.id, "Feed");
         }
 
-        // TODO(port): "Charge" (ChargeItem), "Equip Item" (creature inventory) and "Soulstone" (pets system).
+        // Equipment (saddles, horse armor, bags):
+        if (this.isTamed() && !this.isBaby() && this.canEquip() && player == this.getPlayerOwner()) {
+            String equipSlot = this.inventory.getSlotForEquipment(itemStack);
+            if (equipSlot != null && this.inventory.getEquipmentStack(equipSlot).getItem() != itemStack.getItem()) {
+                commands.put(BaseCreatureEntity.COMMAND_PIORITIES.EQUIPPING.id, "Equip Item");
+            }
+        }
+
+        // TODO(port): "Charge" (ChargeItem) and "Soulstone" (pets system). Unequipping needs the creature GUI.
     }
 
     private Boolean performTameableCommand(String command, Player player, ItemStack itemStack) {
@@ -320,6 +328,12 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
             return true;
         }
 
+        if ("Equip Item".equals(command)) {
+            this.equipHeldItem(itemStack);
+            this.consumePlayersItem(player, itemStack);
+            return true;
+        }
+
         if ("Sit".equals(command)) {
             this.playTameSound();
             this.setTarget(null);
@@ -330,6 +344,17 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         }
 
         return null;
+    }
+
+    private void equipHeldItem(ItemStack itemStack) {
+        String equipSlot = this.inventory.getSlotForEquipment(itemStack);
+        ItemStack equippedItem = this.inventory.getEquipmentStack(equipSlot);
+        if (!equippedItem.isEmpty()) {
+            this.dropItem(equippedItem);
+        }
+        ItemStack equipStack = itemStack.copy();
+        equipStack.setCount(1);
+        this.inventory.setEquipmentStack(equipStack);
     }
 
     private int getHealAmount(ItemStack itemStack) {
@@ -361,6 +386,11 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
                     this.getZ() + (double) (this.getRandom().nextFloat() * width * 2.0F) - (double) width,
                     d0, d1, d2);
         }
+    }
+
+    @Override
+    public boolean canBeControlledByRider() {
+        return this.isTamed();
     }
 
     @Override

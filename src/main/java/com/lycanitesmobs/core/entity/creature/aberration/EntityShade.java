@@ -45,7 +45,7 @@ public class EntityShade extends RideableCreatureEntity {
     // ==================================================
     //                   Mount Ability
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;
@@ -76,12 +76,12 @@ public class EntityShade extends RideableCreatureEntity {
     //                     Movement
     // ==================================================
     // Mounted Y Offset:
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double) this.getBbHeight() * 0.85D;
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getMountedZOffset() {
         return (double) this.getBbWidth() * 0.25D;
     }
@@ -163,12 +163,12 @@ public class EntityShade extends RideableCreatureEntity {
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }

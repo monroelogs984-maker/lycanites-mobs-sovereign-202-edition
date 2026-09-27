@@ -1,43 +1,47 @@
 package com.lycanitesmobs.core.entity.creature.amphibian;
 
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import com.google.common.base.Predicate;
+import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.item.CustomItemEntity;
+import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
 import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
-import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.PathType;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 
-/**
- * Trimmed - originally extended RideableCreatureEntity (the mount/stamina/rider-ability system
- * isn't ported at all in this port). Dropped entirely: riderEffects/mountAbility/specialAttack/
- * getStaminaCost/getStaminaRecoveryWarmup/getStaminaRecoveryMax/onDismounted/
- * getPassengersRidingOffset/canStandOnFluid (all mount-specific), ExtendedPlayer capability
- * usage (not ported), applyDropEffects/getBrightness/solidCollision (custom hooks not on the
- * trimmed BaseCreatureEntity, purely cosmetic - not worth restoring there just for this).
- * getFallResistance() replaced with a direct causeFallDamage() override (see EntityAglebemu).
- * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
- * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
- * about extending Base/AgeableCreatureEntity or taming being unported is outdated.
- */
+import java.util.List;
+
 public class EntitySalamander extends RideableCreatureEntity implements Enemy {
-
     public EntitySalamander(EntityType<? extends EntitySalamander> entityType, Level world) {
         super(entityType, world);
+        
+        // Setup:
         this.isLavaCreature = true;
         this.hasAttackSound = true;
         this.hasJumpSound = true;
+
         this.canGrow = true;
         this.babySpawnChance = 0.01D;
+        this.solidCollision = false;
         this.setupMob();
-        // setMaxUpStep(float) doesn't exist in 1.21.1 - maxUpStep() is now derived from the
-        // STEP_HEIGHT attribute (setupMob() already sets a 0.5 base default), so override it
-        // directly here instead.
-        this.getAttribute(net.minecraft.world.entity.ai.attributes.Attributes.STEP_HEIGHT).setBaseValue(1.0D);
+
+        // Stats:
+        this.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(1.0F);
+
         this.setPathfindingMalus(PathType.LAVA, 0F);
     }
 
@@ -47,47 +51,174 @@ public class EntitySalamander extends RideableCreatureEntity implements Enemy {
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
     }
 
+	@Override
+    public void aiStep() {
+        super.aiStep();
+    }
+
+    @Override
+    public void riderEffects(LivingEntity rider) {
+        rider.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, (5 * 20) + 5, 1));
+        if(rider.hasEffect(ObjectManager.getEffectHolder("penetration")))
+            rider.removeEffect(ObjectManager.getEffectHolder("penetration"));
+        if(rider.isOnFire())
+            rider.clearFire();
+    }
+
+    @Override
+    public float getAISpeedModifier() {
+        if (!this.lavaContact())
+            return 0.5F;
+        return 2.0F;
+    }
+
     @Override
     public float getBlockPathWeight(int x, int y, int z) {
         int waterWeight = 10;
         BlockPos pos = new BlockPos(x, y, z);
-        if (this.getCommandSenderWorld().getBlockState(pos).getBlock() == Blocks.LAVA)
+        if(this.getCommandSenderWorld().getBlockState(pos).getBlock() == Blocks.LAVA)
             return (super.getBlockPathWeight(x, y, z) + 1) * (waterWeight + 1);
+
         return super.getBlockPathWeight(x, y, z);
     }
 
+    // Pushed By Water:
     @Override
     public boolean isPushedByFluid() {
         return false;
     }
 
     @Override
-    public boolean canBurn() {
-        return false;
+    public boolean canStandOnFluid(FluidState fluid) {
+        if (this.getControllingPassenger() instanceof Player) {
+            Player player = (Player) this.getControllingPassenger();
+            ExtendedPlayer playerExt = ExtendedPlayer.getForPlayer(player);
+            if (playerExt != null && playerExt.isControlActive(ExtendedPlayer.CONTROL_ID.DESCEND)) {
+                return false;
+            }
+        }
+        return fluid.is(FluidTags.LAVA);
     }
 
     @Override
-    public boolean waterDamage() {
-        return false;
+    public double getPassengersRidingOffset() {
+        return (double)this.getDimensions(Pose.STANDING).height() * 0.85D;
     }
 
+    public void specialAttack() {
+        // Firey Burst:
+        double distance = 5.0D;
+        List<LivingEntity> possibleTargets = this.getCommandSenderWorld().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(distance, distance, distance), new Predicate<LivingEntity>() {
+            @Override
+            public boolean apply(LivingEntity possibleTarget) {
+                if(!possibleTarget.isAlive()
+                        || possibleTarget == EntitySalamander.this
+                        || EntitySalamander.this.isEntityPassenger(possibleTarget, EntitySalamander.this)
+                        || EntitySalamander.this.isAlliedTo(possibleTarget)
+                        || !EntitySalamander.this.canAttackType(possibleTarget.getType())
+                        || !EntitySalamander.this.canAttack(possibleTarget))
+                    return false;
+                return true;
+            }
+        });
+        if(!possibleTargets.isEmpty()) {
+            for(LivingEntity possibleTarget : possibleTargets) {
+                boolean doDamage = true;
+                if(this.getRider() instanceof Player) {
+                    if(NeoForge.EVENT_BUS.post(new AttackEntityEvent((Player)this.getRider(), possibleTarget)).isCanceled()) {
+                        doDamage = false;
+                    }
+                }
+                if(doDamage) {
+                    possibleTarget.igniteForSeconds(5);
+                }
+            }
+        }
+        this.playAttackSound();
+        this.triggerAttackCooldown();
+    }
+
+    @Override
+    public void mountAbility(Entity rider) {
+        if(this.getCommandSenderWorld().isClientSide)
+            return;
+
+        if(this.abilityToggled)
+            return;
+        if(this.getStamina() < this.getStaminaCost())
+            return;
+
+        this.specialAttack();
+        this.applyStaminaCost();
+    }
+
+    @Override
+    public float getStaminaCost() {
+        return 15;
+    }
+
+    @Override
+    public int getStaminaRecoveryWarmup() {
+        return 5 * 20;
+    }
+
+    @Override
+    public float getStaminaRecoveryMax() {
+        return 1.0F;
+    }
+
+    // Dismount:
+    @Override
+    public void onDismounted(Entity entity) {
+        super.onDismounted(entity);
+        if(entity instanceof LivingEntity) {
+            ((LivingEntity)entity).addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 5 * 20, 1));
+        }
+    }
+
+    @Override
+    public int getNoBagSize() { return 0; }
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    @Override
+    public boolean canBurn() { return false; }
+    
+    @Override
+    public boolean waterDamage() { return false; }
+    
     @Override
     public boolean canBreatheUnderlava() {
         return true;
     }
-
+    
     @Override
     public boolean canBreatheAir() {
         return true;
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
-        return false;
+    public float getFallResistance() {
+        return 100;
     }
 
+    public float getDamageModifier(DamageSource damageSrc) {
+    	if(damageSrc.is(DamageTypeTags.IS_FIRE))
+    		return 0F;
+    	else return super.getDamageModifier(damageSrc);
+    }
+
+    /** Used to add effects or alter the dropped entity item. **/
     @Override
     public void applyDropEffects(CustomItemEntity entityItem) {
         entityItem.setCanBurn(false);
     }
+
+    @Override
+    public float getBrightness() {
+        return 1.0F;
+    }
+
+    @Override
+    public boolean petControlsEnabled() { return true; }
 }

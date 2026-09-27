@@ -1252,3 +1252,51 @@ renderer now only covers creatures whose model fails to load.
 Still not ported on the client side: equipment/saddle layers (`addCustomLayers` in CreatureModel), projectile OBJ
 models (all projectiles render as sprites), `_animation.json` support, and per-entity subspecies model swapping
 (CreatureRenderer resolves a single model when it's constructed).
+
+## Mounts: RideableCreatureEntity, creature inventory, rider controls (2026-09-27)
+
+**Ported:**
+- `RideableCreatureEntity` (real, replaces the stub): owner-only mounting with a saddle ("Mount" interact command),
+  steering/jumping/flying/swimming/lava movement, mount ability (G), rider effects every 10 ticks (debuff protection,
+  fire resistance for fire-immune mounts, water breathing), mount melee, rider team/alliance, passenger damage
+  immunity, dismount handling (sitting mounts re-home), `canBeControlledByRider()` (Lycanites' own check, now used by
+  `CreatureMoveController` again). 1.21.1: player-ridden movement goes vanilla `travelRidden -> travel()` on the
+  controlling client; `getPassengersRidingOffset()/getMountedZOffset()` are Lycanites methods on the base, applied in
+  `positionRider()` with the 1.20.1 player offset (-0.35) so every creature's tuned offsets still apply;
+  `setFlyingSpeed` dropped (vanilla's ridden `getFlyingSpeed()` equals the official glide default).
+- `CreatureInventory` (no GUI yet): chest/saddle/bag slots, synced equipment data, NBT save/load, drops on death (not for
+  bound pets), armor value, 1.21 ContainerHelper/armor-material Holders. "Equip Item" command in Tameable (saddles,
+  horse armor, chests). Verified via RCON: saddle + horse armor round-trip in the right slots per creature type.
+- Networking: first NeoForge payload (`PlayerControlPayload`, client -> server control bitmask), `PacketManager`.
+- `ExtendedPlayer` (trimmed to control states) as a NeoForge data attachment, not serialized.
+- `KeyManager`: mount descend (Left Alt), mount ability (G), mount inventory (K); client tick syncs control states.
+  The official dismount key was dead code (vanilla sneak-dismount is used), not registered.
+- `RevengeRiderGoal` (vanilla `getLastHurtMob` in place of ExtendedEntity's identical last-attacked tracking),
+  `CopyRiderAttackTargetGoal`.
+- Saddle + chest-armor render layers (`LayerCreatureSaddle`, `LayerCreatureEquipment`, 1.21 DYED_COLOR tint).
+- All `TODO(port): restore @Override` markers restored (compiler-checked).
+
+**Big finding: 18 of the 26 mounts were early heavy trims** (Sep 22-26, before the base classes existed): no mount
+ability, rider effects, riding offsets, stamina, flight/pickup/aiStep logic. Re-ported all 18 from official (Maug, Roc,
+Feradon, Warg, Barghest, Stryder, Raiko, Salamander, Ioray, Epion, Erepede, Eyewig, Morock, Roa, Thresher,
+Ventoraptor, Uvaraptor, Zoataur). Per-mount method audit vs official now shows 0 gaps (bar the intentional
+`canBreatheUnderwater -> creatureCanBreatheUnderwater` rename). Pickup carrying (`ExtendedEntity.setPickedUpByEntity`)
+and "skip targets picked up by another mob" left as TODOs for the ExtendedEntity work. Added `hasSpawnEventType()` and
+`hasMaster()` to the base (the latter server-side only - **target bits (TARGET data) are defined but never synced to
+clients**, a separate gap).
+
+**Two pre-existing bugs found and fixed along the way:**
+- `CreatureModel.addCustomLayers()` was never called, so all 31 models' effect layers (glowing eyes, scrolling, dye
+  etc.) were built but never attached. Now attached in `CreatureRenderer`'s constructor.
+- **Custom fluids crashed the client on sight**: `FluidManager`'s doc said client extensions were registered in
+  ClientSetup, but they never were, so NeoForge had no sprites (`FluidSpriteCache` NPE, "Tesselating liquid in
+  world"). Added `ClientSetup.registerClientExtensions` (still/flowing textures, fog color + official 1-6 fog range;
+  default white tint since the textures are pre-colored - the official passed the fluid color as tint with no alpha).
+
+**Verified:** compile; `runServer` (168 entity types, inventory NBT round-trip); `runClient` into a staged world with
+all 26 mounts saddled + the 23 non-boss layered creatures, auto-toured via a datapack (no input injection): no crash,
+saddle harnesses and effect layers visible in screenshots, acid fluid renders. **Not verified: actually riding** -
+mounting, steering, jump/fly/descend keys and mount abilities need Glenn in-game (Lycannots, deployed).
+
+**Known gaps:** unequipping a saddle needs the creature GUI (not ported); mount inventory key does nothing yet;
+no mount HUD/stamina bar.

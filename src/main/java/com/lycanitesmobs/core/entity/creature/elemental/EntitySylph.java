@@ -88,12 +88,12 @@ public class EntitySylph extends TameableCreatureEntity implements Enemy {
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }

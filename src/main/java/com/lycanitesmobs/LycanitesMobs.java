@@ -75,6 +75,8 @@ public class LycanitesMobs {
         ModAttributes.ATTRIBUTES.register(modEventBus);
         ItemManager.register(modEventBus);
         FluidManager.register(modEventBus);
+        com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
+        modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -96,6 +98,9 @@ public class LycanitesMobs {
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerEntityRenderers);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerReloadListeners);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerItemColors);
+            modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerClientExtensions);
+            modEventBus.addListener(com.lycanitesmobs.client.manager.KeyManager::registerKeyMappings);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onClientTick);
         }
 
         modEventBus.addListener(this::commonSetup);
@@ -104,7 +109,7 @@ public class LycanitesMobs {
         // TODO Phase 6: (ProjectileManager done in 6a) SpawnerManager/StructureSpawnInjector/AltarInfo/
         //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
         //       (SpawnerEventListener, CommandManager, GameEventListener, MobEventListener).
-        // TODO Phase 6: PacketManager networking registration.
+        // PacketManager: only PlayerControlPayload (mounts) so far - the other messages come with their systems.
         // TODO Phase 7: WorldGenManager, ModStructureTypes/ModStructurePieceTypes, the dynamic
         //       dungeon datapack (addPackFinders/AddPackFindersEvent -> DungeonVirtualPack).
         // TODO Phase 8: client setup (see LycanitesMobsClient) - TextureManager/ModelManager/

@@ -239,12 +239,12 @@ public class EntityQuetzodracl extends RideableCreatureEntity implements Enemy, 
     // ==================================================
     //                     Equipment
     // ==================================================
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getNoBagSize() {
         return 0;
     }
 
-    // TODO(port): restore @Override once creature inventories are ported
+    @Override
     public int getBagSize() {
         return this.creatureInfo.getBagSize();
     }
@@ -253,7 +253,7 @@ public class EntityQuetzodracl extends RideableCreatureEntity implements Enemy, 
     // ==================================================
     //                      Movement
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public double getPassengersRidingOffset() {
         return (double) this.getBbHeight() * 0.8D;
     }
@@ -262,7 +262,7 @@ public class EntityQuetzodracl extends RideableCreatureEntity implements Enemy, 
     // ==================================================
     //                   Mount Ability
     // ==================================================
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;

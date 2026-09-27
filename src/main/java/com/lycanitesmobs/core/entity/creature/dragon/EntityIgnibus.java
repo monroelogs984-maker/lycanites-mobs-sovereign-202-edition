@@ -90,7 +90,7 @@ public class EntityIgnibus extends RideableCreatureEntity implements IGroupHeavy
             }
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void riderEffects(LivingEntity rider) {
         rider.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, (5 * 20) + 5, 1));
         super.riderEffects(rider);
@@ -170,7 +170,7 @@ public class EntityIgnibus extends RideableCreatureEntity implements IGroupHeavy
         else return super.getDamageModifier(damageSrc);
     }
 
-    // TODO(port): restore @Override once RideableCreatureEntity is ported
+    @Override
     public void mountAbility(Entity rider) {
         if (this.getCommandSenderWorld().isClientSide)
             return;

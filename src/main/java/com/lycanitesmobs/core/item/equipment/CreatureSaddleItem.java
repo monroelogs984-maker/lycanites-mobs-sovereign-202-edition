@@ -5,8 +5,7 @@ import com.lycanitesmobs.core.item.base.CreatureTypeItem;
 
 /**
  * Saddle for a creature type's mounts. The item only identifies the creature type - equipping it is handled by the
- * mount's inventory. TODO(port): mounts (RideableCreatureEntity) and CreatureInventory aren't ported yet, so saddles
- * can't be equipped yet.
+ * mount's inventory (the owner right-clicks their tamed mount with it - TameableCreatureEntity's "Equip Item").
  */
 public class CreatureSaddleItem extends CreatureTypeItem {
 

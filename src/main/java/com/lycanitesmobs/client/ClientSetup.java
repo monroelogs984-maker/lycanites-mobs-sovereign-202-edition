@@ -15,6 +15,16 @@ import com.lycanitesmobs.core.manager.ProjectileManager;
 import net.minecraft.world.entity.EntityType;
 import com.lycanitesmobs.client.item.ItemColorCustomSpawnEgg;
 import com.lycanitesmobs.core.data.info.creature.CreatureType;
+import com.lycanitesmobs.core.manager.FluidManager;
+import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import org.joml.Vector3f;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
@@ -45,6 +55,43 @@ public class ClientSetup {
             if (creatureType.getSpawnEggItem() != null) {
                 event.register(spawnEggColor, creatureType.getSpawnEggItem());
             }
+        }
+    }
+
+    /**
+     * Fluid rendering (textures + fog) for the 8 custom fluids. Without these NeoForge has no sprites for the fluid
+     * types and the client crashes the moment one is in view. The textures are already colored, so the default
+     * white tint is kept (the official passed the fluid color as tint with no alpha byte); the fluid color is used
+     * for the underwater fog, with the official's short fog range.
+     */
+    public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        for (FluidManager.FluidEntry fluid : FluidManager.getInstance().getFluids()) {
+            ResourceLocation stillTexture = fluid.stillTexture();
+            ResourceLocation flowingTexture = fluid.flowingTexture();
+            int color = fluid.color();
+            Vector3f fogColor = new Vector3f(((color >> 16) & 0xFF) / 255f, ((color >> 8) & 0xFF) / 255f, (color & 0xFF) / 255f);
+            event.registerFluidType(new IClientFluidTypeExtensions() {
+                @Override
+                public ResourceLocation getStillTexture() {
+                    return stillTexture;
+                }
+
+                @Override
+                public ResourceLocation getFlowingTexture() {
+                    return flowingTexture;
+                }
+
+                @Override
+                public Vector3f modifyFogColor(Camera camera, float partialTick, ClientLevel level, int renderDistance, float darkenWorldAmount, Vector3f fluidFogColor) {
+                    return new Vector3f(fogColor);
+                }
+
+                @Override
+                public void modifyFogRender(Camera camera, FogRenderer.FogMode mode, float renderDistance, float partialTick, float nearDistance, float farDistance, FogShape shape) {
+                    RenderSystem.setShaderFogStart(1f);
+                    RenderSystem.setShaderFogEnd(6f);
+                }
+            }, fluid.type().get());
         }
     }
 
