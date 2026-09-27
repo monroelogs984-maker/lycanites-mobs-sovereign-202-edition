@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.base;
 
+import com.lycanitesmobs.core.network.message.MessageCreature;
+import com.lycanitesmobs.core.container.provider.CreatureContainerProvider;
+import com.lycanitesmobs.core.container.creature.CreatureContainer;
 import net.minecraft.world.entity.Pose;
 import com.lycanitesmobs.core.container.creature.CreatureInventory;
 import com.lycanitesmobs.core.data.info.creature.CreatureKnowledge;
@@ -130,6 +133,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected static final EntityDataAccessor<Integer> EXPERIENCE = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Byte> SUBSPECIES = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
     protected static final EntityDataAccessor<Byte> VARIANT = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.BYTE);
+    protected static final EntityDataAccessor<Float> SIZE = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<ItemStack> EQUIPMENT_HEAD = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
     public static final EntityDataAccessor<ItemStack> EQUIPMENT_CHEST = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
     public static final EntityDataAccessor<ItemStack> EQUIPMENT_LEGS = SynchedEntityData.defineId(BaseCreatureEntity.class, EntityDataSerializers.ITEM_STACK);
@@ -299,6 +303,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         builder.define(EXPERIENCE, 0);
         builder.define(SUBSPECIES, (byte) 0);
         builder.define(VARIANT, (byte) 0);
+        builder.define(SIZE, 1.0F);
         CreatureInventory.registerData(builder);
 
         this.loadCreatureFlags();
@@ -954,7 +959,145 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     // NOTE: networked advanced-sync (MessageCreature) not ported - no-ops for now.
+    /** Set when a creature subsystem (e.g. relationships) needs an advanced sync on the next update. **/
+    protected boolean syncQueued = true;
+
+    /**
+     * Queues an advanced network sync (per-player reputation) of this entity for the next update tick. Ignored client side.
+     */
     public void queueSync() {
+        if (this.getCommandSenderWorld().isClientSide()) {
+            return;
+        }
+        this.syncQueued = true;
+    }
+
+    /**
+     * Sends each player with a relationship to this creature their reputation (for the taming bar).
+     */
+    public void doSync() {
+        this.syncQueued = false;
+        if (this.getCommandSenderWorld().isClientSide()) {
+            return;
+        }
+        for (Player player : this.relationships.getPlayers()) {
+            CreatureRelationshipEntry relationshipEntry = this.relationships.getEntry(player);
+            if (relationshipEntry != null && player instanceof ServerPlayer serverPlayer) {
+                LycanitesMobs.PACKET_MANAGER.sendToPlayer(new MessageCreature(this, relationshipEntry.getReputation()), serverPlayer);
+            }
+        }
+    }
+
+    /**
+     * Syncs targets, attack phase, animation state and subspecies/variant/size between server and client. Ported from the
+     * official onSyncUpdate() - the port had defined these data slots but never written them, so clients never saw a
+     * creature's variant (base textures only), size, targets or attack animation state.
+     * TODO(port): the ARENA (boss arena centre) slot isn't synced.
+     **/
+    public void onSyncUpdate() {
+        if (this.syncQueued) {
+            this.doSync();
+        }
+
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.getEntityData().set(TARGET, this.getTargetMask());
+            this.getEntityData().set(ATTACK_PHASE, this.attackPhase);
+            this.getEntityData().set(ANIMATION_STATE, this.getServerAnimationMask());
+        } else {
+            byte animationState = this.getByteFromDataManager(ANIMATION_STATE);
+            this.applyClientAnimationState(animationState);
+            this.isMinion = (animationState & ANIMATION_STATE_BITS.MINION.id) > 0;
+        }
+
+        this.syncProgressionState();
+    }
+
+    private void syncProgressionState() {
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.getEntityData().set(SUBSPECIES, (byte) this.getSubspeciesIndex());
+            this.getEntityData().set(VARIANT, (byte) this.getVariantIndex());
+            this.getEntityData().set(SIZE, (float) this.sizeScale);
+            return;
+        }
+        if (this.getSubspeciesIndex() != this.getByteFromDataManager(SUBSPECIES)) {
+            this.setSubspecies(this.getByteFromDataManager(SUBSPECIES));
+        }
+        if (this.getVariantIndex() != this.getByteFromDataManager(VARIANT)) {
+            this.applyVariant(this.getByteFromDataManager(VARIANT));
+        }
+        if (this.sizeScale != this.getFloatFromDataManager(SIZE)) {
+            this.setSizeScale(this.getFloatFromDataManager(SIZE));
+        }
+    }
+
+    private byte getTargetMask() {
+        byte targets = 0;
+        if (this.getTarget() != null) {
+            targets += TARGET_BITS.ATTACK.id;
+        }
+        if (this.getMasterTarget() != null) {
+            targets += TARGET_BITS.MASTER.id;
+        }
+        if (this.getParentTarget() != null) {
+            targets += TARGET_BITS.PARENT.id;
+        }
+        if (this.getAvoidTarget() != null) {
+            targets += TARGET_BITS.AVOID.id;
+        }
+        if (this.getControllingPassenger() != null) {
+            targets += TARGET_BITS.RIDER.id;
+        }
+        if (this.getPickupEntity() != null) {
+            targets += TARGET_BITS.PICKUP.id;
+        }
+        if (this.getPerchTarget() != null) {
+            targets += TARGET_BITS.PERCH.id;
+        }
+        return targets;
+    }
+
+    private byte getServerAnimationMask() {
+        byte animations = 0;
+        if (this.isAttackOnCooldown()) {
+            animations += ANIMATION_STATE_BITS.ATTACKED.id;
+        }
+        if (this.onGround()) {
+            animations += ANIMATION_STATE_BITS.GROUNDED.id;
+        }
+        if (this.wasTouchingWater) {
+            animations += ANIMATION_STATE_BITS.IN_WATER.id;
+        }
+        if (this.isBlocking()) {
+            animations += ANIMATION_STATE_BITS.BLOCKING.id;
+        }
+        if (this.isMinion()) {
+            animations += ANIMATION_STATE_BITS.MINION.id;
+        }
+        if (this.extraAnimation01()) {
+            animations += ANIMATION_STATE_BITS.EXTRA01.id;
+        }
+        if (this.wasSpawnedAsBoss()) {
+            animations += ANIMATION_STATE_BITS.BOSS.id;
+        }
+        return animations;
+    }
+
+    private void applyClientAnimationState(byte animationState) {
+        if ((animationState & ANIMATION_STATE_BITS.ATTACKED.id) > 0) {
+            if (!this.isAttackOnCooldown()) {
+                this.triggerAttackCooldown();
+            }
+        } else {
+            this.resetAttackCooldown();
+        }
+        this.setOnGround((animationState & ANIMATION_STATE_BITS.GROUNDED.id) > 0);
+        this.wasTouchingWater = (animationState & ANIMATION_STATE_BITS.IN_WATER.id) > 0;
+        this.extraAnimation01 = (animationState & ANIMATION_STATE_BITS.EXTRA01.id) > 0;
+        this.setSpawnedAsBoss((animationState & ANIMATION_STATE_BITS.BOSS.id) > 0);
+    }
+
+    private boolean hasTargetBit(TARGET_BITS targetBit) {
+        return (this.getByteFromDataManager(TARGET) & targetBit.id) > 0;
     }
 
     @Override
@@ -1533,6 +1676,99 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * comes with the creature GUIs in Phase 8.
      **/
     public void performGUICommand(Player player, int guiCommandID) {
+        this.scheduleGUIRefresh();
+    }
+
+    // ==================================================
+    //                   Creature GUI
+    // ==================================================
+    private final java.util.List<Player> guiViewers = new java.util.ArrayList<>();
+    /** Counts from guiRefreshTime down to 0 when a GUI refresh has been scheduled. **/
+    private int guiRefreshTick = 0;
+    private final int guiRefreshTime = 2;
+
+    /**
+     * Adds the player as a GUI viewer and opens the creature GUI (inventory + pet commands) for them.
+     **/
+    public void openGUI(Player player) {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return;
+        }
+        this.addGUIViewer(player);
+        this.refreshGUIViewers();
+        this.openGUIToPlayer(player);
+    }
+
+    public void addGUIViewer(Player player) {
+        if (!this.getCommandSenderWorld().isClientSide && !this.guiViewers.contains(player)) {
+            this.guiViewers.add(player);
+        }
+    }
+
+    public void removeGUIViewer(Player player) {
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.guiViewers.remove(player);
+        }
+    }
+
+    /**
+     * Re-opens the GUI for every player still viewing it (after a GUI command or inventory change). Use scheduleGUIRefresh().
+     **/
+    public void refreshGUIViewers() {
+        if (this.getCommandSenderWorld().isClientSide || this.guiViewers.isEmpty()) {
+            return;
+        }
+        for (Player player : this.guiViewers.toArray(new Player[0])) {
+            if (player.containerMenu instanceof CreatureContainer container) {
+                if (container.getCreature() == this) {
+                    this.openGUIToPlayer(player);
+                } else {
+                    this.removeGUIViewer(player);
+                }
+            }
+        }
+    }
+
+    /**
+     * Opens the menu for the player. 1.21: Player.openMenu(provider, extraData) replaces Forge's NetworkHooks.openScreen.
+     **/
+    public void openGUIToPlayer(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(new CreatureContainerProvider(this), buf -> buf.writeInt(this.getId()));
+        }
+    }
+
+    /**
+     * Schedules a GUI refresh, normally takes 2 ticks for everything to update for display.
+     **/
+    public void scheduleGUIRefresh() {
+        this.guiRefreshTick = this.guiRefreshTime + 1;
+    }
+
+    private void tickGuiRefresh(boolean isClient) {
+        if (isClient) {
+            return;
+        }
+        if (this.guiViewers.isEmpty()) {
+            this.guiRefreshTick = 0;
+        }
+        if (this.guiRefreshTick > 0 && --this.guiRefreshTick <= 0) {
+            this.refreshGUIViewers();
+            this.guiRefreshTick = 0;
+        }
+    }
+
+    /**
+     * Pet command IDs sent by the pet/creature GUIs via MessageEntityGUICommand (official numbering, shared by
+     * client and server).
+     **/
+    public enum PET_COMMAND_ID {
+        ACTIVE((byte) 0), TELEPORT((byte) 1), PVP((byte) 2), RELEASE((byte) 3), PASSIVE((byte) 4), DEFENSIVE((byte) 5), ASSIST((byte) 6), AGGRESSIVE((byte) 7), FOLLOW((byte) 8), WANDER((byte) 9), SIT((byte) 10), FLEE((byte) 11);
+        public final byte id;
+
+        PET_COMMAND_ID(byte i) {
+            id = i;
+        }
     }
 
     public enum COMMAND_PIORITIES {
@@ -2293,11 +2529,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Returns true if this mob has a Master Target. TODO(port): the official reads the synced TARGET bits on the
-     * client; target-bit syncing isn't ported yet, so this is only accurate server side.
+     * Returns true if this mob has a Master Target (the synced TARGET bits on the client).
      **/
     public boolean hasMaster() {
-        return this.getMasterTarget() != null;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            return this.getMasterTarget() != null;
+        }
+        return this.hasTargetBit(TARGET_BITS.MASTER);
     }
 
     public boolean isMinion() {
@@ -2944,7 +3182,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     public boolean hasAttackTarget() {
-        return this.getTarget() != null;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            return this.getTarget() != null;
+        }
+        return this.hasTargetBit(TARGET_BITS.ATTACK);
     }
 
     public LivingEntity getMasterTarget() {
@@ -2964,7 +3205,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     public boolean hasParent() {
-        return this.getParentTarget() != null;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            return this.getParentTarget() != null;
+        }
+        return this.hasTargetBit(TARGET_BITS.PARENT);
     }
 
     public LivingEntity getAvoidTarget() {
@@ -2977,7 +3221,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     public boolean hasAvoidTarget() {
-        return this.getAvoidTarget() != null;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            return this.getAvoidTarget() != null;
+        }
+        return this.hasTargetBit(TARGET_BITS.AVOID);
     }
 
     public LivingEntity getFixateTarget() {
@@ -3001,7 +3248,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     public boolean hasPerchTarget() {
-        return this.getPerchTarget() != null;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            return this.getPerchTarget() != null;
+        }
+        return this.hasTargetBit(TARGET_BITS.PERCH);
     }
 
     public boolean rollAttackTargetChance(LivingEntity target) {
@@ -3566,6 +3816,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (this.creatureInfo.isDummy()) {
             return;
         }
+        this.onSyncUpdate();
         if (!this.getCommandSenderWorld().isClientSide && this.firstSpawn) {
             this.onFirstSpawn();
         }
@@ -3579,6 +3830,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
         this.tickBossHealth(this.getCommandSenderWorld().isClientSide);
         this.tickBeastiaryProximityDiscovery(this.getCommandSenderWorld(), this.getCommandSenderWorld().isClientSide);
+        this.tickGuiRefresh(this.getCommandSenderWorld().isClientSide);
         this.enforceDamageLimit(this.getCommandSenderWorld().isClientSide);
         this.tickEnvironmentalState(this.getCommandSenderWorld().isClientSide);
         this.updateTick++;

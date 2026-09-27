@@ -55,8 +55,6 @@ import java.util.UUID;
  * <p>Deliberately left out until their systems are ported (each marked TODO(port) where it would go):
  * <ul>
  *   <li>summonMinion() owner copy.</li>
- *   <li>Creature GUI (Phase 8): the owner's sneak-right-click opens it officially. Until then the same action
- *       toggles sitting so pets are controllable at all.</li>
  *   <li>Projectiles (doRangedDamage owner credit), ChargeItem (charge
  *       command - also moot since S202 drops creature levels), perching,
  *       mob-event spawn tracking, boss health bars, portal-time clamp.</li>
@@ -97,19 +95,6 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
 
         public byte getValue() {
             return id;
-        }
-    }
-
-    /**
-     * Pet command IDs sent by the (not yet ported) pet GUI via performGUICommand().
-     **/
-    public enum PET_COMMAND_ID {
-        PVP((byte) 0), PASSIVE((byte) 1), DEFENSIVE((byte) 2), ASSIST((byte) 3), AGGRESSIVE((byte) 4),
-        FOLLOW((byte) 5), WANDER((byte) 6), SIT((byte) 7);
-        public final byte id;
-
-        PET_COMMAND_ID(byte i) {
-            id = i;
         }
     }
 
@@ -307,10 +292,9 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     }
 
     private void addTameableInteractCommands(HashMap<Integer, String> commands, Player player, ItemStack itemStack) {
-        // TODO(port): "Perch" (perching) and "GUI" (creature GUI, Phase 8). Until the GUI exists the owner's
-        // sneak-right-click with an empty hand toggles sitting instead.
-        if (!this.getCommandSenderWorld().isClientSide && player.isShiftKeyDown() && this.isTamed() && itemStack.isEmpty() && player == this.getPlayerOwner()) {
-            commands.put(BaseCreatureEntity.COMMAND_PIORITIES.MAIN.id, "Sit");
+        // TODO(port): "Perch" (perching).
+        if (!this.getCommandSenderWorld().isClientSide && player.isShiftKeyDown() && this.isTamed() && player == this.getPlayerOwner()) {
+            commands.put(BaseCreatureEntity.COMMAND_PIORITIES.MAIN.id, "GUI");
         }
 
         if (this.getCommandSenderWorld().isClientSide || itemStack.isEmpty() || player.isShiftKeyDown()) {
@@ -342,6 +326,12 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     }
 
     private Boolean performTameableCommand(String command, Player player, ItemStack itemStack) {
+        if ("GUI".equals(command)) {
+            this.playTameSound();
+            this.openGUI(player);
+            return true;
+        }
+
         if ("Tame".equals(command)) {
             this.tame(player);
             this.consumePlayersItem(player, itemStack);

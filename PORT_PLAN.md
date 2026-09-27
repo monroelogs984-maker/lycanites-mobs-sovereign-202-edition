@@ -1300,3 +1300,51 @@ mounting, steering, jump/fly/descend keys and mount abilities need Glenn in-game
 
 **Known gaps:** unequipping a saddle needs the creature GUI (not ported); mount inventory key does nothing yet;
 no mount HUD/stamina bar.
+
+## Pet system + GUI (2026-09-27)
+
+Glenn: "port the rest... the pet system needs to be ported before I can even really test it". LYCANITES-REVIEW: pets
+and summoning stay unchanged for the first version, so this is a faithful port.
+
+**Core (commit 5aef874):** `ExtendedPlayer` as a NeoForge data attachment (serialized to player NBT, `copyOnDeath()`
+replaces the capability + clone backup; the client player gets its own instance filled by sync messages): spirit,
+summoning focus, 5 summon sets, Beastiary, `PetManager`. `PetEntry`/`SummonSet`/`CreatureKnowledge`/`Beastiary`.
+Knowledge from proximity (10 blocks), kills and treats; **taming requires rank 2 knowledge again** (official).
+Soulstone + per-type filled soulstones (spawn a random tameable of that type, already bound), Soulgazer (study), Soul
+Contract (transfer pets), 5 summoning staffs + `PortalEntity` (as an old projectile, "summoningportal"). Bound-pet
+lifecycle: orphaned bound pets (reloaded without their entry) are discarded, the entry respawns its own; temporary
+minions count down and despawn (the official despawnCheck isn't ported, so this runs in aiStep); IsMinion/IsTemporary/
+IsBoundPet NBT. Real `DeferredLevelActionManager` queue (spawns wait for loaded chunks, e.g. pets on login).
+**Dropped deliberately:** `PlayerFamiliars` (official online Patreon familiar service: per-player fetch from
+service.lycanitesmobs.com with SSL certificate checks disabled) and the online `VersionChecker` (same pattern) -
+replaced by an offline stand-in that only shows the running version.
+
+**GUI:** Beastiary (index, creatures, pets, summoning, elements), minion selection (R, held), creature GUI (owner
+sneak-right-click - replaces the port's temporary sneak-to-sit) with `CreatureContainer` menu (inventory, saddle/bag/
+armor slots, pet commands), HUD layer (summoning focus, mount stamina via the 1.21 jump-bar sprites + controls hint,
+taming reputation bar), F3 creature debug text (config). Keys: B index, R minions, unbound beastiary/pets/summoning.
+`/lm beastiary complete|clear|add`, `/lm creatures reload`. 1.21 changes: `BaseList` is an `ObjectSelectionList`
+(`AbstractSelectionList.Entry` is only reachable through it; widget position replaces x0/x1/y0/y1; panel/scrollbar drawn
+with GuiGraphics fills), `DrawHelper` on the 1.21 tessellator API, `Player.openMenu(provider, buf)`,
+`IMenuTypeExtension`, `PET_COMMAND_ID` moved to `BaseCreatureEntity` with the official numbering (the port's Tameable
+copy was renumbered, which would have broken GUI command ids). Official inventory tabs (TabManager) not ported: they
+reflect on an obfuscated Screen field and official only invoked them when `screen.getClass() == Screen.class`, so they
+never ran.
+
+**Client sync pass (big pre-existing gap):** the port defined SUBSPECIES/VARIANT/TARGET/ATTACK_PHASE/ANIMATION_STATE data
+slots but never wrote them - clients never saw a creature's variant (base textures only) or size, and had no target/
+animation state. Ported official `onSyncUpdate()` (+ SIZE slot, client-side target-bit getters) and the per-player
+reputation message (`MessageCreature`) the taming bar needs. ARENA isn't synced (TODO).
+
+**Also fixed:** recipes lived in `data/lycanitesmobs/recipes/` (1.20 path) so none of the 36 cooking recipes ever
+loaded - moved to `recipe/`; added the pet recipes (1.21 `id` result format).
+
+**Verified in a real client** (temporary test driver, removed): with rank-2 knowledge, 7 treats tamed a Warg; saddle
+equipped (synced); soulstone bound it as a mount (server + client entry); all 6 screens open; sneak-click opened the
+creature GUI; mounted, rode ~24 blocks, dismounted; staff summoned 3 Geken from a summon set. After a save/reload the
+entry respawned the Warg tamed + saddled + bound (orphan discarded), and GUI/riding worked again. Screens render
+correctly at a normal GUI scale (screenshots checked); at the minimum 320-wide GUI the Beastiary is cramped. The
+summoning screen's variant list overlaps the action labels - identical coordinates to official.
+
+**Remaining pet-adjacent TODOs:** summoning pedestal (block entity + screen), perching, ExtendedEntity (pickup carrying,
+fear), Charge items, mob-event titles in the HUD.

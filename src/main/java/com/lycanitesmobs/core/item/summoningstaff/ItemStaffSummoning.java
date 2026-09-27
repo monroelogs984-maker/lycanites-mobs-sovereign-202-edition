@@ -91,7 +91,8 @@ public class ItemStaffSummoning extends BaseItem {
                 playerExt.clearStaffPortal();
                 if (!player.getCommandSenderWorld().isClientSide())
                     playerExt.sendAllSummonSetsToPlayer();
-                // TODO(port): client side, open the Beastiary summoning screen (GUI not ported yet).
+                else
+                    LycanitesMobs.OPEN_SCREEN.accept(0);
             }
         }
         player.startUsingItem(hand);

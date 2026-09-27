@@ -46,8 +46,14 @@ public class ClientSetup {
         event.registerReloadListener(ModelReloadListener.INSTANCE);
     }
 
+    public static void registerMenuScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
+        event.register(com.lycanitesmobs.core.container.creature.CreatureContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.creature.CreatureInventoryScreen::new);
+    }
+
     public static void setClientPlayerSupplier() {
+        com.lycanitesmobs.client.manager.TextureManager.getInstance().createTextures(com.lycanitesmobs.LycanitesMobs.modInfo);
         com.lycanitesmobs.LycanitesMobs.CLIENT_PLAYER = () -> net.minecraft.client.Minecraft.getInstance().player;
+        com.lycanitesmobs.LycanitesMobs.OPEN_SCREEN = com.lycanitesmobs.client.manager.KeyManager::openScreen;
     }
 
     /**

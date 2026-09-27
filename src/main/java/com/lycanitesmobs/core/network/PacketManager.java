@@ -23,11 +23,13 @@ public class PacketManager {
 
         // Client -> Server:
         registrar.playToServer(PlayerControlPayload.TYPE, PlayerControlPayload.STREAM_CODEC, PlayerControlPayload::handle);
+        registrar.playToServer(MessageEntityGUICommand.TYPE, MessageEntityGUICommand.STREAM_CODEC, MessageEntityGUICommand::handle);
 
         // Server -> Client:
         registrar.playToClient(MessagePlayerStats.TYPE, MessagePlayerStats.STREAM_CODEC, MessagePlayerStats::handle);
         registrar.playToClient(MessageBeastiary.TYPE, MessageBeastiary.STREAM_CODEC, MessageBeastiary::handle);
         registrar.playToClient(MessageCreatureKnowledge.TYPE, MessageCreatureKnowledge.STREAM_CODEC, MessageCreatureKnowledge::handle);
+        registrar.playToClient(MessageCreature.TYPE, MessageCreature.STREAM_CODEC, MessageCreature::handle);
         registrar.playToClient(MessageOverlayMessage.TYPE, MessageOverlayMessage.STREAM_CODEC, MessageOverlayMessage::handle);
 
         // Both ways:

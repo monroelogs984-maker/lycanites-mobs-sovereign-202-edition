@@ -198,6 +198,9 @@ public class CreatureInventory implements Container {
 			    this.creature.getEntityData().set(dataParameter, itemStack);
 		}
 
+		if(refresh)
+			this.creature.scheduleGUIRefresh();
+
 	}
 	
 	@Override

@@ -47,7 +47,15 @@ public class LycanitesMobs {
     public static final com.lycanitesmobs.core.network.PacketManager PACKET_MANAGER = new com.lycanitesmobs.core.network.PacketManager();
     /** The client's own player, or null on a server. Set during client setup (replaces the original's PROXY.getClientPlayer()). **/
     public static java.util.function.Supplier<net.minecraft.world.entity.player.Player> CLIENT_PLAYER = () -> null;
+    /** Opens a client screen by id (0 = Beastiary index, 1 = summoning), no-op on a server. Set during client setup. **/
+    public static java.util.function.IntConsumer OPEN_SCREEN = screenId -> {};
     public static final String versionMC = "1.21.1";
+
+    // Lycanite's links (credit for the original mod, shown in the Beastiary index):
+    public static final String twitter = "https://twitter.com/Lycanite05";
+    public static final String patreon = "https://www.patreon.com/lycanite";
+    public static final String guilded = "https://www.guilded.gg/i/jpLvd6J2";
+    public static final String discord = "https://discord.gg/bFpV3z4";
     public static final String version = versionNumber + " - MC " + versionMC;
     public static final String website = "https://lycanitesmobs.com";
 
@@ -79,9 +87,11 @@ public class LycanitesMobs {
         ItemManager.register(modEventBus);
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
+        com.lycanitesmobs.core.container.creature.CreatureContainer.MENUS.register(modEventBus);
         modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
         com.lycanitesmobs.core.manager.DeferredLevelActionManager.register();
         com.lycanitesmobs.core.event.PlayerEventListener.register();
+        com.lycanitesmobs.core.command.CommandManager.register();
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -105,8 +115,12 @@ public class LycanitesMobs {
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerItemColors);
             com.lycanitesmobs.client.ClientSetup.setClientPlayerSupplier();
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerClientExtensions);
+            modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerMenuScreens);
+            modEventBus.addListener(com.lycanitesmobs.client.event.OverlayEvents::registerGuiLayers);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.event.OverlayEvents::onDebugText);
             modEventBus.addListener(com.lycanitesmobs.client.manager.KeyManager::registerKeyMappings);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onClientTick);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onKeyInput);
         }
 
         modEventBus.addListener(this::commonSetup);
