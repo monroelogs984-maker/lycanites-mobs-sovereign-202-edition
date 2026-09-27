@@ -1,5 +1,6 @@
 package com.lycanitesmobs.client.renderer.entity.creature;
 
+import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureBase;
 import com.lycanitesmobs.client.manager.ModelManager;
 import com.lycanitesmobs.client.model.creature.base.CreatureModel;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -38,5 +39,23 @@ public class CreatureRenderer<T extends BaseCreatureEntity> extends MobRenderer<
      */
     public CreatureModel<T> getMainModel() {
         return this.model;
+    }
+
+    /**
+     * Gets the texture for a render pass, the base pass (null layer) uses the entity texture.
+     */
+    public ResourceLocation getEntityTexture(BaseCreatureEntity entity, LayerCreatureBase layer) {
+        if (layer == null) {
+            return entity.getTexture();
+        }
+        ResourceLocation layerTexture = layer.getLayerTexture(entity);
+        return layerTexture != null ? layerTexture : entity.getTexture();
+    }
+
+    /**
+     * Public so CreatureModel.addCustomLayers() can add effect layers (addLayer is protected).
+     */
+    public void addCreatureLayer(LayerCreatureBase<T> layer) {
+        this.addLayer(layer);
     }
 }

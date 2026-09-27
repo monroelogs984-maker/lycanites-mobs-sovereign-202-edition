@@ -198,12 +198,18 @@ public class ObjModel {
                 Vector3f norm = new Vector3f(normal.x(), normal.y(), normal.z());
                 matrix3f.transform(norm);
 
-                vertexBuilder.addVertex(pos.x(), pos.y(), pos.z())
-                        .setColor(red, green, blue, alpha)
-                        .setUv(v.getTexCoords().x + texOffsetX, 1f - (v.getTexCoords().y + texOffsetY))
-                        .setUv1(0, overlayV)
-                        .setLight(brightness)
-                        .setNormal(norm.x(), norm.y(), norm.z());
+                // Vanilla entity render types are QUADS buffers but OBJ meshes are triangles: every triangle is
+                // emitted as a degenerate quad (last vertex twice), otherwise each 4 vertices would be drawn as one
+                // quad stitched across two unrelated triangles (the "shattered mosaic" calpod look).
+                int emitCount = iv == 2 ? 2 : 1;
+                for (int emit = 0; emit < emitCount; emit++) {
+                    vertexBuilder.addVertex(pos.x(), pos.y(), pos.z())
+                            .setColor(red, green, blue, alpha)
+                            .setUv(v.getTexCoords().x + texOffsetX, 1f - (v.getTexCoords().y + texOffsetY))
+                            .setUv1(0, overlayV)
+                            .setLight(brightness)
+                            .setNormal(norm.x(), norm.y(), norm.z());
+                }
             }
         }
     }

@@ -74,6 +74,7 @@ public abstract class CreatureModel<T extends BaseCreatureEntity> extends Entity
         this.currentLoop = loop;
         this.currentLookY = lookY;
         this.currentLookX = lookX;
+        this.clearAnimationFrames();
         this.generateAnimationFrames(entity, time, distance, loop, lookY, lookX, 1, 0);
     }
 
@@ -85,7 +86,18 @@ public abstract class CreatureModel<T extends BaseCreatureEntity> extends Entity
         this.matrixStack = matrixStack;
         int fade = Math.max(this.currentEntity.hurtTime, 0);
         this.render(this.currentEntity, matrixStack, vertexBuilder, null, this.currentTime, this.currentDistance, this.currentLoop, this.currentLookY, this.currentLookX, 1, packedLight, fade);
-        this.clearAnimationFrames();
+    }
+
+    /**
+     * Renders a layer pass with this frame's stashed animation state (frames are kept until the next setupAnim).
+     */
+    public void renderLayer(PoseStack matrixStack, VertexConsumer vertexBuilder, LayerCreatureBase layer, int packedLight) {
+        if (this.currentEntity == null) {
+            return;
+        }
+        this.matrixStack = matrixStack;
+        int fade = Math.max(this.currentEntity.hurtTime, 0);
+        this.render(this.currentEntity, matrixStack, vertexBuilder, layer, this.currentTime, this.currentDistance, this.currentLoop, this.currentLookY, this.currentLookX, 1, packedLight, fade);
     }
 
     public void generateAnimationFrames(BaseCreatureEntity entity, float time, float distance, float loop, float lookY, float lookX, float scale, int brightness) {

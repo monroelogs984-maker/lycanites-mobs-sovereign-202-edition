@@ -1012,6 +1012,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
+     * Returns a sub texture of this creature (not subspecies/variant specific), e.g. calpod_effect.
+     **/
+    public ResourceLocation getSubTexture(String subName) {
+        return AssetHelper.entityTexture(this.getTextureName() + "_" + subName.toLowerCase());
+    }
+
+    /**
      * Gets the name of this creature's texture, normally links to its code name but can be overridden by subspecies and alpha creatures.
      **/
     public String getTextureName() {
