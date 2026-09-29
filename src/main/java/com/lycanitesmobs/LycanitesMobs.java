@@ -91,7 +91,9 @@ public class LycanitesMobs {
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedEntity.register(modEventBus);
+        com.lycanitesmobs.core.container.block.SummoningPedestalContainer.init(); // adds its menu to CreatureContainer.MENUS
         com.lycanitesmobs.core.container.creature.CreatureContainer.MENUS.register(modEventBus);
+        com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal.register(modEventBus);
         modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
         com.lycanitesmobs.core.manager.DeferredLevelActionManager.register();
         com.lycanitesmobs.core.event.PlayerEventListener.register();

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.special;
 
+import com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
@@ -30,7 +31,7 @@ import java.util.UUID;
 
 /**
  * The summoning portal a summoning staff opens where the player looks; releasing the staff summons the charged
- * minions from it. TODO(port): the summoning pedestal branches (TileEntitySummoningPedestal isn't ported yet).
+ * minions from it. A summoning pedestal keeps its own portal open above it and summons its summon set from it.
  */
 public class PortalEntity extends BaseProjectileEntity {
     // Summoning Portal:
@@ -49,8 +50,7 @@ public class PortalEntity extends BaseProjectileEntity {
     protected CreatureInfo creatureInfo;
     protected ItemStaffSummoning portalItem;
     protected UUID ownerUUID;
-    // TODO(port): summoning pedestal (TileEntitySummoningPedestal) - always null until ported.
-    protected Object summoningPedestal;
+    protected TileEntitySummoningPedestal summoningPedestal;
 
     // Datawatcher:
     protected static final EntityDataAccessor<Optional<UUID>> OWNER_UUID = SynchedEntityData.defineId(PortalEntity.class, EntityDataSerializers.OPTIONAL_UUID);
@@ -61,6 +61,17 @@ public class PortalEntity extends BaseProjectileEntity {
     public PortalEntity(EntityType<? extends PortalEntity> entityType, Level world) {
         super(entityType, world);
         this.setStats();
+    }
+
+    public PortalEntity(EntityType<? extends PortalEntity> entityType, Level world, TileEntitySummoningPedestal summoningPedestal) {
+        super(entityType, world);
+        this.summoningPedestal = summoningPedestal;
+        this.setStats();
+        this.setPos(
+                summoningPedestal.getBlockPos().getX() + 0.5D,
+                summoningPedestal.getBlockPos().getY() + 1.5D,
+                summoningPedestal.getBlockPos().getZ() + 0.5D
+        );
     }
 
     public PortalEntity(EntityType<? extends PortalEntity> entityType, Level world, Player shooter, SummonSet summonSet, ItemStaffSummoning portalItem) {
@@ -115,6 +126,14 @@ public class PortalEntity extends BaseProjectileEntity {
         }
         super.tick();
 
+        if (!this.getCommandSenderWorld().isClientSide) {
+            if (this.summoningPedestal != null) {
+                this.shootingEntity = this.summoningPedestal.getPlayer();
+                this.summonType = this.summoningPedestal.getSummonType();
+                this.creatureInfo = this.summoningPedestal.getCreatureInfo();
+            }
+        }
+
         // ========= Check for despawn =========
         if (!this.getCommandSenderWorld().isClientSide && this.isAlive()) {
             // From pedestal
@@ -156,6 +175,8 @@ public class PortalEntity extends BaseProjectileEntity {
         if (!this.getCommandSenderWorld().isClientSide) {
             if (this.shootingEntity != null) {
                 this.entityData.set(OWNER_UUID, Optional.of(this.shootingEntity.getUUID()));
+            } else if (this.summoningPedestal != null && this.summoningPedestal.getOwnerUUID() != null) {
+                this.entityData.set(OWNER_UUID, Optional.of(this.summoningPedestal.getOwnerUUID()));
             } else {
                 this.entityData.set(OWNER_UUID, Optional.empty());
             }
@@ -175,6 +196,14 @@ public class PortalEntity extends BaseProjectileEntity {
                     this.grantStaffSummonAmount();
                     this.summonTick = 0;
                 }
+            }
+        }
+
+        // Summoning Pedestal:
+        else if (this.summonType != null && this.summoningPedestal != null) {
+            if (++this.summonTick >= this.summonTime) {
+                this.summonAmount = this.summoningPedestal.getSummonAmount();
+                this.summonTick = 0;
             }
         }
 
@@ -255,6 +284,16 @@ public class PortalEntity extends BaseProjectileEntity {
                             this.portalItem.applyMinionBehaviour((TameableCreatureEntity) entityCreature, this.shootingEntity);
                             this.portalItem.applyMinionEffects(entityCreature);
                         }
+                    }
+                }
+
+                // Summoning Pedestal:
+                else if (this.summoningPedestal != null && this.summoningPedestal.getOwnerUUID() != null) {
+                    entityCreature.setMinion(true);
+                    entityCreature.bindSummoningPedestal(this.summoningPedestal);
+                    if (entityCreature instanceof TameableCreatureEntity) {
+                        ((TameableCreatureEntity) entityCreature).setOwnerId(this.summoningPedestal.getOwnerUUID());
+                        this.summoningPedestal.applyMinionBehaviour((TameableCreatureEntity) entityCreature);
                     }
                 }
 

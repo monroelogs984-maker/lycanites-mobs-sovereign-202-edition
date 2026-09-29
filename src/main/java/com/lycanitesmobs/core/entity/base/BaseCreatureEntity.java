@@ -188,6 +188,8 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected boolean isMinion = false;
     /** The pet entry (soulbound pet, mount, summoned minion, familiar) this creature belongs to, if any. **/
     protected PetEntry petEntry;
+    /** The Summoning Pedestal that summoned this creature, null if not summoned via a pedestal. **/
+    protected com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal summoningPedestal;
     /** Set when a creature saved as a bound pet is loaded without its pet entry - it's discarded, as the entry respawns its own. **/
     protected boolean boundPetOrphan = false;
     /** If true, this mob is temporary and will despawn once temporaryDuration reaches 0. **/
@@ -3092,7 +3094,21 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /** Hands a fused creature over to the summoning pedestal that owned its parts (if any). **/
     public void registerTransformedPedestalMinion(BaseCreatureEntity transformedCreature) {
-        // TODO(port): summoning pedestal block entity (TileEntitySummoningPedestal.registerMinion).
+        if (this.summoningPedestal != null) {
+            this.summoningPedestal.registerMinion(transformedCreature);
+        }
+    }
+
+    public void bindSummoningPedestal(com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal summoningPedestal) {
+        this.summoningPedestal = summoningPedestal;
+    }
+
+    public boolean hasSummoningPedestal() {
+        return this.summoningPedestal != null;
+    }
+
+    public int getSummonCost() {
+        return this.creatureInfo.getSummonCost();
     }
 
     private int getFusionTransformLevel(BaseCreatureEntity partnerCreature) {

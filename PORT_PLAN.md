@@ -1552,3 +1552,28 @@ all three keys teleported the player to the right dimension (Rahovart Nether (4,
 `run/client/screenshots/altartest_*.png`. **Not verified:** key consumption (the test player was in creative, which
 skips it, as upstream), multiplayer (several players using one pedestal), and a real fight to the death. The first
 teleport took ~10 s (fresh Nether chunk generation).
+
+## Summoning Pedestal (2026-09-29)
+
+The pet system's last placeholder block. Ported `TileEntitySummoningPedestal`, the real `BlockSummoningPedestal`
+(an EntityBlock with a ticker), `SummoningPedestalContainer` + provider, `SummoningPedestalScreen` +
+`SummoningPedestalList`, `MessageSummoningPedestalStats` (server -> nearby clients) and
+`MessageSummoningPedestalSummonSet` (client -> server), the pedestal branches of `PortalEntity`, and
+`BaseCreatureEntity.bindSummoningPedestal`/`hasSummoningPedestal`/`getSummonCost` (fused minions re-register with
+their pedestal).
+
+**1.21 / NeoForge changes:** a real registered `BlockEntityType` (the official `TileEntityBase` reported
+`BlockEntityType.CHEST` and swapped it in `getType()`); ticking via `getTicker`; registry-aware NBT; block entity
+sync via `getUpdateTag`/`handleUpdateTag`; `Player.openMenu` with the block pos; the menu type is added to
+`CreatureContainer.MENUS`. The screen registers its list as a renderable widget, since 1.21's `Screen.render` draws
+the background a second time and covered a manually rendered list.
+
+**Official bugs fixed:** the `summoningpedestal.redstonetime` config only set the fuel bar's initial max; each redstone
+still burned a hardcoded 10 minutes. It now sets the burn time. The summon-set packet was applied for anyone who sent
+it; it's now owner-only and needs the owner within reach.
+
+**Verified** with a real client (temporary driver, removed): placing binds it to the placer (`owner=2` model state);
+right-clicking opens the screen with all 33 summonable creatures listed and the behaviour buttons; picking one through
+the screen reaches the server; with redstone in the fuel slot it burned one dust, summoned a Geonach about every 10 s,
+each bound to the pedestal and owned by the player, and stopped at 5 when capacity hit 10/10. A water creature (Lacedon)
+was also selectable; whether it summons sensibly out of water is untested.

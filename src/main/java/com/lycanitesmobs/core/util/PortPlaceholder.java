@@ -11,7 +11,6 @@ import net.minecraft.world.entity.player.Player;
 public class PortPlaceholder {
     /** Systems a placeholder can be waiting on. The name is shown in the chat message. **/
     public static final String EQUIPMENT = "the equipment system";
-    public static final String SUMMONING_PEDESTAL = "the summoning pedestal";
 
     /**
      * Sends "<thing> is not functional yet due to <system> not being ported." to the player. Call server side only,

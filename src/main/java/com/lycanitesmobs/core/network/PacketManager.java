@@ -28,6 +28,7 @@ public class PacketManager {
         // Client -> Server:
         registrar.playToServer(PlayerControlPayload.TYPE, PlayerControlPayload.STREAM_CODEC, PlayerControlPayload::handle);
         registrar.playToServer(MessageEntityGUICommand.TYPE, MessageEntityGUICommand.STREAM_CODEC, MessageEntityGUICommand::handle);
+        registrar.playToServer(MessageSummoningPedestalSummonSet.TYPE, MessageSummoningPedestalSummonSet.STREAM_CODEC, MessageSummoningPedestalSummonSet::handle);
 
         // Server -> Client:
         registrar.playToClient(MessagePlayerStats.TYPE, MessagePlayerStats.STREAM_CODEC, MessagePlayerStats::handle);
@@ -38,6 +39,7 @@ public class PacketManager {
         registrar.playToClient(MessageEntityPickedUp.TYPE, MessageEntityPickedUp.STREAM_CODEC, MessageEntityPickedUp::handle);
         registrar.playToClient(MessageEntityPerched.TYPE, MessageEntityPerched.STREAM_CODEC, MessageEntityPerched::handle);
         registrar.playToClient(MessageScreenRequest.TYPE, MessageScreenRequest.STREAM_CODEC, MessageScreenRequest::handle);
+        registrar.playToClient(MessageSummoningPedestalStats.TYPE, MessageSummoningPedestalStats.STREAM_CODEC, MessageSummoningPedestalStats::handle);
         registrar.playToClient(MessageMobEvent.TYPE, MessageMobEvent.STREAM_CODEC, MessageMobEvent::handle);
         registrar.playToClient(MessageWorldEvent.TYPE, MessageWorldEvent.STREAM_CODEC, MessageWorldEvent::handle);
 
