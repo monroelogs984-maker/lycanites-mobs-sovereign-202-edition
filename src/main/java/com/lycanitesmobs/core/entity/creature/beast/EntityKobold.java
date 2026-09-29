@@ -1,5 +1,14 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.data.info.ObjectLists;
+import com.lycanitesmobs.core.entity.goals.actions.abilities.GetBlockGoal;
+import com.lycanitesmobs.core.entity.goals.actions.abilities.GetItemGoal;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.world.entity.EntityType;
@@ -13,11 +22,12 @@ import net.minecraft.world.level.Level;
  * torch-stealing abilities) and the torch-looting aiStep block that went with them. Kept the
  * `theivery` flag wired into vanilla's own canPickupItems() (self-contained) and the
  * health-threshold canAttack()/shouldCreatureGroupRevenge() tweaks (self-contained). Dropped
- * onRemovedFromWorld's bag-drop (bag subsystem not ported), shouldCreatureGroupHunt/Flee (no
- * such hooks in this port's BaseCreatureEntity, only shouldCreatureGroupRevenge), and the
- * MobType.UNDEFINED attribute assignment.
+ * MobType.UNDEFINED attribute assignment. (Bag drop, group hunt/flee restored 2026-09-28.)
  */
 public class EntityKobold extends TameableCreatureEntity implements Enemy {
+    // Fields restored from official (2026-09-28 method audit):
+    private int torchLootingTime = 20;
+
     protected boolean griefing = true;
     protected boolean theivery = true;
 
@@ -32,9 +42,15 @@ public class EntityKobold extends TameableCreatureEntity implements Enemy {
 
     @Override
     protected void registerGoals() {
-        super.registerGoals();
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setTargetClass(Player.class).setLongMemory(false));
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
+		if(this.theivery)
+			this.goalSelector.addGoal(this.claimIdleGoalIndex(), new GetItemGoal(this).setDistanceMax(8).setSpeed(1.2D));
+		if(this.griefing)
+			this.goalSelector.addGoal(this.claimIdleGoalIndex(), new GetBlockGoal(this).setDistanceMax(8).setSpeed(1.2D).setBlockName("torch").setTamedLooting(false));
+
+		super.registerGoals();
+
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setTargetClass(Player.class).setLongMemory(false));
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
     }
 
     @Override
@@ -61,4 +77,64 @@ public class EntityKobold extends TameableCreatureEntity implements Enemy {
     public boolean canPickUpLoot() {
         return this.theivery;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+	@Override
+    public void aiStep() {
+        super.aiStep();
+        
+        // Torch Looting:
+        if(!this.isTamed() && this.getCommandSenderWorld().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.griefing) {
+	        if(this.torchLootingTime-- <= 0) {
+	        	this.torchLootingTime = 60;
+	        	int distance = 2;
+	        	String targetName = "torch";
+	        	List possibleTargets = new ArrayList<BlockPos>();
+	            for(int x = (int)this.position().x() - distance; x < (int)this.position().x() + distance; x++) {
+	            	for(int y = (int)this.position().y() - distance; y < (int)this.position().y() + distance; y++) {
+	            		for(int z = (int)this.position().z() - distance; z < (int)this.position().z() + distance; z++) {
+                            BlockPos pos = new BlockPos(x, y, z);
+	            			Block searchBlock = this.getCommandSenderWorld().getBlockState(pos).getBlock();
+	                    	if(searchBlock != Blocks.AIR) {
+	                    		BlockPos possibleTarget = null;
+	                			if(ObjectLists.isName(searchBlock, targetName)) {
+	                				this.getCommandSenderWorld().destroyBlock(pos, true);
+	                				break;
+	                			}
+	                    	}
+	                    }
+	                }
+	            }
+	        }
+        }
+    }
+
+	/**
+	 * Kobolds drop the loot they stole when they despawn. Official: Forge's onRemovedFromWorld (also ran on chunk
+	 * unload); here only an actual despawn/discard drops it, so unloading doesn't spill the bag every time.
+	 **/
+	@Override
+	public void remove(RemovalReason reason) {
+		if(!this.getCommandSenderWorld().isClientSide && reason == RemovalReason.DISCARDED && !this.isTamed() && this.inventory.hasBagItems()) {
+			this.inventory.dropInventory();
+		}
+		super.remove(reason);
+	}
+
+	@Override
+	public boolean shouldCreatureGroupFlee(LivingEntity target) {
+		if(target instanceof Player && (target.getHealth() / target.getMaxHealth()) <= 0.5F)
+			return false;
+		return super.shouldCreatureGroupFlee(target);
+	}
+
+	@Override
+	public boolean shouldCreatureGroupHunt(LivingEntity target) {
+		if(target instanceof Player && (target.getHealth() / target.getMaxHealth()) <= 0.5F)
+			return true;
+		return super.shouldCreatureGroupHunt(target);
+	}
 }

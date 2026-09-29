@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
@@ -29,13 +32,18 @@ public class EntityMaka extends AgeableCreatureEntity {
         this.babySpawnChance = 0.1D;
         this.attackCooldownMax = 10;
         this.isAggressiveByDefault = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.fleeHealthPercent = 1.0F;
         this.setupMob();
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
+		this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
+
+		this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindMasterGoal(this).setTargetClass(EntityMakaAlpha.class).setSightCheck(false));
     }
 
     @Override
@@ -88,4 +96,17 @@ public class EntityMaka extends AgeableCreatureEntity {
         }
         super.setGrowingAge(age);
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
 }

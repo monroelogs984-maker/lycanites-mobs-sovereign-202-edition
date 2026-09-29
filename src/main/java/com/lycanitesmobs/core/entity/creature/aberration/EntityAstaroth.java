@@ -1,5 +1,11 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.projectile.hellfire.EntityHellShield;
+import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
+import com.lycanitesmobs.core.manager.ProjectileManager;
+import com.lycanitesmobs.core.util.helpers.LMHelperClass;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.creature.demon.EntityMalwrath;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
@@ -34,6 +40,8 @@ public class EntityAstaroth extends TameableCreatureEntity implements Enemy {
     public EntityAstaroth(EntityType<? extends EntityAstaroth> entityType, Level world) {
         super(entityType, world);
         this.hasAttackSound = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.solidCollision = false;
         this.setupMob();
         this.hitAreaWidthScale = 1.5F;
     }
@@ -81,5 +89,51 @@ public class EntityAstaroth extends TameableCreatureEntity implements Enemy {
     public void attackRanged(Entity target, float range) {
         this.fireProjectile("devilstar", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 1f, 1F);
         super.attackRanged(target, range);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Update
+    // ==================================================
+    // ========== Living Update ==========
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Asmodeus Master:
+        if (this.updateTick % 20 == 0) {
+            if (this.getMasterTarget() != null && this.getMasterTarget() instanceof EntityAsmodeus && ((BaseCreatureEntity) this.getMasterTarget()).getBattlePhase() > 0) {
+                EntityHellShield projectile = new EntityHellShield(ProjectileManager.getInstance().getOldProjectileType(EntityHellShield.class), this.getCommandSenderWorld(), this);
+                projectile.setProjectileScale(3f);
+                projectile.setPos(
+                        projectile.position().x(),
+                        projectile.position().y() - this.getDimensions(Pose.STANDING).height() * 0.35D,
+                        projectile.position().z()
+                );
+                double dX = this.getMasterTarget().position().x() - this.position().x();
+                double dY = this.getMasterTarget().position().y() + (this.getMasterTarget().getDimensions(Pose.STANDING).height() * 0.75D) - projectile.position().y();
+                double dZ = this.getMasterTarget().position().z() - this.position().z();
+                double distance = Mth.sqrt(LMHelperClass.convertToFloat(dX * dX + dZ * dZ)) * 0.1F;
+                float velocity = 0.8F;
+                projectile.shoot(dX, dY + distance, dZ, velocity, 0.0F);
+                DeferredLevelActionManager.spawnEntity(this.getCommandSenderWorld(), this.blockPosition(), null, projectile);
+            }
+        }
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

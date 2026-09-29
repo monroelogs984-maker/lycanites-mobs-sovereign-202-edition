@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.data.info;
 
+import com.lycanitesmobs.core.manager.CreatureManager;
+import com.lycanitesmobs.core.data.info.creature.CreatureInfo;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffects;
@@ -52,10 +54,24 @@ public class ObjectLists {
 			itemLists.get(list).add(itemStack);
 	}
 
-	// NOTE: addEntity(String, Object) was dropped here during the NeoForge 1.21.1 port - it
-	// depends on com.lycanitesmobs.core.manager.CreatureManager, which is Phase 5 and doesn't
-	// exist yet. Port it back in alongside CreatureManager. getEntites()/inEntityList() below
-	// don't depend on it and are kept.
+	public static void addEntity(String list, Object object) {
+		if(!(object instanceof Entity || object instanceof String))
+			return;
+		list = list.toLowerCase();
+		if(!entityLists.containsKey(list))
+			entityLists.put(list, new ArrayList<>());
+
+		EntityType entityType = null;
+		if(object instanceof String) {
+			CreatureInfo creatureInfo = CreatureManager.getInstance().getCreature((String) object);
+			if(creatureInfo != null) {
+				entityType = creatureInfo.getEntityType();
+			}
+		}
+		if(entityType != null) {
+			entityLists.get(list).add(entityType);
+		}
+	}
 
 	public static void addEffect(String list, MobEffect effect, String effectName) {
 		if(effect == null)
@@ -71,6 +87,10 @@ public class ObjectLists {
     // ==================================================
     //                        Get
     // ==================================================
+	/** Official: commented-out custom drop config reading, kept as a no-op for the holiday lists. **/
+	public static void addFromConfig(String listName) {
+	}
+
 	public static List<ItemStack> getItems(String list) {
 		list = list.toLowerCase();
 		if(!itemLists.containsKey(list))

@@ -278,7 +278,7 @@ public class CreatureManager extends JSONLoader {
      */
     public void reload() {
         this.loadConfig();
-        // TODO Phase 6: SpawnerMobRegistry.clearRegistries() - spawner system not ported yet.
+        com.lycanitesmobs.core.entity.spawner.SpawnerMobRegistry.clearRegistries();
         for (ModInfo group : this.loadedMods) {
             this.loadCreaturesFromJSON(group);
         }

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.goals.actions.WanderGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -23,6 +24,8 @@ public class EntityLacedon extends TameableCreatureEntity implements Enemy {
 
     public EntityLacedon(EntityType<? extends EntityLacedon> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.1D;
         this.canGrow = true;
@@ -88,4 +91,22 @@ public class EntityLacedon extends TameableCreatureEntity implements Enemy {
     public boolean canBreatheAir() {
         return false;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.avian;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -73,7 +74,9 @@ public class EntityRoc extends RideableCreatureEntity implements Enemy {
 
             // Pickup Update:
 	    	if(this.hasPickupEntity()) {
-	    		// TODO(port): ExtendedEntity.setPickedUpByEntity() (pickup carrying) comes with the ExtendedEntity work.
+	    		ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+	    		if (extendedEntity != null)
+	    		    extendedEntity.setPickedUpByEntity(this);
 
                 // Drop Creeper On Target:
                 if(this.getPickupEntity() instanceof Creeper && this.hasAttackTarget() && !(this.getTarget() instanceof Creeper)) {
@@ -181,7 +184,10 @@ public class EntityRoc extends RideableCreatureEntity implements Enemy {
         }
 
         // Ignore Targets Picked Up By Another Mob:
-        // TODO(port): skip targets already picked up by another mob (ExtendedEntity.isPickedUp()).
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(targetEntity);
+        if (extendedEntity != null && extendedEntity.isPickedUp()) {
+            return false;
+        }
 
         // Creeper Bombing:
         if(!this.creeperDropping && targetEntity instanceof Creeper) {

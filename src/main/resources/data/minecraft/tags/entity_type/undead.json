@@ -1,0 +1,22 @@
+{
+  "replace": false,
+  "values": [
+    "lycanitesmobs:amalgalich",
+    "lycanitesmobs:apollyon",
+    "lycanitesmobs:behemophet",
+    "lycanitesmobs:belphegor",
+    "lycanitesmobs:cryptkeeper",
+    "lycanitesmobs:darkling",
+    "lycanitesmobs:epion",
+    "lycanitesmobs:geist",
+    "lycanitesmobs:ghoul",
+    "lycanitesmobs:grell",
+    "lycanitesmobs:kathoga",
+    "lycanitesmobs:malwrath",
+    "lycanitesmobs:necrovore",
+    "lycanitesmobs:rahovart",
+    "lycanitesmobs:reaper",
+    "lycanitesmobs:vorach",
+    "lycanitesmobs:wendigo"
+  ]
+}

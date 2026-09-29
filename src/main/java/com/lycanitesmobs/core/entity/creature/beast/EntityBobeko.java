@@ -1,5 +1,12 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import java.util.HashMap;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -28,12 +35,15 @@ public class EntityBobeko extends AgeableCreatureEntity {
         super(entityType, world);
         this.hasAttackSound = false;
         this.isAggressiveByDefault = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.fleeHealthPercent = 1.0F;
         this.setupMob();
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
@@ -86,5 +96,45 @@ public class EntityBobeko extends AgeableCreatureEntity {
         if (potionEffect.is(MobEffects.MOVEMENT_SLOWDOWN)) return false;
         if (potionEffect.is(MobEffects.HUNGER)) return false;
         return super.canBeAffected(potionEffect);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public HashMap<Integer, String> getInteractCommands(Player player, ItemStack itemStack) {
+        HashMap<Integer, String> commands = new HashMap<Integer, String>();
+        commands.putAll(super.getInteractCommands(player, itemStack));
+
+        if (itemStack != null) {
+            // Milk:
+            if (itemStack.getItem() == Items.BUCKET)
+                commands.put(COMMAND_PIORITIES.ITEM_USE.id, "Milk");
+        }
+
+        return commands;
+    }
+
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    @Override
+    public boolean performCommand(String command, Player player, ItemStack itemStack, InteractionHand hand) {
+
+        // Milk:
+        if (command.equals("Milk")) {
+            this.replacePlayersItem(player, hand, itemStack, new ItemStack(Items.MILK_BUCKET));
+            return true;
+        }
+
+        return super.performCommand(command, player, itemStack, hand);
     }
 }

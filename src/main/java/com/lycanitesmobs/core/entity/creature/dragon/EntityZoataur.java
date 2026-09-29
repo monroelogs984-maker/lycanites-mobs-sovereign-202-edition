@@ -19,6 +19,7 @@ public class EntityZoataur extends RideableCreatureEntity implements Enemy {
     // ==================================================
     public EntityZoataur(EntityType<? extends EntityZoataur> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = true;
 
         // Setup:
         this.hasAttackSound = true;

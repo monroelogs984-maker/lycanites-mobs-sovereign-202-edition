@@ -44,4 +44,58 @@ public class EntityGeken extends TameableCreatureEntity implements Enemy {
     public boolean canClimb() {
         return true;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+	// ========== Living Update ==========
+	@Override
+    public void aiStep() {
+        super.aiStep();
+        
+        // Random Leaping:
+        if(this.onGround() && !this.getCommandSenderWorld().isClientSide) {
+        	if(this.hasAttackTarget()) {
+        		if(this.random.nextInt(10) == 0)
+        			this.leap(6.0F, 0.6D, this.getTarget());
+        	}
+        	else {
+        		if(this.isMoving() && this.random.nextInt(50) == 0)
+        			this.leap(1.0D, 1.0D);
+        	}
+        }
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+   	//                     Immunities
+   	// ==================================================
+    @Override
+    public float getFallResistance() {
+    	return 100;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+	@Override
+	public int getRangedCooldown() {
+		if(this.getAttackPhase() == 2)
+			return super.getRangedCooldown() * 3;
+		return super.getRangedCooldown();
+	}
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

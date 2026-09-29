@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
@@ -26,6 +27,8 @@ public class EntityStryder extends RideableCreatureEntity implements IGroupHeavy
 
     public EntityStryder(EntityType<? extends EntityStryder> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
 
         // Setup:
         this.hasAttackSound = true;
@@ -58,7 +61,9 @@ public class EntityStryder extends RideableCreatureEntity implements IGroupHeavy
 
             // Entity Pickup Update:
             if (this.hasPickupEntity()) {
-                // TODO(port): ExtendedEntity.setPickedUpByEntity() (pickup carrying) comes with the ExtendedEntity work.
+                ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+                if (extendedEntity != null)
+                    extendedEntity.setPickedUpByEntity(this);
 
                 if (this.isTamed() && !this.canAttack(this.getPickupEntity())) {
                     this.getPickupEntity().addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, this.getEffectDuration(5), 1));
@@ -212,7 +217,9 @@ public class EntityStryder extends RideableCreatureEntity implements IGroupHeavy
     }
 
     public void dropPickupEntity() {
-        // TODO(port): ExtendedEntity.setPickedUpByEntity() (pickup carrying) comes with the ExtendedEntity work.
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+        if (extendedEntity != null)
+            extendedEntity.setPickedUpByEntity(null);
         this.pickupEntity = null;
     }
 

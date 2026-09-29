@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.amphibian;
 
+import net.minecraft.world.level.pathfinder.PathType;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -27,6 +28,8 @@ public class EntityAglebemu extends TameableCreatureEntity implements Enemy {
 
     public EntityAglebemu(EntityType<? extends EntityAglebemu> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.spreadFire = false;
         this.canGrow = true;
@@ -74,4 +77,64 @@ public class EntityAglebemu extends TameableCreatureEntity implements Enemy {
     public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
         return false;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+	// ========== Living Update ==========
+	@Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Random Leaping:
+        if(this.onGround() && !this.getCommandSenderWorld().isClientSide && this.isMoving()) {
+            if(this.hasAttackTarget()) {
+                if(this.random.nextInt(5) == 0)
+                    this.leap(6.0F, 0.6D, this.getTarget());
+            }
+            else {
+                if(this.random.nextInt(25) == 0)
+                    this.leap(1.0D, 1.0D);
+            }
+        }
+    }
+
+    // ==================================================
+    //                      Movement
+    // ==================================================
+    // ========== Movement Speed Modifier ==========
+    @Override
+    public float getAISpeedModifier() {
+        if(this.isInWater()) // Checks specifically just for water.
+            return 2.0F;
+        else if(this.waterContact()) // Checks for water, rain, etc.
+            return 1.5F;
+        return super.getAISpeedModifier();
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+   	//                     Immunities
+   	// ==================================================
+    @Override
+    public float getFallResistance() {
+    	return 100;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

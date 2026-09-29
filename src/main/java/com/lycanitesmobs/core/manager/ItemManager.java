@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.block.base.BlockBase;
+import com.lycanitesmobs.core.util.PortPlaceholder;
 import com.lycanitesmobs.core.item.summoningstaff.*;
 import com.lycanitesmobs.core.item.special.ItemSoulgazer;
 import com.lycanitesmobs.core.item.special.ItemSoulContract;
@@ -70,6 +72,7 @@ public class ItemManager extends JSONLoader {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> blockTab = TABS.register(LycanitesMobs.MODID + ".blocks", blocksGroup::build);
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> creaturesTab = TABS.register(LycanitesMobs.MODID + ".creatures", LMCreaturesGroup.getBuilder()::build);
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> chargesTab = TABS.register(LycanitesMobs.MODID + ".charges", LMChargesGroup.getBuilder()::build);
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> equipmentPartsTab = TABS.register(LycanitesMobs.MODID + ".equipmentparts", com.lycanitesmobs.core.tabs.LMEquipmentPartsGroup.getBuilder()::build);
     public static final Map<String, Item.Properties> registryItems = new HashMap<>();
     protected static ItemManager INSTANCE;
     protected static final Map<String, ItemInfo> items = new HashMap<>();
@@ -176,6 +179,20 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addItem("soul_contract", () -> new ItemSoulContract(itemPropertiesNoStack));
         ObjectManager.addItem("soulstone", () -> new ItemSoulstone(itemProperties, null));
 
+        // Equipment Pieces: (placeholder until the equipment system - see ItemEquipment)
+        Item.Properties equipmentProperties = new Item.Properties().stacksTo(1).setNoRepair();
+        ObjectManager.addItem("equipment", () -> new com.lycanitesmobs.core.item.equipment.ItemEquipment(equipmentProperties));
+
+        // Keys: (placeholders until altars - see ItemSoulkey)
+        ObjectManager.addItem("soulkey", () -> new com.lycanitesmobs.core.item.consumable.utility.ItemSoulkey(itemProperties, "soulkey", 0));
+        ObjectManager.addItem("soulkeydiamond", () -> new com.lycanitesmobs.core.item.consumable.utility.ItemSoulkey(itemProperties, "soulkeydiamond", 1));
+        ObjectManager.addItem("soulkeyemerald", () -> new com.lycanitesmobs.core.item.consumable.utility.ItemSoulkey(itemProperties, "soulkeyemerald", 2));
+
+        // Seasonal Items:
+        ObjectManager.addItem("halloweentreat", () -> new com.lycanitesmobs.core.item.consumable.holiday.ItemHalloweenTreat(itemProperties));
+        ObjectManager.addItem("wintergift", () -> new com.lycanitesmobs.core.item.consumable.holiday.ItemWinterGift(itemProperties));
+        ObjectManager.addItem("wintergiftlarge", () -> new com.lycanitesmobs.core.item.consumable.holiday.ItemWinterGiftLarge(itemProperties));
+
         // Summoning Staffs:
         Item.Properties summoningStaffProperties = new Item.Properties().stacksTo(1).durability(500);
         ObjectManager.addItem("summoningstaff", () -> new ItemStaffSummoning(summoningStaffProperties, "summoningstaff", "summoningstaff"));
@@ -196,6 +213,17 @@ public class ItemManager extends JSONLoader {
         BlockManager.addDungeonBlocks("aberrant");
         BlockManager.addDungeonBlocks("ashen");
         BlockManager.addDungeonBlocks("stream");
+        ObjectManager.addBlock("soulcubedemonic", () -> new BlockBase(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE).strength(2F, 1200.0F), "soulcubedemonic"), false);
+        ObjectManager.addBlock("soulcubeundead", () -> new BlockBase(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE).strength(2F, 1200.0F), "soulcubeundead"), false);
+        ObjectManager.addBlock("soulcubeaberrant", () -> new BlockBase(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE).strength(2F, 1200.0F), "soulcubeaberrant"), false);
+
+        // Utilities: (placeholders - see PlaceholderFacingBlock / BlockSummoningPedestal)
+        ObjectManager.addBlock("summoningpedestal", () -> new com.lycanitesmobs.core.block.special.BlockSummoningPedestal(Block.Properties.of().sound(SoundType.METAL).strength(5, 10)), false);
+        ObjectManager.addBlock("equipmentforge_lesser", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.WOOD).strength(5, 10), "equipmentforge_lesser", PortPlaceholder.EQUIPMENT), false);
+        ObjectManager.addBlock("equipmentforge_greater", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.STONE).strength(5, 20), "equipmentforge_greater", PortPlaceholder.EQUIPMENT), false);
+        ObjectManager.addBlock("equipmentforge_master", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipmentforge_master", PortPlaceholder.EQUIPMENT), false);
+        ObjectManager.addBlock("equipment_infuser", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_infuser", PortPlaceholder.EQUIPMENT), false);
+        ObjectManager.addBlock("equipment_station", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_station", PortPlaceholder.EQUIPMENT), false);
         ObjectManager.addBlock("propolis", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.CLAY).sound(SoundType.WET_GRASS).strength(0.6F).randomTicks(), "propolis"), false);
         ObjectManager.addBlock("veswax", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.WOOD).sound(SoundType.WOOD).strength(0.6F).randomTicks(), "veswax"), false);
 

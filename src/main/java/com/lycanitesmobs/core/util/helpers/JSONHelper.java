@@ -1,6 +1,7 @@
 package com.lycanitesmobs.core.util.helpers;
 
 import com.google.gson.JsonArray;
+import com.lycanitesmobs.core.block.Material;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Vec3i;
@@ -95,9 +96,85 @@ public class JSONHelper {
         return items;
     }
 
-    // NOTE: getJsonMaterials(JsonObject) was dropped here during the NeoForge 1.21.1 port - it
-    // depends on com.lycanitesmobs.core.block.Material, which is Phase 4 (Items & Blocks) and
-    // doesn't exist yet. Port it back in alongside Material.
+    /** Blocks for the official legacy material names; Material's lists are built in common setup. **/
+    public static List<Block> getJsonMaterials(JsonObject json) {
+        List<Block> blocks = new ArrayList<>();
+
+        if (json.has("materials")) {
+            JsonArray jsonArray = json.get("materials").getAsJsonArray();
+            Iterator<JsonElement> jsonIterator = jsonArray.iterator();
+
+            while (jsonIterator.hasNext()) {
+                String materialName = jsonIterator.next().getAsString();
+                List<Block> materialBlocks = null;
+
+                switch (materialName.toLowerCase()) {
+                    case "air":
+                        materialBlocks = Material.AIR;
+                        break;
+                    case "lava":
+                        materialBlocks = Material.LAVA;
+                        break;
+                    case "fire":
+                        materialBlocks = Material.FIRE;
+                        break;
+                    case "water":
+                        materialBlocks = Material.WATER;
+                        break;
+                    case "ground":
+                    case "earth":
+                        materialBlocks = Material.DIRT;
+                        break;
+                    case "sand":
+                        materialBlocks = Material.SAND;
+                        break;
+                    case "clay":
+                        materialBlocks = Material.CLAY;
+                        break;
+                    case "wood":
+                        materialBlocks = Material.WOOD;
+                        break;
+                    case "rock":
+                        materialBlocks = Material.STONE;
+                        break;
+                    case "grass":
+                        materialBlocks = Material.GRASS;
+                        break;
+                    case "tallplants":
+                    case "vine":
+                        materialBlocks = Material.REPLACEABLE_PLANT;
+                        break;
+                    case "plants":
+                        materialBlocks = Material.PLANT;
+                        break;
+                    case "leaves":
+                        materialBlocks = Material.LEAVES;
+                        break;
+                    case "cactus":
+                        materialBlocks = Material.CACTUS;
+                        break;
+                    case "snow":
+                        materialBlocks = Material.SNOW;
+                        break;
+                    case "ice":
+                        materialBlocks = Material.ICE;
+                        break;
+                    case "iron":
+                        materialBlocks = Material.METAL;
+                        break;
+                    case "web":
+                        materialBlocks = Material.WEB;
+                        break;
+                }
+
+                if (materialBlocks != null) {
+                    blocks.addAll(materialBlocks);
+                }
+            }
+        }
+        return blocks;
+    }
+
 
     public static List<String> getBiomesFromTags(Level world, List<String> biomeTags) {
         List<String> cachedResult = biomeTagCache.get(biomeTags);

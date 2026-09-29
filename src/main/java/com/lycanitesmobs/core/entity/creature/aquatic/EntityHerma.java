@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.goals.actions.WanderGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -20,6 +21,8 @@ public class EntityHerma extends TameableCreatureEntity implements Enemy {
 
     public EntityHerma(EntityType<? extends EntityHerma> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.01D;
         this.canGrow = true;
@@ -69,4 +72,42 @@ public class EntityHerma extends TameableCreatureEntity implements Enemy {
     public boolean canBreatheAir() {
         return true;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Movement
+    // ==================================================
+    // ========== Movement Speed Modifier ==========
+    @Override
+    public float getAISpeedModifier() {
+    	if(this.isInWater()) // Checks specifically just for water.
+    		return 1.25F;
+    	else if(this.waterContact()) // Checks for water, rain, etc.
+    		return 1.125F;
+    	return super.getAISpeedModifier();
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ========== Get Wander Position ==========
+    public BlockPos getWanderPosition(BlockPos wanderPosition) {
+        BlockPos groundPos;
+        for(groundPos = wanderPosition.below(); groundPos.getY() > 0 && !this.getCommandSenderWorld().getBlockState(groundPos).isSolid(); groundPos = groundPos.below()) {}
+        return groundPos.above();
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

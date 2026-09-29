@@ -1,5 +1,11 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import com.lycanitesmobs.core.entity.goals.actions.WanderGoal;
+import com.lycanitesmobs.core.manager.ObjectManager;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.pathfinder.PathType;
 import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -16,19 +22,23 @@ import net.minecraft.world.level.pathfinder.PathType;
  * canBeTempted). "purelava" block check dropped (that block isn't registered in this port yet -
  * kept the plain Blocks.LAVA check). fleeHealthPercent field doesn't exist on the trimmed
  * BaseCreatureEntity - dropped (default flee behaviour applies instead).
- * getBrightnessForRender()/getDamageModifier() are dead code even in the original (no caller) -
- * dropped along with them. applyDropEffects()/CustomItemEntity dropped too - that custom item-
+ * getBrightnessForRender() is dead code even in the original (no caller) - dropped.
+ * getDamageModifier() restored 2026-09-29 (called from BaseCreatureEntity.hurt()). applyDropEffects()/CustomItemEntity dropped too - that custom item-
  * entity drop system isn't ported at all (core/entity/item/ doesn't exist in this port yet).
  */
 public class EntityCephignis extends AgeableCreatureEntity {
 
     public EntityCephignis(EntityType<? extends EntityCephignis> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
         this.isLavaCreature = true;
         this.hasAttackSound = false;
         this.babySpawnChance = 0.01D;
         this.canGrow = true;
         this.isAggressiveByDefault = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.fleeHealthPercent = 1.0F;
         this.setupMob();
         this.setPathfindingMalus(PathType.LAVA, 0F);
     }
@@ -36,6 +46,7 @@ public class EntityCephignis extends AgeableCreatureEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
@@ -97,5 +108,45 @@ public class EntityCephignis extends AgeableCreatureEntity {
     @Override
     public void applyDropEffects(CustomItemEntity entityItem) {
         entityItem.setCanBurn(false);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ========== Can Be Tempted ==========
+    @Override
+    public boolean canBeTempted() {
+        if (this.getAirSupply() <= -100)
+            return false;
+        else return super.canBeTempted();
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                   Brightness
+    // ==================================================
+    public float getBrightness() {
+        return 1.0F;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // Restored from official 2026-09-29 (method audit) - hooked in BaseCreatureEntity.hurt().
+    @Override
+    public float getDamageModifier(DamageSource damageSrc) {
+        if (damageSrc.is(DamageTypeTags.IS_FIRE))
+            return 0F;
+        return super.getDamageModifier(damageSrc);
     }
 }

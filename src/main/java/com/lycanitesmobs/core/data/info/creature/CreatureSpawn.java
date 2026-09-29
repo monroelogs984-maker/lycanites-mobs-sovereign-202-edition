@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.data.info.creature;
 
+import com.lycanitesmobs.core.entity.spawner.SpawnerMobRegistry;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.util.helpers.JSONHelper;
@@ -253,10 +254,7 @@ public class CreatureSpawn {
             this.spawners = JSONHelper.getJsonStrings(json.get("spawners").getAsJsonArray());
             for (String spawner : this.spawners) {
                 LMHelperClass.logDebug("Creature", "Adding " + creatureInfo.getName() + " to " + spawner + " global spawn list.");
-                // TODO Phase 6: SpawnerMobRegistry.createSpawn(creatureInfo, spawner) - the
-                // spawner registry system isn't ported yet. Custom spawner entries in JSON
-                // won't do anything until then; vanilla spawner category registration below
-                // still works independently.
+                SpawnerMobRegistry.createSpawn(creatureInfo, spawner);
 
                 if ("monster".equalsIgnoreCase(spawner))
                     this.vanillaSpawnerTypes.add(MobCategory.MONSTER);

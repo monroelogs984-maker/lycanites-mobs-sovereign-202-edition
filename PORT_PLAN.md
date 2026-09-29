@@ -1348,3 +1348,125 @@ summoning screen's variant list overlaps the action labels - identical coordinat
 
 **Remaining pet-adjacent TODOs:** summoning pedestal (block entity + screen), perching, ExtendedEntity (pickup carrying,
 fear), Charge items, mob-event titles in the HUD.
+
+## Phase 6b: world spawning - spawners, triggers, structure spawns (2026-09-28)
+
+Faithful port of the official spawner system; S202 spawn tuning (common/rare rates, loosened biomes, trigger keep-list)
+is still data work for later - all 47 official spawner JSONs are copied unchanged. Before this, **no creature ever
+spawned naturally** (official Lycanites uses only its own spawners, never vanilla biome spawn lists).
+
+**Ported:** `SpawnerManager` (+ `globalspawner.json`), `Spawner`, `MobSpawn`, `SpawnerMobRegistry` (creature JSON
+`"spawners"` lists re-enabled in `CreatureSpawn`), `SpawnerTriggerDispatcher`, all triggers except `mobEvent` (world,
+player, kill, entitySpawned, chunk, block, ore, crop, tree, mix, sleep, fishing, explosion), all conditions (world,
+player, event, date, group), all locations (base, random, block, material, structure), `SpawnerEventListener`,
+`StructureSpawnInjector`, `/lm spawners reload|list|creative`, `/lm spawner test <name> <level>|lighttest`.
+`ExtendedWorld` (trimmed SavedData: spawner tick, day base time, boss tracking, saved world-event fields) + `BossEntry`.
+`BaseCreatureEntity`: the official spawn-check chain (`checkSpawnRules` -> light/collision/group limit/dimension/
+liquid/underground/boss proximity, `checkSpawnLimits`), persistence (`isPersistenceRequired`/`canDespawnNaturally`/
+`forceNoDespawn`), the full `despawnCheck()` (disabled creature, temporary, peaceful, stale event spawns) replacing the
+temporary-only version, boss arena tracking + boss block break/place protection (`PlayerEventListener`), and
+`destroyArea` now fires block spawn triggers. Restored `spawnsInWater/OnLand/Underground` on 39 creatures and the
+Vespid/Vespid Queen `isPersistant()` overrides that the early trims dropped.
+
+**1.21 / NeoForge changes:** load in common setup (spawner JSON resolves blocks/items/Material lists, which only exist
+after registries freeze) not the constructor; `LevelTickEvent.Pre`/`PlayerTickEvent.Post`; harvest trigger on
+`BlockDropsEvent` (carries the tool; fortune/silk holders looked up from the enchantment registry); sleep on
+`CanPlayerSleepEvent.setProblem`; entitySpawned on `FinalizeSpawnEvent`; fresh chunks from `ChunkEvent.Load#isNewChunk`
+(no ChunkSpawnFeature); `MobType` -> entity type tags (undead/arthropod/aquatic/illager, "undefined" = none);
+`IPlantable` -> BushBlock/Cactus/SugarCane (+vine); `IFluidBlock` check dropped (no block ever implemented it);
+`Explosion.getDirectSourceEntity()/center()`; `Level.getSharedSpawnPos()`. Structure spawns use a real NeoForge
+**structure modifier** (`lycanitesmobs:json_structure_spawns`, one datapack entry in `data/lycanitesmobs/neoforge/
+structure_modifier/`) instead of the official's mixin accessor hack.
+
+**Deliberate deviations:** (1) the official built the `SpawnPlacementCheck` event but never posted it; it is posted
+now, so other mods can veto/force. (2) The official never called `finalizeSpawn` for spawner spawns; the port calls
+`EventHooks.finalizeMobSpawn` for every spawn, so other mods' `FinalizeSpawnEvent` hooks (mob scaling, spawn control)
+see Lycanites spawns, and a cancel from them is honoured. (3) Non-Lycanites `mobId`s in spawner JSON are resolved
+lazily (official only resolved them for dungeons, so they never spawned). (4) `applySpawnerSpawnState(forceNoDespawn)`
+also sets vanilla's saved persistence flag (official's field was lost on reload). (5) `/lm spawner test` from a console
+uses the source position, not 0,0,0.
+
+**Deferred:** mob event spawners (`mobevents/` spawner entries, `MobEventSpawnTrigger`, `applySpawnEvent` tagging,
+`MobEvent.onSpawn`), dungeon state in `ExtendedWorld`. `ExtendedWorld.getWorldEvent()`/`getMobEventPlayerServer()`
+return null until mob events exist, so event-gated spawners stay off. Official quirks kept: `BlockSpawnLocation` never
+scans below y=0 unless `yMin` is set; `isBlockUnderground` only counts plant blocks as cover; `chunk_animal`/
+`chunk_water_animal` spawners have no creatures assigned in official data (inert).
+
+**Verified headless** (runServer + RCON): server loads clean; `/lm spawner test land 1` spawned 3 Herma (the only
+biome-valid land mob at spawn) including a Russet variant; 40 TNT -> 1 explosion trigger (5%) -> 1 Tremor; structure
+modifier injected Sylph into desert/jungle pyramids + stronghold and Aegis into the 5 vanilla villages; `/lm spawners
+reload` then another trigger worked. Note the dev test world has `doMobSpawning=false` (spawners respect it; restored
+after testing). **Not verified**: the `world` trigger (it needs real players - the main natural spawn path), player/
+kill/block/ore/fishing/sleep triggers, and actual structure spawning in-game. Deployed to Lycannots.
+Found: `/kill` doesn't remove bosses (damage caps) - old Rahovarts from boss tests are still in the dev world.
+
+## Remaining items + blocks, with placeholders (2026-09-28)
+
+Glenn: "port the rest of the items before we start removing anything and keeping them non functional as a
+placeholder (displays message in chat)". Every official item and block now exists. Items/blocks whose system isn't
+ported call `PortPlaceholder.notifyNotFunctional(...)` when used, which sends "`<name>` is not functional yet due to
+`<system>` not being ported." to chat (`lyc.port.placeholder`). Remove each call when its system lands.
+
+**Real ports:** 3 soulcubes (plain blocks, now with a self-drop loot table; the official had none, so they dropped
+nothing), Halloween Treat / Winter Gift / Large Winter Gift (give random loot or spawn a "trick" creature; restored
+`ObjectLists.addEntity`; fixed the official lists' stale food ids like `mosspie` -> `moss_pie`, which silently left
+every Lycanites food out of the treats), 59 **equipment parts** (JSON data, levels/experience/sharpness/mana on
+CUSTOM_DATA, elements, all 7 feature types parsed; drop from their creature at `dropChance` via `setupMob`, like the
+official; own creative tab), and their **OBJ item renderer** (`EquipmentPartRenderer` + `ItemObjModel`/
+`ModelEquipmentPart`, official per-part transforms unchanged, plain buffered rendering instead of the VBO/Iris path;
+also ported `ModelAnimation`/`ModelPartAnimation`/`TextureLayerAnimation`/`LayerItem`/`LayerItemDye`, which the
+creature pipeline had skipped - 12 parts ship animation/glow layers). Part tooltip is plain text (level/xp, slot,
+elements, feature lines); the official's `[[BAR:..]]` markup needs the equipment tooltip handler.
+
+**Placeholders:** `equipment` (assembled item; no parts, so invisible like the official, `/give` only; not in any tab,
+as official), 3 soulkeys (altars), 59 parts on right-click (equipment), 3 Equipment Forges + Station + Infuser
+(`PlaceholderFacingBlock`: facing + official models, no block entity/menu), Summoning Pedestal (keeps the `owner`
+state for its 3 models; the pedestal block entity isn't ported). Equipment feature *behaviour* (projectiles need
+ExtendedEntity cooldowns, harvest/summon/effect on hit) is ported but only reachable from assembled equipment.
+
+**Assets/data:** item/block models + blockstates + textures copied referentially; `modelParts/equipment` -> lowercase
+`modelparts/equipment` (189 files), `textures/equipment` (65), 59 part JSONs, 21 recipes (1.21 `id` results, `recipe/`),
+6 block loot tables (`loot_table/`), `tags/block/equipment_harvest`. **Asset bug found + fixed:** the earlier
+referential copy script stopped at a same-named *model* when a texture shared its path (`block/soulcubeundead`), so
+the soulcubes, `propolis`, `veswax` and 2 pedestal textures were never copied (missing-texture blocks). Re-verified
+every `textures` entry in every port model: only `smitefireballcharge` is missing, and it is missing in the official
+mod too.
+
+**Verified:** runServer loads clean (137 blocks, 129 block items, recipes/loot load without errors); a real client
+(temporary test driver, removed) showed parts rendering as 3D models in the hotbar, the part tooltip, holiday items,
+soulcubes, forges, the pedestal and the chat message on a forge.
+
+## Creature method audit (unlogged session 2026-09-28, finished + logged 2026-09-29)
+
+A session after the items/placeholders work above ran the Sep 27 lesson ("audit method sets against reference/")
+across every creature, then ended before logging it. Everything below was found uncommitted on 2026-09-29, compiled
+clean and was re-audited. Scope: 59 creature classes (53 carry a "Restored from official 2026-09-28" marker) regained
+trimmed methods, fields, constructor values and goals, for example Calpod's swarm allies and block chewing, Maka's
+tempt and alpha-following, and bag sizes. `BaseCreatureEntity` gained about 1,000 lines of the hooks those methods
+need. Also added: **ExtendedEntity** (NeoForge data attachment, ticked from `EntityTickEvent.Post`; pickup carrying,
+perching, projectile cooldowns, safe position and forced removal; not serialized because the official NBT methods were
+no-ops), `EntityEventListener` (the entity half of the official GameEventListener), sync messages for picked-up and
+perched entities plus `MessageScreenRequest`, 25 AI goals the early trims had dropped (all used), and laser
+projectiles (`LaserProjectileEntity`/`LaserEndProjectileEntity`, Hell Laser/End/Shield, Shadowfire Barrier).
+
+**Finished 2026-09-29:** the audit script (method names per class, `comm -23` official vs port) still flagged 9
+`getDamageModifier` overrides (Troll pickaxe x3, Vespid/Vespid Queen fire x2, Afrit/Khalk/Cephignis fire x0, Skylus
+shell x0.25, Maka Alpha x2 vs other alphas, Aegis x2 when not blocking). The early ports had dropped them as "not a
+real hook", but `BaseCreatureEntity.hurt()` applies the modifier now, so they were restored and the stale header notes
+fixed. Everything else the audit reports is a rename or dead code: `canBreatheUnderwater` -> `creatureCanBreatheUnderwater`,
+`canPickupItems` -> `canPickUpLoot`, Kobold `onRemovedFromWorld` -> `remove()`, `getBrightnessForRender` (no caller),
+Yale's anonymous crafting-menu methods. Only `fear` (dummy entity) and its two goals remain unported.
+
+**Verified headless** (runServer + RCON): loads clean (174 entity types, 137 blocks, 129 block items); Vespid took 1.5
+from 1.5 generic and 3.0 from 1.5 fire; Skylus took 1.2 from an 8 hit at full health. Afrit still takes 1 from fire:
+the official `getDamageAfterDefense` floors every hit at 1, so that is faithful.
+
+**Official quirks kept:** Calpod's wood chewing calls `destroyAreaBlock(..., WoodType.class, ...)`. `WoodType` is not
+a block class, so it never matches and Calpods never break wood, in the official mod as well. Worth fixing (e.g. a
+`BlockTags.LOGS` check) if S202 wants the behaviour.
+
+**Dev world note:** the Asmodeus and Rahovart from earlier boss tests survive `/kill` (damage caps) and keep firing.
+Asmodeus's devilstar stream piles up about 85 frozen projectiles per burst at z=-64, the edge of the entity-ticking
+spawn chunks when no player is online, which had reached 81,807 entities. That is a headless artifact (vanilla freezes
+any projectile outside ticking chunks), not a lifetime bug, but it slows the dev server; remove those bosses when
+convenient.

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.goals.util.GoalConditions;
 import com.lycanitesmobs.core.entity.goals.actions.abilities.FireProjectilesGoal;
 import org.joml.Vector3d;
@@ -66,5 +67,28 @@ public class EntityChupacabra extends TameableCreatureEntity {
     @Override
     public boolean isBreedingItem(ItemStack itemStack) {
         return false; // Breeding is triggered by attacking specific mobs instead!
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
+
+    @Override
+    public boolean shouldCreatureGroupFlee(LivingEntity target) {
+        return false;
     }
 }

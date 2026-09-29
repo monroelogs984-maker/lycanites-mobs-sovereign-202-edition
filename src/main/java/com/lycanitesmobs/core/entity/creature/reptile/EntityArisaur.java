@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.IGroupHeavy;
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -16,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * fleeHealthPercent/spawnsOnLand-style config fields that were dropped in the Phase 5 base trim.
  * canBeLeashed() uses the 1.21.1 no-arg Leashable signature (was canBeLeashed(Player)).
  */
-public class EntityArisaur extends AgeableCreatureEntity {
+public class EntityArisaur extends AgeableCreatureEntity implements IGroupHeavy {
 
     public EntityArisaur(EntityType<? extends EntityArisaur> entityType, Level world) {
         super(entityType, world);
@@ -24,12 +27,16 @@ public class EntityArisaur extends AgeableCreatureEntity {
         this.canGrow = true;
         this.babySpawnChance = 0.1D;
         this.isAggressiveByDefault = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.fleeHealthPercent = 1.0F;
+        this.solidCollision = true;
         this.setupMob();
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
@@ -59,5 +66,19 @@ public class EntityArisaur extends AgeableCreatureEntity {
             return super.getTexture();
         String textureName = this.getTextureName() + "_flowersaur";
         return AssetHelper.entityTexture(textureName);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

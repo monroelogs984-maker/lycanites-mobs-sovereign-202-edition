@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.dragon;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
@@ -88,7 +89,9 @@ public class EntityQuetzodracl extends RideableCreatureEntity implements Enemy, 
                     if (this.updateTick % this.getMeleeCooldown() == 0) {
                         this.attackMelee(this.getPickupEntity(), 1);
                     }
-                    // TODO(port): ExtendedEntity.setPickedUpByEntity(this) - the capability carries the grabbed entity.
+                    ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+                    if (extendedEntity != null)
+                        extendedEntity.setPickedUpByEntity(this);
                     if (this.tickCount % 100 == 0 && this.getRandom().nextBoolean()) {
                         this.dropPickupEntity();
                     }

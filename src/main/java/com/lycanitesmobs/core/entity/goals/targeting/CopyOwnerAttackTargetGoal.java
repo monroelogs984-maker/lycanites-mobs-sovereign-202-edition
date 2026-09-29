@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.goals.targeting;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -44,8 +45,13 @@ public class CopyOwnerAttackTargetGoal extends TargetingGoal {
         LivingEntity owner = (LivingEntity)this.host.getOwner();
 		int lastAttackedTime = owner.getLastHurtMobTimestamp();
     	this.target = owner.getLastHurtMob();
-		// TODO(port): the official falls back to ExtendedEntity.getLastAttackedEntity() (entity capability,
-		// not ported yet) for owners that aren't tracked by vanilla's lastHurtMob. Vanilla tracking only for now.
+		if(this.target == null) {
+			ExtendedEntity extendedOwner = ExtendedEntity.getForEntity(owner);
+			if(extendedOwner != null) {
+				this.target = extendedOwner.getLastAttackedEntity();
+				lastAttackedTime = extendedOwner.getLastAttackedTime();
+			}
+		}
 		if(this.target == null) {
 			return false;
 		}

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.avian;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.base.RideableCreatureEntity;
@@ -84,7 +85,9 @@ public class EntityRaiko extends RideableCreatureEntity implements Enemy {
 
                 // Random Dropping:
                 if(this.hasPickupEntity()) {
-                    // TODO(port): ExtendedEntity.setPickedUpByEntity() (pickup carrying) comes with the ExtendedEntity work.
+                    ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+                    if (extendedEntity != null)
+                        extendedEntity.setPickedUpByEntity(this);
                     if(this.tickCount % 100 == 0 && this.getRandom().nextBoolean()) {
                         this.dropPickupEntity();
                     }
@@ -183,7 +186,10 @@ public class EntityRaiko extends RideableCreatureEntity implements Enemy {
         }
 
         // Ignore Targets Picked Up By Another Mob:
-        // TODO(port): skip targets already picked up by another mob (ExtendedEntity.isPickedUp()).
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(targetEntity);
+        if (extendedEntity != null && extendedEntity.isPickedUp()) {
+            return false;
+        }
 
         return super.canAttack(targetEntity);
     }

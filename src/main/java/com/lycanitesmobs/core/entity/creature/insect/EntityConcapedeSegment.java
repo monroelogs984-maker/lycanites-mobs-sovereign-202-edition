@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
@@ -254,5 +255,67 @@ public class EntityConcapedeSegment extends AgeableCreatureEntity {
         if (this.hasParent()) {
             nbt.putUUID("ParentUUID", this.getParentTarget().getUUID());
         }
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    /**
+     * Returns whether this mob should despawn overtime or not. Config defined forced despawns override everything except tamed creatures and tagged creatures.
+     **/
+    @Override
+    protected boolean canDespawnNaturally() {
+        if (!super.canDespawnNaturally())
+            return false;
+        return !this.hasParent();
+    }
+
+    /**
+     * Second stage checks for spawning, this check is ignored if there is a valid monster spawner nearby.
+     **/
+    @Override
+    public boolean environmentSpawnCheck(Level world, BlockPos pos) {
+        if (this.getNearbyEntities(EntityConcapedeHead.class, null, CreatureManager.getInstance().getSpawnConfig().spawnLimitRange()).size() <= 0)
+            return false;
+        return super.environmentSpawnCheck(world, pos);
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public float getFallResistance() {
+        return 100;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ========== Get Random Subspecies ==========
+    @Override
+    public void getRandomVariant() {
+        if (this.subspecies == null && !this.hasParent()) {
+            this.subspecies = this.creatureInfo.getRandomSubspecies(this);
+        }
+
+        if (this.hasParent() && this.getParentTarget() instanceof BaseCreatureEntity) {
+            this.applyVariant(((BaseCreatureEntity) this.getParentTarget()).getSubspeciesIndex());
+        }
+    }
+
+    /**
+     * Gets whether this mob should always display its nametag if it's a subspecies.
+     **/
+    @Override
+    public boolean renderVariantNameTag() {
+        return !this.hasParent();
     }
 }

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -56,4 +57,39 @@ public class EntityTrite extends TameableCreatureEntity implements Enemy {
     public boolean canBurn() {
         return false;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+	// ========== Living Update ==========
+	@Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Leap:
+        if(this.hasAttackTarget() && this.onGround() && !this.getCommandSenderWorld().isClientSide && this.random.nextInt(10) == 0)
+        	this.leap(6.0F, 0.6D, this.getTarget());
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    @Override
+    public float getFallResistance() {
+        return 10;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ========== Environmental ==========
+    @Override
+    public boolean webProof() { return true; }
 }

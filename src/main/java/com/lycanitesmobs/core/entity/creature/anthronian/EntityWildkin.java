@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.anthronian;
 
+import com.lycanitesmobs.core.entity.goals.actions.BreakDoorGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.util.helpers.AssetHelper;
@@ -27,6 +28,7 @@ public class EntityWildkin extends TameableCreatureEntity implements Enemy {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new BreakDoorGoal(this));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
 
         if (this.getNavigation() instanceof GroundPathNavigation) {
@@ -47,5 +49,37 @@ public class EntityWildkin extends TameableCreatureEntity implements Enemy {
 
         String textureName = this.getTextureName() + "_gooderness";
         return AssetHelper.entityTexture(textureName);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Immunities
+    // ==================================================
+    @Override
+    public float getFallResistance() {
+        return 100;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

@@ -1,5 +1,13 @@
 package com.lycanitesmobs.core.entity.base;
 
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import com.lycanitesmobs.core.entity.IFusable;
+import com.lycanitesmobs.core.entity.goals.targeting.*;
+import com.lycanitesmobs.core.entity.goals.actions.*;
+import net.minecraft.world.entity.Mob;
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
+import com.lycanitesmobs.core.item.equipment.ItemEquipmentPart;
 import com.lycanitesmobs.core.network.message.MessageCreature;
 import com.lycanitesmobs.core.container.provider.CreatureContainerProvider;
 import com.lycanitesmobs.core.container.creature.CreatureContainer;
@@ -93,6 +101,15 @@ import net.minecraft.world.InteractionHand;
 import java.util.HashMap;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.Difficulty;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.phys.AABB;
+import java.util.Collections;
+import com.lycanitesmobs.core.capabilities.level.ExtendedWorld;
+import com.lycanitesmobs.core.data.info.creature.CreatureGroup;
+import com.lycanitesmobs.core.entity.spawner.SpawnerTriggerDispatcher;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
@@ -216,6 +233,14 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected boolean isLavaCreature = false;
     protected boolean spawnedRare = false;
     protected boolean spawnedAsBoss = false;
+    /** Set by spawners (forceNoDespawn) and setPersistenceRequired(), see isPersistant(). **/
+    protected boolean forceNoDespawn = false;
+    /** Can this mob spawn where it can't see the sky above? **/
+    protected boolean spawnsUnderground = true;
+    /** Can this mob spawn on land (not in liquids)? **/
+    protected boolean spawnsOnLand = true;
+    /** Does this mob spawn inside liquids? **/
+    protected boolean spawnsInWater = false;
     private DirectNavigator directNavigator;
 
     protected boolean hasAttackSound = false;
@@ -445,6 +470,10 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return this.firstSpawn;
     }
 
+    public void applySpawnLifecycleState(boolean firstSpawn) {
+        this.firstSpawn = firstSpawn;
+    }
+
     public void markNotFirstSpawn() {
         this.firstSpawn = false;
     }
@@ -471,21 +500,50 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.spawnEventCount = source.spawnEventCount;
     }
 
-    // NOTE: original backed this with a forceNoDespawn field (dropped during the Phase 5 trim,
-    // set via applySpawnerSpawnState()/setPersistenceRequired() which weren't ported) - always
-    // false here; AgeableCreatureEntity's override (hasBeenFarmed) is still meaningful on top.
+    /**
+     * Returns true if this mob should not despawn in unloaded chunks (official: set by spawners with forceNoDespawn
+     * and by setPersistenceRequired()). Subclasses add tamed/farmed/master checks.
+     **/
     public boolean isPersistant() {
-        return false;
+        return this.forceNoDespawn;
+    }
+
+    @Override
+    public void setPersistenceRequired() {
+        super.setPersistenceRequired();
+        this.forceNoDespawn = true;
+    }
+
+    @Override
+    public boolean isPersistenceRequired() {
+        if (!this.canDespawnNaturally()) {
+            return true;
+        }
+        return super.isPersistenceRequired();
     }
 
     /**
-     * Phase 5e: the official despawn system (despawnCheck/canDespawnNaturally) isn't ported, so route this port's
-     * isPersistant() (true for tamed creatures, see TameableCreatureEntity) into vanilla's persistence check -
-     * otherwise tamed pets would despawn like wild mobs.
+     * Returns whether this mob should despawn overtime or not. Config defined forced despawns override everything except tamed creatures and tagged creatures.
      **/
-    @Override
-    public boolean requiresCustomPersistence() {
-        return this.isPersistant() || super.requiresCustomPersistence();
+    protected boolean canDespawnNaturally() {
+        if (this.creatureInfo.getCreatureSpawn().forcesDespawn()) {
+            return true;
+        }
+        if (!this.creatureInfo.getCreatureSpawn().despawnsNaturally()) {
+            return false;
+        }
+        if (this.creatureInfo.isBoss() || (this.isRareVariant() && !Variant.isRareDespawning())) {
+            return false;
+        }
+        return !this.isPersistant() && !this.isLeashed() && !(this.hasCustomName() && "".equals(this.spawnEventType));
+    }
+
+    public void applySpawnerSpawnState(boolean forceNoDespawn, boolean spawnedRare) {
+        // The official only sets the field, which isn't saved; also set vanilla's saved flag so it survives a reload.
+        if (forceNoDespawn) {
+            this.setPersistenceRequired();
+        }
+        this.spawnedRare = spawnedRare;
     }
 
     public void configureExtraBehaviourGoals(boolean attackPlayers, boolean defendAnimals) {
@@ -572,19 +630,32 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Registers all AI Goals for this entity.
-     * Trimmed: PaddleGoal/StayByWaterGoal/AvoidGoal/TemptGoal/FindFuseTargetGoal/FollowFuseGoal
-     * (IFusable not ported)/FindGroupAttackTargetGoal/FindGroupAvoidTargetGoal/FollowMasterGoal/
-     * WatchClosestGoal are not ported yet - see PORT_PLAN.md Phase 6.
+     * Registers all AI Goals for this entity (restored to the official set 2026-09-28).
      */
     @Override
     protected void registerGoals() {
+        if (this instanceof IFusable) {
+            this.targetSelector.addGoal(this.claimSpecialTargetGoalIndex(), new FindFuseTargetGoal(this));
+        }
         this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new AvoidIfHitGoal(this).setHelpCall(true));
         this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new RevengeGoal(this).setHelpCall(true).setCheckSight(true));
 
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new PaddleGoal(this));
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new StayByWaterGoal(this));
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new AvoidGoal(this).setNearSpeed(1.3D).setFarSpeed(1.2D).setNearDistance(5.0D).setFarDistance(20.0D));
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setTemptDistanceMin(4.0D));
+        if (this instanceof IFusable) {
+            this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new FollowFuseGoal(this).setLostDistance(16));
+        }
+
         super.registerGoals();
 
+        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindGroupAttackTargetGoal(this));
+        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindGroupAvoidTargetGoal(this).setTameTargetting(false));
+
+        this.goalSelector.addGoal(this.claimTravelGoalIndex(), new FollowMasterGoal(this).setStrayDistance(12.0D));
         this.goalSelector.addGoal(this.claimIdleGoalIndex(), new WanderGoal(this));
+        this.goalSelector.addGoal(this.claimIdleGoalIndex(), new WatchClosestGoal(this).setTargetClass(Player.class));
         this.goalSelector.addGoal(this.claimIdleGoalIndex(), new LookIdleGoal(this));
     }
 
@@ -596,6 +667,15 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     public void setupMob() {
         this.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.5D);
         this.loadItemDrops();
+        // Equipment parts drop as materials (placeholders until the equipment system, see ItemEquipmentPart).
+        if (ItemEquipmentPart.hasMobPartDrops(this.creatureInfo.getEntityId())) {
+            for (ItemEquipmentPart itemEquipmentPart : ItemEquipmentPart.getMobPartDrops(this.creatureInfo.getEntityId())) {
+                ItemDrop partDrop = new ItemDrop(LycanitesMobs.MODID + ":" + itemEquipmentPart.itemName, itemEquipmentPart.getDropChance()).setMaxAmount(1);
+                partDrop.setBonusAmount(false);
+                partDrop.setAmountMultiplier(false);
+                this.drops.add(partDrop);
+            }
+        }
         this.setAttackCooldownMax(this.attackCooldownMax);
     }
 
@@ -735,11 +815,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Temporary mobs (summoned minions) count down and despawn. The official does this in despawnCheck(), which isn't
-     * ported (vanilla despawning is used), so it runs here.
+     * Removes this mob when despawnCheck() says so (temporary minions, peaceful difficulty, disabled creatures, stale
+     * mob event spawns). Official: in tick(); here in aiStep with the rest of the per-tick runtime.
      **/
     private boolean tickTemporaryDespawn() {
-        if (this.getCommandSenderWorld().isClientSide || !this.isTemporary || this.temporaryDuration-- > 0) {
+        if (!this.despawnCheck()) {
             return false;
         }
         if (this.shouldDropInventoryOnDespawn()) {
@@ -1140,13 +1220,307 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
     }
 
-    // NOTE: full natural-spawn eligibility chain (light level, biome, group/boss-proximity
-    // limits) not ported yet - always allows. Fine for /summon or spawn-egg testing.
+    // ==================================================
+    //                     Spawning
+    // ==================================================
+    /**
+     * Checks if the creature is able to spawn at it's initial position.
+     **/
     @Override
     public boolean checkSpawnRules(LevelAccessor world, MobSpawnType spawnReason) {
-        return true;
+        return this.checkSpawnVanilla(this.getCommandSenderWorld(), spawnReason, this.blockPosition());
     }
 
+    @Override
+    public int getMaxSpawnClusterSize() {
+        return this.creatureInfo.getCreatureSpawn().getSpawnGroupMax();
+    }
+
+    /**
+     * Performs checks when spawned by a vanilla spawner or possibly another modded spawner if they use the vanilla checks.
+     **/
+    public boolean checkSpawnVanilla(Level world, MobSpawnType spawnReason, BlockPos pos) {
+        if (world.isClientSide) {
+            return false;
+        }
+        if (spawnReason != MobSpawnType.NATURAL && spawnReason != MobSpawnType.SPAWNER) {
+            return true;
+        }
+
+        LMHelperClass.logDebug("MobSpawns", "Vanilla Spawn Check: " + this.creatureInfo.getName() + " at " + pos);
+        if (!this.creatureInfo.isEnabled() || !this.creatureInfo.getCreatureSpawn().isEnabled()) {
+            return false;
+        }
+        if (!this.creatureInfo.isPeaceful() && world.getDifficulty() == Difficulty.PEACEFUL) {
+            return false;
+        }
+        if (!world.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
+            return false;
+        }
+        if (!this.fixedSpawnCheck(world, pos)) {
+            return false;
+        }
+        if (spawnReason == MobSpawnType.SPAWNER) {
+            return true;
+        }
+        if (!CreatureManager.getInstance().getSpawnConfig().isAllowedGlobal(world)) {
+            return false;
+        }
+        return this.environmentSpawnCheck(world, pos);
+    }
+
+    /**
+     * First stage checks for vanilla spawning, if this check fails the creature will not spawn.
+     **/
+    public boolean fixedSpawnCheck(Level world, BlockPos pos) {
+        if (!this.checkSpawnLightLevel(world, pos)) {
+            return false;
+        }
+        if (!this.checkSpawnCollision(world, pos)) {
+            return false;
+        }
+        return this.checkSpawnGroupLimit(world, pos, CreatureManager.getInstance().getSpawnConfig().spawnLimitRange());
+    }
+
+    /**
+     * Second stage checks for vanilla spawning, this check is ignored if there is a valid monster spawner nearby.
+     **/
+    public boolean environmentSpawnCheck(Level world, BlockPos pos) {
+        if (this.creatureInfo.getCreatureSpawn().getWorldDayMin() > 0) {
+            int currentDay = (int) Math.floor(world.getGameTime() / 24000D);
+            if (currentDay < this.creatureInfo.getCreatureSpawn().getWorldDayMin()) {
+                return false;
+            }
+        }
+        if (!this.isNativeDimension(world)) {
+            return false;
+        }
+        if (!this.spawnsInWater && world.containsAnyLiquid(this.getBoundingBox())) {
+            return false;
+        } else if (!this.spawnsOnLand && !world.containsAnyLiquid(this.getBoundingBox())) {
+            return false;
+        }
+        if (!this.spawnsUnderground && this.isBlockUnderground(pos.getX(), pos.getY() + 1, pos.getZ())) {
+            return false;
+        }
+        return this.checkSpawnBoss(world, pos);
+    }
+
+    public boolean isNativeDimension(Level world) {
+        return this.creatureInfo.getCreatureSpawn().isAllowedDimension(world);
+    }
+
+    /**
+     * Returns true if there is no collision stopping this mob from spawning.
+     **/
+    public boolean checkSpawnCollision(Level world, BlockPos pos) {
+        double radius = this.creatureInfo.getWidth();
+        double height = this.creatureInfo.getHeight();
+        AABB spawnBoundries = new AABB(pos.getX() - radius, pos.getY(), pos.getZ() - radius, pos.getX() + radius, pos.getY() + height, pos.getZ() + radius);
+        return this.spawnsInBlock || world.noCollision(spawnBoundries);
+    }
+
+    @Override
+    public boolean checkSpawnObstruction(LevelReader world) {
+        if (this.spawnsInWater) {
+            return world.isUnobstructed(this);
+        }
+        return super.checkSpawnObstruction(world);
+    }
+
+    /**
+     * Returns true if the light level is valid for spawning.
+     **/
+    public boolean checkSpawnLightLevel(Level world, BlockPos pos) {
+        if (this.creatureInfo.getCreatureSpawn().spawnsInDark() && this.creatureInfo.getCreatureSpawn().spawnsInLight()) {
+            return true;
+        }
+        if (!this.creatureInfo.getCreatureSpawn().spawnsInDark() && !this.creatureInfo.getCreatureSpawn().spawnsInLight()) {
+            return false;
+        }
+
+        byte light = this.testLightLevel(pos);
+        if (this.creatureInfo.getCreatureSpawn().spawnsInDark() && light <= 1) {
+            return true;
+        }
+        return this.creatureInfo.getCreatureSpawn().spawnsInLight() && light >= 2;
+    }
+
+    /**
+     * Checks for nearby entities of this type, mobs use this so that too many don't spawn in the same area. Returns true if the mob should spawn.
+     **/
+    public boolean checkSpawnGroupLimit(Level world, BlockPos pos, double range) {
+        if (range <= 0) {
+            return true;
+        }
+        return this.countNearbySpawnLimits(range).withinGroupLimits();
+    }
+
+    /**
+     * Checks for nearby bosses, mobs usually shouldn't randomly spawn near a boss.
+     **/
+    public boolean checkSpawnBoss(Level world, BlockPos pos) {
+        CreatureGroup bossGroup = CreatureManager.getInstance().getCreatureGroup("boss");
+        if (bossGroup == null) {
+            return true;
+        }
+        List<?> bosses = this.getNearbyEntities(BaseCreatureEntity.class, bossGroup::hasEntity, CreatureManager.getInstance().getSpawnConfig().spawnLimitRange());
+        return bosses.isEmpty();
+    }
+
+    /**
+     * Combined spawn limit check - boss proximity AND group limit checks with a single entity scan.
+     *
+     * @param world           The world to check in.
+     * @param pos             The position to check around.
+     * @param groupLimitRange The range for group limit checks.
+     * @return True if the mob is allowed to spawn (no boss nearby, within group limits).
+     */
+    public boolean checkSpawnLimits(Level world, BlockPos pos, double groupLimitRange) {
+        CreatureGroup bossGroup = CreatureManager.getInstance().getCreatureGroup("boss");
+        double bossRange = CreatureManager.getInstance().getSpawnConfig().spawnLimitRange();
+        double range = Math.max(groupLimitRange, bossRange);
+        if (range <= 0 && bossGroup == null) {
+            return true;
+        }
+
+        NearbySpawnLimitCounts counts = this.countNearbySpawnLimits(range);
+        if (bossGroup != null && bossRange > 0 && counts.hasBossWithin(bossRange)) {
+            return false;
+        }
+        if (groupLimitRange <= 0) {
+            return true;
+        }
+        return counts.withinGroupLimits(groupLimitRange);
+    }
+
+    private NearbySpawnLimitCounts countNearbySpawnLimits(double range) {
+        int typesLimit = CreatureManager.getInstance().getSpawnConfig().typeSpawnLimit();
+        int speciesLimit = this.creatureInfo.getCreatureSpawn().getSpawnAreaLimit();
+        CreatureGroup bossGroup = CreatureManager.getInstance().getCreatureGroup("boss");
+        if (typesLimit <= 0 && speciesLimit <= 0 && bossGroup == null) {
+            return NearbySpawnLimitCounts.empty(this, typesLimit, speciesLimit);
+        }
+
+        List<BaseCreatureEntity> nearby = this.getNearbyEntities(BaseCreatureEntity.class, entity -> entity instanceof BaseCreatureEntity, range);
+        return new NearbySpawnLimitCounts(this, nearby, bossGroup, typesLimit, speciesLimit);
+    }
+
+    private record NearbySpawnLimitCounts(
+            BaseCreatureEntity owner,
+            List<BaseCreatureEntity> nearby,
+            CreatureGroup bossGroup,
+            int typesLimit,
+            int speciesLimit
+    ) {
+        private static NearbySpawnLimitCounts empty(BaseCreatureEntity owner, int typesLimit, int speciesLimit) {
+            return new NearbySpawnLimitCounts(owner, Collections.emptyList(), null, typesLimit, speciesLimit);
+        }
+
+        private boolean hasBossWithin(double bossRange) {
+            for (BaseCreatureEntity target : this.nearby) {
+                if (target.distanceTo(this.owner) <= bossRange && this.bossGroup.hasEntity(target)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean withinGroupLimits() {
+            return this.withinGroupLimits(Double.MAX_VALUE);
+        }
+
+        private boolean withinGroupLimits(double range) {
+            if (this.typesLimit <= 0 && this.speciesLimit <= 0) {
+                return true;
+            }
+
+            int typesFound = 0;
+            int speciesFound = 0;
+            for (BaseCreatureEntity target : this.nearby) {
+                if (target.distanceTo(this.owner) > range) {
+                    continue;
+                }
+                if (target.creatureInfo.isPeaceful() == this.owner.creatureInfo.isPeaceful()) {
+                    typesFound++;
+                }
+                if (this.owner.creatureInfo.matchesEntityClass(target.getClass())) {
+                    speciesFound++;
+                }
+            }
+            if (this.typesLimit > 0 && typesFound >= this.typesLimit) {
+                return false;
+            }
+            return this.speciesLimit <= 0 || speciesFound < this.speciesLimit;
+        }
+    }
+
+    /**
+     * Checks if the specified block is underground (unable to see the sky above it). This checks through leaves, plants, grass and vine materials.
+     **/
+    public boolean isBlockUnderground(int x, int y, int z) {
+        if (this.getCommandSenderWorld().canSeeSkyFromBelowWater(new BlockPos(x, y, z))) {
+            return false;
+        }
+        for (int j = y; j < this.getCommandSenderWorld().getMaxBuildHeight(); j++) {
+            BlockState blockState = this.getCommandSenderWorld().getBlockState(new BlockPos(x, j, z));
+            boolean isLeaves = LMHelperClass.hasTag(blockState, BlockTags.LEAVES);
+            boolean replaceablePlant = LMHelperClass.hasTag(blockState, BlockTags.REPLACEABLE);
+            // Official quirk kept: only plant blocks count as cover here.
+            if (blockState.getBlock() != Blocks.AIR
+                    && !isLeaves
+                    && LMHelperClass.Materials.isPlant(blockState.getBlock())
+                    && !replaceablePlant) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * A check that is constantly done, if this returns true, this entity will be removed, used normally for peaceful difficulty removal and temporary minions.
+     **/
+    public boolean despawnCheck() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return false;
+        }
+
+        if (!this.creatureInfo.isEnabled()) {
+            return true;
+        }
+
+        if (this.isTemporary && this.temporaryDuration-- <= 0) {
+            return true;
+        }
+
+        if (!this.creatureInfo.isPeaceful() && this.getCommandSenderWorld().getDifficulty() == Difficulty.PEACEFUL && !this.hasCustomName()) {
+            return true;
+        }
+
+        ExtendedWorld worldExt = ExtendedWorld.getForWorld(this.getCommandSenderWorld());
+        if (worldExt != null && !"".equals(this.spawnEventType) && this.spawnEventCount >= 0 && this.spawnEventCount != worldExt.getWorldEventCount()) {
+            if (this.isLeashed() || this.isPersistant()) {
+                this.spawnEventType = "";
+                this.spawnEventCount = -1;
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public int getBossNearbyRange() {
+        return this.creatureInfo.getBossNearbyRange();
+    }
+
+    private void tickBossArena(Level world) {
+        if (!world.isClientSide && this.isBossAlways()) {
+            ExtendedWorld extendedWorld = ExtendedWorld.getForWorld(world);
+            if (extendedWorld != null) {
+                extendedWorld.bossUpdate(this);
+            }
+        }
+    }
     @Override
     public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficultyInstance, MobSpawnType spawnReason, @Nullable SpawnGroupData livingEntityData) {
         return super.finalizeSpawn(world, difficultyInstance, spawnReason, livingEntityData);
@@ -1342,6 +1716,14 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return 0.0F;
     }
 
+    @Override
+    protected void customServerAiStep() {
+        if (this.useDirectNavigator()) {
+            this.directNavigator.updateFlight();
+        }
+        super.customServerAiStep();
+    }
+
     public boolean useDirectNavigator() {
         return false;
     }
@@ -1490,9 +1872,6 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     @Override
     public boolean hurt(DamageSource damageSrc, float damageAmount) {
         damageAmount *= this.getDamageModifier(damageSrc);
-        if (this.damageMax > 0) {
-            damageAmount = Math.min(damageAmount, this.damageMax);
-        }
         if (super.hurt(damageSrc, damageAmount)) {
             if (this.dropsRequirePlayerDamage && damageSrc.getEntity() instanceof Player) {
                 this.dropsRequirePlayerDamage = false;
@@ -1503,6 +1882,53 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             }
             this.updateAttackerReputation(damageSrc);
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Applies this creature's Defense stat (boosted while blocking), the boss/rare-variant 75% reduction against
+     * non-player damage and the damage cap. Official: resolveIncomingDamage() inside an actuallyHurt() override, after
+     * armor and magic absorption. NeoForge 1.21 routes reductions through a damage container and ignores the magic
+     * step's return value, so this hooks the armor step (whose return value is used) - one step earlier than the
+     * official, which only differs at the 1-damage minimum.
+     **/
+    @Override
+    protected float getDamageAfterArmorAbsorb(DamageSource damageSrc, float damageAmount) {
+        damageAmount = super.getDamageAfterArmorAbsorb(damageSrc, damageAmount);
+        damageAmount = this.getDamageAfterDefense(damageAmount);
+        if ((this.isBoss() || this.isRareVariant()) && !(damageSrc.getEntity() instanceof Player)) {
+            damageAmount *= 0.25F;
+        }
+        return damageAmount;
+    }
+
+    public float getDamageAfterDefense(float damage) {
+        float defense = (float) this.creatureStats.getDefense();
+        if (this.isBlocking()) {
+            if (defense <= 0) {
+                defense = 1;
+            }
+            defense *= this.getBlockingMultiplier();
+        }
+        damage = Math.max(damage - defense, 1);
+        if (this.damageMax > 0) {
+            damage = Math.min(damage, this.damageMax);
+        }
+        return Math.max(damage, 0F);
+    }
+
+    public boolean canTargetBlockDamageSource(LivingEntity target, DamageSource damageSource) {
+        Entity entity = damageSource.getDirectEntity();
+        boolean arrowPierce = entity instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow && arrow.getPierceLevel() > 0;
+        if (!damageSource.is(net.minecraft.tags.DamageTypeTags.BYPASSES_ARMOR) && target.isBlocking() && !arrowPierce) {
+            Vec3 sourcePosition = damageSource.getSourcePosition();
+            if (sourcePosition != null) {
+                Vec3 viewVector = target.getViewVector(1.0F);
+                Vec3 toTarget = sourcePosition.vectorTo(target.position()).normalize();
+                toTarget = new Vec3(toTarget.x, 0.0D, toTarget.z);
+                return toTarget.dot(viewVector) < 0.0D;
+            }
         }
         return false;
     }
@@ -2034,10 +2460,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Drops the entity this creature is carrying. TODO(port): the official also clears the carried entity's
-     * ExtendedEntity pickedUpByEntity link (capability not ported).
+     * Drops the entity this creature is carrying (and clears the carried entity's ExtendedEntity link).
      **/
     public void dropPickupEntity() {
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+        if (extendedEntity != null) {
+            extendedEntity.setPickedUpByEntity(null);
+        }
         this.pickupEntity = null;
     }
 
@@ -2142,7 +2571,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Destroys blocks around the given position that are weaker than strength. Callers check the mobGriefing rule.
-     * TODO(port): the official also fires SpawnerTriggerDispatcher.onBlockBreak (spawners not ported).
+     * Broken blocks fire block spawn triggers (chain + 1 limits spawner loops).
      **/
     public void destroyArea(int x, int y, int z, float strength, boolean drop, int range, Player player, int chain) {
         int adjustedRange = Math.max(range - 1, 0);
@@ -2155,7 +2584,17 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             if (player != null && breakPos.getX() == x && breakPos.getY() == y && breakPos.getZ() == z) {
                 return;
             }
+            SpawnerTriggerDispatcher.getInstance().onBlockBreak(this.getCommandSenderWorld(), breakPos, blockState, player, chain);
             this.getCommandSenderWorld().destroyBlock(breakPos, drop);
+        });
+    }
+
+    /** Destroys blocks of the given class around the position (official signature kept; WoodType never matches a block). **/
+    public void destroyAreaBlock(int x, int y, int z, Class<?> blockClass, boolean drop, int range) {
+        this.forEachDestroyAreaBlock(x, y, z, range, true, (breakPos, blockState) -> {
+            if (blockClass.isInstance(blockState.getBlock())) {
+                this.getCommandSenderWorld().destroyBlock(breakPos, drop);
+            }
         });
     }
 
@@ -2218,6 +2657,40 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             return this.creatureInfo.getBagSize();
         }
         return 5;
+    }
+
+    /** Official: item pickup is opt-in per creature (extra mob behaviour / overrides like Kobold). **/
+    public boolean canPickupItems() {
+        return this.extraMobBehaviour != null && this.extraMobBehaviour.itemPickupOverride();
+    }
+
+    public void pickupItems() {
+        List<ItemEntity> nearbyItems = this.getCommandSenderWorld().getEntitiesOfClass(ItemEntity.class, this.getBoundingBox().inflate(1.0D, 0.0D, 1.0D));
+        for (ItemEntity entityItem : nearbyItems) {
+            if (entityItem.isAlive() && !entityItem.getItem().isEmpty()) {
+                ItemStack itemStack = entityItem.getItem();
+                int space = this.getSpaceForStack(itemStack);
+                if (space > 0) {
+                    this.onPickupStack(itemStack);
+                    this.doItemPickup(entityItem);
+                }
+            }
+        }
+    }
+
+    /** Called when this mob picks up an item entity, provides the itemStack it has picked up. **/
+    public void onPickupStack(ItemStack itemStack) {
+    }
+
+    public void doItemPickup(ItemEntity entityItem) {
+        if (entityItem.isAlive() && !entityItem.getItem().isEmpty()) {
+            ItemStack leftoverStack = this.inventory.autoInsertStack(entityItem.getItem());
+            if (leftoverStack != null) {
+                entityItem.setItem(leftoverStack);
+            } else {
+                entityItem.remove(Entity.RemovalReason.DISCARDED);
+            }
+        }
     }
 
     public int getSpaceForStack(ItemStack pickupStack) {
@@ -2342,6 +2815,109 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     /**
      * Returns true if this creature should flee the target based on its creature groups.
      **/
+    public boolean shouldCreatureGroupHunt(LivingEntity target) {
+        boolean shouldFlee = false;
+        boolean shouldHunt = false;
+        boolean shouldPackHunt = false;
+        for (CreatureGroup group : this.creatureInfo.getGroups()) {
+            if (group.shouldFlee(target)) {
+                shouldFlee = true;
+            }
+            if (group.shouldHunt(target)) {
+                shouldHunt = true;
+            }
+            if (group.shouldPackHunt(target)) {
+                shouldPackHunt = true;
+            }
+        }
+        boolean canPackHunt = shouldPackHunt && this.isInPack();
+        if (shouldFlee && !canPackHunt) {
+            return false;
+        }
+        return shouldHunt || shouldPackHunt;
+    }
+
+    /** The attack target of this creature's parent (used by CopyParentAttackTargetGoal). **/
+    public LivingEntity getParentAttackTarget() {
+        if (this.getParentTarget() instanceof Mob mobTarget) {
+            return mobTarget.getTarget();
+        }
+        return null;
+    }
+
+    public int getDirectNavigationTargetY() {
+        return this.directNavigator.getTargetPositionY();
+    }
+
+    public void setDirectNavigationSpeedModifier(double speedModifier) {
+        this.directNavigator.setSpeedModifier(speedModifier);
+    }
+
+    /** Called by PlaceBlockGoal after this creature places a block (e.g. Vespids building their hive). **/
+    public void onBlockPlaced(BlockPos blockPos, BlockState blockState) {
+    }
+
+    /**
+     * Called when this creature kills an entity. The official defined this (a 1.12-era hook) but never called it, so
+     * the Geist/Ghoul/Cryptkeeper on-kill behaviours were dead; it is wired to vanilla's killedEntity() here.
+     **/
+    protected void onKillEntity(LivingEntity entityLivingBase) {
+    }
+
+    /**
+     * Turns a villager this creature killed into a zombie villager (Geist/Ghoul/Cryptkeeper). 1.21: mirrors vanilla
+     * Zombie.killedEntity() - the official 1.20 code built the zombie villager by hand with the old finalizeSpawn/
+     * trade offer tag APIs.
+     **/
+    protected void convertVillagerToZombie(net.minecraft.world.entity.npc.Villager villager) {
+        if (!(this.level() instanceof ServerLevel level) || !net.neoforged.neoforge.event.EventHooks.canLivingConvert(villager, EntityType.ZOMBIE_VILLAGER, timer -> {})) {
+            return;
+        }
+        net.minecraft.world.entity.monster.ZombieVillager zombieVillager = villager.convertTo(EntityType.ZOMBIE_VILLAGER, false);
+        if (zombieVillager == null) {
+            return;
+        }
+        zombieVillager.finalizeSpawn(level, level.getCurrentDifficultyAt(zombieVillager.blockPosition()), MobSpawnType.CONVERSION, new net.minecraft.world.entity.monster.Zombie.ZombieGroupData(false, true));
+        zombieVillager.setVillagerData(villager.getVillagerData());
+        zombieVillager.setGossips(villager.getGossips().store(net.minecraft.nbt.NbtOps.INSTANCE));
+        zombieVillager.setTradeOffers(villager.getOffers().copy());
+        zombieVillager.setVillagerXp(villager.getVillagerXp());
+        net.neoforged.neoforge.event.EventHooks.onLivingConvert(villager, zombieVillager);
+        if (!this.isSilent()) {
+            level.levelEvent(null, 1026, this.blockPosition(), 0);
+        }
+    }
+
+    @Override
+    public boolean killedEntity(ServerLevel level, LivingEntity killed) {
+        boolean result = super.killedEntity(level, killed);
+        this.onKillEntity(killed);
+        return result;
+    }
+
+    /** Sets the home position and the distance this creature may stray from it (vanilla restriction). **/
+    public void setHome(int x, int y, int z, float distance) {
+        this.restrictTo(new BlockPos(x, y, z), (int) distance);
+    }
+
+    /** Sets the home position (vanilla restriction centre), keeping the current home distance. **/
+    public void setHomePosition(int x, int y, int z) {
+        this.restrictTo(new BlockPos(x, y, z), (int) Math.max(this.getRestrictRadius(), 1));
+    }
+
+    @Override
+    public boolean shouldShowName() {
+        if (this.getVariant() != null && !this.hasCustomName()) {
+            return this.renderVariantNameTag();
+        }
+        return super.shouldShowName();
+    }
+
+    /** Gets whether this mob should always display its nametag if it's a variant. **/
+    public boolean renderVariantNameTag() {
+        return CreatureManager.getInstance().getConfig().subspeciesTags();
+    }
+
     public boolean shouldCreatureGroupFlee(LivingEntity target) {
         if (this.isBoss() || this.isRareVariant() || this.isTamed()) {
             return false;
@@ -2402,17 +2978,19 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Picks up the given entity. TODO(port): the official also sets the target's ExtendedEntity pickedUpByEntity,
-     * which is what actually carries the entity along - capability not ported, so carrying doesn't move it yet.
+     * Picks up the given entity. The target's ExtendedEntity pickedUpByEntity is what carries it along.
      **/
     public void pickupEntity(LivingEntity entity) {
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(entity);
+        if (extendedEntity != null) {
+            extendedEntity.setPickedUpByEntity(this);
+        }
         this.pickupEntity = entity;
         this.clearMovement();
     }
 
     /**
-     * Returns true if this creature may pick up the entity. TODO(port): the official also requires the target's
-     * ExtendedEntity (capability) and that it isn't already picked up.
+     * Returns true if this creature may pick up the entity.
      **/
     public boolean canPickupEntity(LivingEntity entity) {
         if (this.getPickupEntity() == entity || entity instanceof IGroupBoss || entity.isSpectator()) {
@@ -2440,13 +3018,16 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             return false;
         }
         Holder<MobEffect> repulsion = ObjectManager.getEffectHolder("repulsion");
-        return repulsion == null || !entity.hasEffect(repulsion);
+        if (repulsion != null && entity.hasEffect(repulsion)) {
+            return false;
+        }
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(entity);
+        return extendedEntity != null && !extendedEntity.isPickedUp();
     }
 
     /**
-     * Transforms this creature into another entity type (elemental fusion, or a solo transformation).
-     * Trimmed from the official: temporary/minion/master state copying, fusion minion registration and fusion
-     * level/taming maths are TODO(port) (minions not ported; S202 drops creature levels).
+     * Transforms this creature into another entity type (elemental fusion, or a solo transformation). Restored to the
+     * official version 2026-09-28 (temporary/minion/master state, fusion level maths, partner ownership).
      **/
     @Nullable
     public LivingEntity transform(EntityType<? extends LivingEntity> transformType, Entity partner, boolean destroyPartner) {
@@ -2459,21 +3040,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
 
         if (transformedEntity instanceof BaseCreatureEntity transformedCreature) {
-            transformedCreature.firstSpawn = false;
-            transformedCreature.setSubspecies(this.getSubspeciesIndex());
+            this.copyBaseTransformState(transformedCreature);
             if (partner instanceof BaseCreatureEntity partnerCreature) {
-                Variant fusionVariant = transformedCreature.getSubspecies() != null
-                        ? transformedCreature.getSubspecies().getChildVariant(this, this.getVariant(), partnerCreature.getVariant()) : null;
-                transformedCreature.applyVariant(fusionVariant != null ? fusionVariant.getIndex() : 0);
-                transformedCreature.setSizeScale(this.sizeScale + partnerCreature.sizeScale);
+                this.copyFusionTransformState(transformedCreature, partnerCreature);
             } else {
-                transformedCreature.applyVariant(this.getVariantIndex());
-                transformedCreature.setSizeScale(this.sizeScale);
-            }
-            if (transformedCreature instanceof TameableCreatureEntity fusionTameable && this instanceof TameableCreatureEntity tameableSource
-                    && tameableSource.getOwner() instanceof Player owner) {
-                fusionTameable.setPlayerOwner(owner);
-                tameableSource.copyPetBehaviourTo(fusionTameable);
+                this.copySoloTransformState(transformedCreature);
             }
         }
 
@@ -2485,6 +3056,96 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             }
         });
         return transformedEntity;
+    }
+
+    private void copyBaseTransformState(BaseCreatureEntity transformedCreature) {
+        transformedCreature.firstSpawn = false;
+        if (this.isTemporary) {
+            transformedCreature.setTemporary(this.temporaryDuration);
+        }
+        if (this.isMinion()) {
+            transformedCreature.setMinion(true);
+        }
+        if (this.hasMaster()) {
+            transformedCreature.setMasterTarget(this.getMasterTarget());
+        }
+    }
+
+    private void copyFusionTransformState(BaseCreatureEntity transformedCreature, BaseCreatureEntity partnerCreature) {
+        Variant fusionVariant = transformedCreature.getSubspecies() != null
+                ? transformedCreature.getSubspecies().getChildVariant(this, this.getVariant(), partnerCreature.getVariant()) : null;
+        transformedCreature.setSubspecies(this.getSubspeciesIndex());
+        transformedCreature.applyVariant(fusionVariant != null ? fusionVariant.getIndex() : 0);
+        transformedCreature.setSizeScale(this.sizeScale + partnerCreature.sizeScale);
+        partnerCreature.registerTransformedPedestalMinion(transformedCreature);
+        this.registerTransformedPedestalMinion(transformedCreature);
+
+        int transformedLevel = this.getFusionTransformLevel(partnerCreature);
+        transformedCreature.applyLevel(Math.round(transformedLevel * (float) CreatureManager.getInstance().getConfig().elementalFusionLevelMultiplier()));
+        this.copyFusionTransformTamingState(transformedCreature, partnerCreature, transformedLevel);
+    }
+
+    /** Hands a fused creature over to the summoning pedestal that owned its parts (if any). **/
+    public void registerTransformedPedestalMinion(BaseCreatureEntity transformedCreature) {
+        // TODO(port): summoning pedestal block entity (TileEntitySummoningPedestal.registerMinion).
+    }
+
+    private int getFusionTransformLevel(BaseCreatureEntity partnerCreature) {
+        int transformedLevel = this.getMobLevel();
+        String fusionLevelMix = CreatureManager.getInstance().getConfig().elementalFusionLevelMix();
+        if ("lowest".equalsIgnoreCase(fusionLevelMix)) {
+            return Math.min(transformedLevel, partnerCreature.getMobLevel());
+        }
+        if ("highest".equalsIgnoreCase(fusionLevelMix)) {
+            return Math.max(transformedLevel, partnerCreature.getMobLevel());
+        }
+        return transformedLevel + partnerCreature.getMobLevel();
+    }
+
+    private void copyFusionTransformTamingState(BaseCreatureEntity transformedCreature, BaseCreatureEntity partnerCreature, int transformedLevel) {
+        if (!(transformedCreature instanceof TameableCreatureEntity fusionTameable)) {
+            return;
+        }
+
+        if (this instanceof TameableCreatureEntity tameableSource) {
+            Player owner = tameableSource.getPlayerOwner();
+            if (owner != null) {
+                transformedCreature.applyLevel(transformedLevel);
+                fusionTameable.setPlayerOwner(owner);
+                tameableSource.copyPetBehaviourTo(fusionTameable);
+            }
+            return;
+        }
+
+        if (partnerCreature instanceof TameableCreatureEntity tameablePartner) {
+            Player partnerOwner = tameablePartner.getPlayerOwner();
+            if (partnerOwner != null) {
+                transformedCreature.applyLevel(transformedLevel);
+                fusionTameable.setPlayerOwner(partnerOwner);
+                tameablePartner.copyPetBehaviourTo(fusionTameable);
+                if (partnerCreature.isTemporary) {
+                    transformedCreature.setTemporary(partnerCreature.temporaryDuration);
+                }
+                transformedCreature.setMinion(partnerCreature.isMinion());
+                if (partnerCreature.hasMaster()) {
+                    transformedCreature.setMasterTarget(partnerCreature.getMasterTarget());
+                }
+            }
+        }
+    }
+
+    private void copySoloTransformState(BaseCreatureEntity transformedCreature) {
+        transformedCreature.setSubspecies(this.getSubspeciesIndex());
+        transformedCreature.applyVariant(this.getVariantIndex());
+        transformedCreature.setSizeScale(this.sizeScale);
+        transformedCreature.applyLevel(this.getMobLevel());
+
+        if (transformedCreature instanceof TameableCreatureEntity fusionTameable && this.getOwner() instanceof Player owner) {
+            fusionTameable.setPlayerOwner(owner);
+            if (this instanceof TameableCreatureEntity tameableSource) {
+                tameableSource.copyPetBehaviourTo(fusionTameable);
+            }
+        }
     }
 
     // ==================================================
@@ -2590,6 +3251,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     @Override
     public void die(DamageSource damageSource) {
+        if (!this.level().isClientSide && this.isBossAlways()) {
+            ExtendedWorld extendedWorld = ExtendedWorld.getForWorld(this.level());
+            if (extendedWorld != null) {
+                extendedWorld.bossRemoved(this);
+            }
+        }
         if (this.getMasterTarget() instanceof BaseCreatureEntity masterCreature) {
             masterCreature.onMinionDeath(this, damageSource);
         }
@@ -3247,6 +3914,66 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.perchTarget = setTarget;
     }
 
+    /** Perches this creature on the target (e.g. a pet on its owner's shoulder), or stops perching with null. **/
+    public void perchOnEntity(LivingEntity target) {
+        if (target == null) {
+            this.clearPerchTarget();
+            return;
+        }
+
+        ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(target);
+        if (extendedEntity == null) {
+            return;
+        }
+        this.setPerchTarget(target);
+        extendedEntity.setPerchedByEntity(this);
+    }
+
+    void tickPerchState() {
+        LivingEntity perchTarget = this.getPerchTarget();
+        if (perchTarget == null) {
+            return;
+        }
+
+        ExtendedEntity perchEntityExt = ExtendedEntity.getForEntity(perchTarget);
+        if (perchEntityExt != null) {
+            org.joml.Vector3d perchPosition = perchEntityExt.getPerchPosition();
+            this.setPos(perchPosition.x, perchPosition.y, perchPosition.z);
+            this.setDeltaMovement(perchTarget.getDeltaMovement());
+            this.yRotO = perchTarget.yRotO;
+        }
+        if (perchTarget instanceof Player playerTarget) {
+            ExtendedPlayer perchPlayerExt = ExtendedPlayer.getForPlayer(playerTarget);
+            if (perchPlayerExt != null && perchPlayerExt.isControlActive(ExtendedPlayer.CONTROL_ID.MOUNT_DISMOUNT)) {
+                this.perchOnEntity(null);
+            }
+        }
+    }
+
+    private void clearPerchTarget() {
+        if (this.getPerchTarget() != null) {
+            ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPerchTarget());
+            if (extendedEntity != null) {
+                extendedEntity.setPerchedByEntity(null);
+            }
+        }
+        this.setPerchTarget(null);
+    }
+
+    /** Drops the carried entity if it died or got too far away. **/
+    void tickPickupState() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return;
+        }
+        LivingEntity pickupEntity = this.getPickupEntity();
+        if (pickupEntity == null) {
+            return;
+        }
+        if (!pickupEntity.isAlive() || this.distanceToSqr(pickupEntity) > 32D * 32D) {
+            this.dropPickupEntity();
+        }
+    }
+
     public boolean hasPerchTarget() {
         if (!this.getCommandSenderWorld().isClientSide) {
             return this.getPerchTarget() != null;
@@ -3507,9 +4234,17 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * creatures that can't breathe air. TODO(port): daylight burning (tickDaylightBurn).
      **/
     void tickEnvironmentalState(boolean isClient) {
+        // Stealth runs on both sides (invisibility + target clearing server side, start/onStealth hooks both).
+        this.tickStealthState(isClient);
         if (isClient) {
             return;
         }
+
+        float brightness = this.getBrightness();
+        if (this.daylightBurns() && this.getCommandSenderWorld().isDay()) {
+            this.tickDaylightBurn(this.getCommandSenderWorld(), brightness);
+        }
+        this.applyLightSpawnPressure(brightness);
 
         if (this.waterDamage() && this.isInWaterOrRain() && !this.isInLava()) {
             this.hurt(this.level().damageSources().drown(), 1.0F);
@@ -3522,6 +4257,96 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
                 this.hurt(this.level().damageSources().drown(), 1.0F);
             }
         }
+    }
+
+    /** Undead-style creatures burn in daylight unless they wear a helmet (which takes the damage instead). **/
+    private void tickDaylightBurn(Level world, float brightness) {
+        if (brightness <= 0.5F || this.getRandom().nextFloat() * 30.0F >= (brightness - 0.4F) * 2.0F || !world.canSeeSkyFromBelowWater(this.blockPosition())) {
+            return;
+        }
+
+        ItemStack helmet = this.inventory.getEquipmentStack("head");
+        if (!helmet.isEmpty()) {
+            if (helmet.isDamageableItem()) {
+                helmet.setDamageValue(helmet.getDamageValue() + this.getRandom().nextInt(2));
+                if (helmet.getDamageValue() >= helmet.getMaxDamage()) {
+                    this.inventory.setEquipmentStack("head", ItemStack.EMPTY);
+                }
+            }
+            return;
+        }
+        this.igniteForSeconds(8);
+    }
+
+    /** Creatures in light they wouldn't spawn in (or dark, for light-only ones) build up despawn pressure. **/
+    private void applyLightSpawnPressure(float brightness) {
+        if (!this.creatureInfo.getCreatureSpawn().spawnsInLight() && brightness > 0.5F) {
+            this.noActionTime += 2;
+        } else if (!this.creatureInfo.getCreatureSpawn().spawnsInDark() && brightness <= 0.5F) {
+            this.noActionTime += 2;
+        }
+    }
+
+    private void tickStealthState(boolean isClient) {
+        if (!isClient) {
+            if (this.isStealthed() && !this.isInvisible()) {
+                this.setInvisible(true);
+            } else if (!this.isStealthed() && this.isInvisible() && !this.hasEffect(MobEffects.INVISIBILITY)) {
+                this.setInvisible(false);
+            }
+        }
+        if (this.isStealthed()) {
+            if (this.stealthPrev != this.isStealthed()) {
+                this.startStealth();
+            }
+            this.onStealth();
+        } else if (this.isInvisible() && !this.hasEffect(MobEffects.INVISIBILITY) && !isClient) {
+            this.setInvisible(false);
+        }
+        this.stealthPrev = this.isStealthed();
+    }
+
+    /** While stealthed, whatever this creature is targeting loses track of its own target. **/
+    public void onStealth() {
+        if (!this.getCommandSenderWorld().isClientSide) {
+            if (this.getTarget() instanceof Mob mobTarget && mobTarget.getTarget() != null) {
+                mobTarget.setTarget(null);
+            }
+        }
+    }
+
+    /** Gliders (getFallingMod() < 1) fall slowly. **/
+    private void applyGlidingSlowdown() {
+        if (!this.onGround() && this.getDeltaMovement().y < 0.0D) {
+            this.setDeltaMovement(this.getDeltaMovement().multiply(1, this.getFallingMod(), 1));
+        }
+    }
+
+    @Override
+    public void lavaHurt() {
+        if (!this.canBurn()) {
+            return;
+        }
+        super.lavaHurt();
+    }
+
+    @Override
+    public void igniteForTicks(int ticks) {
+        if (!this.canBurn()) {
+            return;
+        }
+        super.igniteForTicks(ticks);
+    }
+
+    /** Elements make creatures immune to some effects (e.g. poison for plant/poison elements). **/
+    @Override
+    public boolean canBeAffected(MobEffectInstance effectInstance) {
+        for (ElementInfo element : this.getElements()) {
+            if (!element.isEffectApplicable(effectInstance)) {
+                return false;
+            }
+        }
+        return super.canBeAffected(effectInstance);
     }
 
     public boolean lavaContact() {
@@ -3589,22 +4414,105 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return Math.cos(angleRadians);
     }
 
-    // NOTE: trimmed - original also adjusted for water-surface-Y/ground-Y here (getWaterSurfaceY/
-    // getGroundY, dropped earlier as unused dead weight); fine for the day/night aggression
-    // check concapede uses this for, not accurate enough for underwater/cave spawn-light checks.
     public byte testLightLevel() {
         return this.testLightLevel(this.blockPosition());
     }
 
+    /**
+     * Returns a light rating for the light level the specified XYZ position.
+     * Dark enough for spawnsInDarkness: 0 = Dark, 1 = Dim
+     * Light enough for spawnsInLight: 2 = Light, 3 = Bright
+     * Official conventions kept: below y=0 is always dark, water is measured at its surface (config), air at the
+     * ground below it.
+     **/
     public byte testLightLevel(BlockPos pos) {
-        if (pos.getY() < this.getCommandSenderWorld().getMinBuildHeight()) {
+        BlockState spawnBlockState = this.getCommandSenderWorld().getBlockState(pos);
+        if (pos.getY() < 0) {
             return 0;
         }
+        if (com.lycanitesmobs.core.block.Material.WATER.contains(spawnBlockState.getBlock()) && CreatureManager.getInstance().getSpawnConfig().useSurfaceLightLevel()) {
+            pos = new BlockPos(pos.getX(), this.getWaterSurfaceY(pos), pos.getZ());
+        } else {
+            pos = new BlockPos(pos.getX(), this.getGroundY(pos), pos.getZ());
+        }
+
         int rawLight = this.getCommandSenderWorld().getMaxLocalRawBrightness(pos);
         if (rawLight == 0) return 0;
         if (rawLight <= 8) return 1;
         if (rawLight < 15) return 2;
         return 3;
+    }
+
+
+
+
+    /**
+     * Returns the Y position of the water surface (first air block searching up, max 24 blocks), or the highest
+     * water block if covered.
+     **/
+    public int getWaterSurfaceY(BlockPos pos) {
+        int y = pos.getY();
+        if (y <= 0) {
+            return 0;
+        }
+        int yMax = this.getCommandSenderWorld().getMaxBuildHeight() - 1;
+        if (y >= yMax) {
+            return yMax;
+        }
+        yMax = Math.min(yMax, y + 24);
+        BlockState startBlock = this.getCommandSenderWorld().getBlockState(pos);
+        if (startBlock.getBlock() == Blocks.WATER) {
+            int possibleSurfaceY = y;
+            for (possibleSurfaceY += 1; possibleSurfaceY <= yMax; possibleSurfaceY++) {
+                BlockState possibleSurfaceBlock = this.getCommandSenderWorld().getBlockState(new BlockPos(pos.getX(), possibleSurfaceY, pos.getZ()));
+                if (possibleSurfaceBlock.isAir()) {
+                    return possibleSurfaceY;
+                } else if (possibleSurfaceBlock.getBlock() != Blocks.WATER) {
+                    return possibleSurfaceY - 1;
+                }
+            }
+            return Math.max(possibleSurfaceY - 1, y);
+        }
+        return y;
+    }
+
+    public boolean isSwimmable(int x, int y, int z) {
+        BlockState blockState = this.getCommandSenderWorld().getBlockState(new BlockPos(x, y, z));
+        if (this.isLavaCreature && com.lycanitesmobs.core.block.Material.LAVA.contains(blockState.getBlock())) {
+            return true;
+        }
+        return com.lycanitesmobs.core.block.Material.WATER.contains(blockState.getBlock());
+    }
+
+    @Override
+    protected float getWaterSlowDown() {
+        if (!this.isPushedByFluid()) {
+            return 1F;
+        }
+        return 0.8F;
+    }
+
+    /** Official: riders are never dumped off Lycanites mounts underwater (aquatic mounts). **/
+    @Override
+    public boolean dismountsUnderwater() {
+        return false;
+    }
+
+    @Override
+    protected boolean canRide(Entity entity) {
+        if (this.isBoss()) {
+            return false;
+        }
+        return super.canRide(entity);
+    }
+
+    public boolean canCarryItems() {
+        return this.getInventorySize() > 0;
+    }
+
+    @Override
+    public int getAmbientSoundInterval() {
+        return CreatureManager.getInstance().getConfig().idleSoundTicks();
     }
 
     public boolean isDaytime() {
@@ -3705,7 +4613,18 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return false;
     }
 
+    /** Fixate target saved by UUID, resolved to the entity once it's loaded after a reload. **/
+    private UUID fixateUUID = null;
+
     private void tickTargetRuntime() {
+        if (!this.getCommandSenderWorld().isClientSide && !this.hasFixateTarget() && this.fixateUUID != null
+                && this.getCommandSenderWorld() instanceof ServerLevel serverLevel) {
+            Entity foundEntity = serverLevel.getEntity(this.fixateUUID);
+            if (foundEntity instanceof LivingEntity livingTarget && foundEntity != this) {
+                this.setFixateTarget(livingTarget);
+            }
+            this.fixateUUID = null;
+        }
         if (this.hasFixateTarget()) {
             this.setTarget(this.getFixateTarget());
         }
@@ -3822,6 +4741,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         }
         this.tickBlockingState();
         this.tickTargetRuntime();
+        this.applyGlidingSlowdown();
         this.tickMovementRuntime(this.getCommandSenderWorld().isClientSide);
         this.tickMinionLifecycle();
         this.updateBattlePhase();
@@ -3829,6 +4749,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             return;
         }
         this.tickBossHealth(this.getCommandSenderWorld().isClientSide);
+        this.tickBossArena(this.getCommandSenderWorld());
+        this.tickPerchState();
+        this.tickPickupState();
+        if (this.tickCount % 20 == 0 && !this.getCommandSenderWorld().isClientSide && this.isAlive() && this.canPickupItems()) {
+            this.pickupItems();
+        }
         this.tickBeastiaryProximityDiscovery(this.getCommandSenderWorld(), this.getCommandSenderWorld().isClientSide);
         this.tickGuiRefresh(this.getCommandSenderWorld().isClientSide);
         this.enforceDamageLimit(this.getCommandSenderWorld().isClientSide);
@@ -3856,8 +4782,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Used when loading this mob from a saved chunk.
-     * Trimmed: saved-drops/extra-behaviour/constraint/fixate/minion
-     * persistence not ported - only progression (level/experience/subspecies/variant/size).
+     * Restored to the official set of saved data (2026-09-28).
      */
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
@@ -3914,6 +4839,38 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (nbt.contains("HomeX") && nbt.contains("HomeY") && nbt.contains("HomeZ") && nbt.contains("HomeDistanceMax")) {
             this.restrictTo(new BlockPos(nbt.getInt("HomeX"), nbt.getInt("HomeY"), nbt.getInt("HomeZ")), (int) nbt.getFloat("HomeDistanceMax"));
         }
+        // Restored 2026-09-28 (official read*Data methods):
+        if (nbt.contains("SpawnEventType")) {
+            this.spawnEventType = nbt.getString("SpawnEventType");
+        }
+        if (nbt.contains("SpawnEventCount")) {
+            this.spawnEventCount = nbt.getInt("SpawnEventCount");
+        }
+        if (nbt.contains("ForceNoDespawn") && nbt.getBoolean("ForceNoDespawn")) {
+            this.setPersistenceRequired();
+        }
+        if (nbt.contains("Stealth")) {
+            this.setStealth(nbt.getFloat("Stealth"));
+        }
+        if (nbt.contains("ArenaX") && nbt.contains("ArenaY") && nbt.contains("ArenaZ")) {
+            this.setArenaCenter(new BlockPos(nbt.getInt("ArenaX"), nbt.getInt("ArenaY"), nbt.getInt("ArenaZ")));
+        }
+        if (nbt.contains("FixateUUIDMost") && nbt.contains("FixateUUIDLeast")) {
+            this.fixateUUID = new UUID(nbt.getLong("FixateUUIDMost"), nbt.getLong("FixateUUIDLeast"));
+        }
+        if (nbt.contains("ExtraBehaviour")) {
+            this.extraMobBehaviour.read(nbt.getCompound("ExtraBehaviour"));
+        }
+        // Official quirk kept: minions are saved by runtime entity id, so this only relinks within a session.
+        if (nbt.contains("MinionIds")) {
+            ListTag minionIds = nbt.getList("MinionIds", 10);
+            for (int i = 0; i < minionIds.size(); i++) {
+                CompoundTag minionId = minionIds.getCompound(i);
+                if (minionId.contains("ID") && this.getCommandSenderWorld().getEntity(minionId.getInt("ID")) instanceof LivingEntity livingEntity) {
+                    this.addMinion(livingEntity);
+                }
+            }
+        }
     }
 
     @Override
@@ -3951,6 +4908,31 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
             nbt.putInt("HomeZ", homePos.getZ());
             nbt.putFloat("HomeDistanceMax", this.getHomeDistanceMax());
         }
+        // Restored 2026-09-28 (official write*Data methods):
+        nbt.putString("SpawnEventType", this.spawnEventType);
+        nbt.putInt("SpawnEventCount", this.spawnEventCount);
+        nbt.putBoolean("ForceNoDespawn", this.isPersistant());
+        nbt.putFloat("Stealth", this.getStealth());
+        if (this.hasArenaCenter()) {
+            BlockPos arenaPos = this.getArenaCenter();
+            nbt.putInt("ArenaX", arenaPos.getX());
+            nbt.putInt("ArenaY", arenaPos.getY());
+            nbt.putInt("ArenaZ", arenaPos.getZ());
+        }
+        if (this.getFixateTarget() != null) {
+            nbt.putLong("FixateUUIDMost", this.getFixateTarget().getUUID().getMostSignificantBits());
+            nbt.putLong("FixateUUIDLeast", this.getFixateTarget().getUUID().getLeastSignificantBits());
+        }
+        CompoundTag extTagCompound = new CompoundTag();
+        this.extraMobBehaviour.write(extTagCompound);
+        nbt.put("ExtraBehaviour", extTagCompound);
+        ListTag minionIds = new ListTag();
+        for (LivingEntity minion : this.minions) {
+            CompoundTag minionId = new CompoundTag();
+            minionId.putInt("ID", minion.getId());
+            minionIds.add(minionId);
+        }
+        nbt.put("MinionIds", minionIds);
     }
 
     public int getAttackCooldown() {

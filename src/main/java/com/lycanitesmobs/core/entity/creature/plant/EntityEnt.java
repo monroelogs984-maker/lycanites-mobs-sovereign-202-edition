@@ -25,6 +25,7 @@ public class EntityEnt extends TameableCreatureEntity implements Enemy {
     // ==================================================
     public EntityEnt(EntityType<? extends EntityEnt> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = false;
 
         // Setup:
         this.hasAttackSound = true;

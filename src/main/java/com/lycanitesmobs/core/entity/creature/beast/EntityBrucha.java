@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.AvoidGoal;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
 import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
@@ -45,4 +46,22 @@ public class EntityBrucha extends TameableCreatureEntity implements Enemy {
         }
         super.attackRanged(target, range);
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

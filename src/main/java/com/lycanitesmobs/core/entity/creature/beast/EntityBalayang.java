@@ -52,4 +52,18 @@ public class EntityBalayang extends TameableCreatureEntity implements Enemy {
         if (source.is(DamageTypes.CACTUS)) return true;
         return super.isInvulnerableTo(source);
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
 }

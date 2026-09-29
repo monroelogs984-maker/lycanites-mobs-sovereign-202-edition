@@ -32,6 +32,8 @@ public class EntityRoa extends RideableCreatureEntity implements Enemy {
     // ==================================================
     public EntityRoa(EntityType<? extends EntityRoa> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
 
         // Setup:
         this.hasAttackSound = true;

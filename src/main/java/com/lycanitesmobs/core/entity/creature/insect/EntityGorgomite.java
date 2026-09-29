@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.creature.beast.EntityBalayang;
+import com.lycanitesmobs.core.entity.goals.targeting.FindAvoidTargetGoal;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -31,7 +34,7 @@ public class EntityGorgomite extends BaseCreatureEntity implements Enemy {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(true));
-        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAttackTargetGoal(this).addTargets(EntityType.PLAYER));
+        this.targetSelector.addGoal(this.claimSpecialTargetGoalIndex(), new FindAvoidTargetGoal(this).setTargetClass(EntityBalayang.class));
     }
 
     @Override
@@ -85,5 +88,22 @@ public class EntityGorgomite extends BaseCreatureEntity implements Enemy {
     public boolean isInvulnerableTo(DamageSource source) {
         if (source.is(DamageTypes.CACTUS)) return true;
         return super.isInvulnerableTo(source);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

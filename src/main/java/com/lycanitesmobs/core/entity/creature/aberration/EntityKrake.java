@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -21,6 +22,8 @@ public class EntityKrake extends AgeableCreatureEntity implements Enemy {
 
     public EntityKrake(EntityType<? extends EntityKrake> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.1D;
         this.canGrow = true;
@@ -30,6 +33,7 @@ public class EntityKrake extends AgeableCreatureEntity implements Enemy {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false).setRange(1));
     }
 
@@ -88,4 +92,17 @@ public class EntityKrake extends AgeableCreatureEntity implements Enemy {
     public boolean creatureCanBreatheUnderwater() {
         return true;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
 }

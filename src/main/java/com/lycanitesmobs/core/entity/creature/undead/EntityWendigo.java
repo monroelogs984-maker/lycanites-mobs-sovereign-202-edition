@@ -26,9 +26,10 @@ public class EntityWendigo extends BaseCreatureEntity implements Enemy {
     // ==================================================
     public EntityWendigo(EntityType<? extends EntityWendigo> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
         this.setupMob();
     }

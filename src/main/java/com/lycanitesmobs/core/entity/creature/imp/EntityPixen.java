@@ -41,9 +41,10 @@ public class EntityPixen extends TameableCreatureEntity implements Enemy {
  	// ==================================================
     public EntityPixen(EntityType<? extends EntityPixen> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
         this.flySoundSpeed = 5;
         this.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(1.0F);

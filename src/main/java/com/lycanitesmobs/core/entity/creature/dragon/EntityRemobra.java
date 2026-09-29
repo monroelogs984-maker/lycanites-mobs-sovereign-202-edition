@@ -46,4 +46,31 @@ public class EntityRemobra extends TameableCreatureEntity implements Enemy {
         this.fireProjectile("venomshot", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
         super.attackRanged(target, range);
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+	// ========== Living Update ==========
+	@Override
+    public void aiStep() {
+        super.aiStep();
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
 }

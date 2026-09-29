@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.base;
 
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import com.lycanitesmobs.core.item.consumable.utility.ItemSoulstone;
 import com.lycanitesmobs.core.data.info.creature.CreatureKnowledge;
 import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
@@ -292,8 +293,9 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     }
 
     private void addTameableInteractCommands(HashMap<Integer, String> commands, Player player, ItemStack itemStack) {
-        // TODO(port): "Perch" (perching).
-        if (!this.getCommandSenderWorld().isClientSide && player.isShiftKeyDown() && this.isTamed() && player == this.getPlayerOwner()) {
+        if (this.canPerch(player) && !player.isShiftKeyDown() && !this.getCommandSenderWorld().isClientSide) {
+            commands.put(BaseCreatureEntity.COMMAND_PIORITIES.MAIN.id, "Perch");
+        } else if (!this.getCommandSenderWorld().isClientSide && player.isShiftKeyDown() && this.isTamed() && player == this.getPlayerOwner()) {
             commands.put(BaseCreatureEntity.COMMAND_PIORITIES.MAIN.id, "GUI");
         }
 
@@ -325,7 +327,23 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         // TODO(port): "Charge" (ChargeItem). Unequipping needs the creature GUI.
     }
 
+    // ==================================================
+    //                       Perching
+    // ==================================================
+    public boolean canPerch(LivingEntity target) {
+        if (!this.creatureInfo.isPerchable()) {
+            return false;
+        }
+        return this.getPlayerOwner() == target;
+    }
+
     private Boolean performTameableCommand(String command, Player player, ItemStack itemStack) {
+        if ("Perch".equals(command)) {
+            this.playTameSound();
+            this.perchOnEntity(player);
+            return true;
+        }
+
         if ("GUI".equals(command)) {
             this.playTameSound();
             this.openGUI(player);
@@ -522,7 +540,59 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     // ==================================================
     //                      Attacks
     // ==================================================
-    // TODO(port): doRangedDamage() owner kill credit (projectiles not ported).
+    /** Owner kill credit for ranged attacks too: a killing projectile hit is dealt as the owner's minion. **/
+    @Override
+    public boolean doRangedDamage(Entity target, ThrowableProjectile projectile, float damage, boolean noPierce) {
+        float totalDamage = damage * ((float) this.creatureStats.getDamage() / 2);
+        if (target instanceof Mob mobTarget && this.getOwner() instanceof Player
+                && mobTarget.getHealth() > 0 && mobTarget.getHealth() - totalDamage <= 0) {
+            DamageSource creditSource = new MinionEntityDamageSource(this.getDamageSource(null).typeHolder(), this.getOwner());
+            return target.hurt(creditSource, totalDamage);
+        }
+        return super.doRangedDamage(target, projectile, damage, noPierce);
+    }
+
+    /** Tamed (non-temporary) creatures never despawn, even on Peaceful. **/
+    @Override
+    public boolean despawnCheck() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return false;
+        }
+        if (this.isTamed() && !this.isTemporary()) {
+            return false;
+        }
+        return super.despawnCheck();
+    }
+
+    /** Minions summoned by a tamed creature belong to its owner and copy its pet behaviour. **/
+    @Override
+    public void summonMinion(LivingEntity minion, double angle, double distance) {
+        if (this.getPlayerOwner() != null && minion instanceof TameableCreatureEntity tameableMinion) {
+            tameableMinion.setPlayerOwner(this.getPlayerOwner());
+            this.copyPetBehaviourTo(tameableMinion);
+        }
+        super.summonMinion(minion, angle, distance);
+    }
+
+    @Override
+    public AgeableCreatureEntity createChild(AgeableCreatureEntity partner) {
+        AgeableCreatureEntity spawnedBaby = super.createChild(partner);
+        if (this.getOwnerId() != null && spawnedBaby instanceof TameableCreatureEntity tameableBaby) {
+            tameableBaby.setOwnerId(this.getOwnerId());
+        }
+        return spawnedBaby;
+    }
+
+    @Override
+    public void onCreateBaby(AgeableCreatureEntity partner, AgeableCreatureEntity baby) {
+        if (this.isTamed() && this.getOwner() instanceof Player owner && partner instanceof TameableCreatureEntity partnerTameable && baby instanceof TameableCreatureEntity babyTameable) {
+            if (partnerTameable.getPlayerOwner() == this.getPlayerOwner()) {
+                babyTameable.setPlayerOwner(owner);
+            }
+        }
+        super.onCreateBaby(partner, baby);
+    }
+
     @Override
     public boolean attackEntityAsMob(Entity target, double damageScale) {
         if (!this.isAlive() || target == null || !this.hasLineOfSight(target)) {

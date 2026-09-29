@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
@@ -40,6 +42,7 @@ public class EntityConcapedeHead extends AgeableCreatureEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+		this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
@@ -237,4 +240,25 @@ public class EntityConcapedeHead extends AgeableCreatureEntity {
         super.addAdditionalSaveData(nbt);
         nbt.putBoolean("IsHungry", this.isHungry);
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+	@Override
+	public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+   	//                     Immunities
+   	// ==================================================
+    @Override
+    public float getFallResistance() {
+    	return 100;
+    }
+
+	// ==================================================
+	//                     Equipment
+	// ==================================================
+	@Override
+	public int getNoBagSize() { return 0; }
 }

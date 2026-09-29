@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.abilities.StealthGoal;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -34,6 +35,7 @@ public class EntityWraamon extends TameableCreatureEntity implements Enemy {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new StealthGoal(this).setStealthTime(20).setStealthAttack(true).setStealthMove(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
     }
 
@@ -63,5 +65,47 @@ public class EntityWraamon extends TameableCreatureEntity implements Enemy {
     public boolean isInvulnerableTo(DamageSource source) {
         if (source.is(DamageTypes.IN_WALL)) return true;
         return super.isInvulnerableTo(source);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+    // ========== Living Update ==========
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Leap:
+        if (!this.getCommandSenderWorld().isClientSide && this.hasAttackTarget() && this.onGround() && !this.getCommandSenderWorld().isClientSide && this.random.nextInt(10) == 0)
+            this.leap(6.0F, 0.6D, this.getTarget());
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public float getFallResistance() {
+        return 10;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

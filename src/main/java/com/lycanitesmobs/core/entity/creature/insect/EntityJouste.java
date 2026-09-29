@@ -1,5 +1,10 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import com.lycanitesmobs.core.entity.goals.targeting.CopyMasterAttackTargetGoal;
+import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -32,14 +37,19 @@ public class EntityJouste extends AgeableCreatureEntity {
         this.babySpawnChance = 0.1D;
         this.canGrow = true;
         this.setAttackCooldownMax(10);
+        // Restored from official (2026-09-28 constructor audit):
+        this.attackCooldownMax = 10;
         this.setupMob();
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
-        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAttackTargetGoal(this).addTargets(EntityType.PLAYER));
+
+        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindMasterGoal(this).setTargetClass(EntityJousteAlpha.class).setSightCheck(false));
+        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new CopyMasterAttackTargetGoal(this));
     }
 
     @Override

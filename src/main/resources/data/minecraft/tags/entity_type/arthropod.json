@@ -1,0 +1,20 @@
+{
+  "replace": false,
+  "values": [
+    "lycanitesmobs:calpod",
+    "lycanitesmobs:concapede",
+    "lycanitesmobs:concapedesegment",
+    "lycanitesmobs:crusk",
+    "lycanitesmobs:eechetik",
+    "lycanitesmobs:eyewig",
+    "lycanitesmobs:frostweaver",
+    "lycanitesmobs:gorgomite",
+    "lycanitesmobs:lycosa",
+    "lycanitesmobs:ostimien",
+    "lycanitesmobs:serpix",
+    "lycanitesmobs:sutiramu",
+    "lycanitesmobs:umibas",
+    "lycanitesmobs:vespid",
+    "lycanitesmobs:vespidqueen"
+  ]
+}

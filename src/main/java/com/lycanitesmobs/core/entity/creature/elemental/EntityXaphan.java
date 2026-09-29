@@ -28,9 +28,9 @@ public class EntityXaphan extends TameableCreatureEntity implements Enemy {
     // ==================================================
     public EntityXaphan(EntityType<? extends EntityXaphan> entityType, Level world) {
         super(entityType, world);
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
         this.setupMob();
 

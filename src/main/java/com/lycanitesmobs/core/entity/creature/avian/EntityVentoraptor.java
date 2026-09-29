@@ -20,6 +20,7 @@ public class EntityVentoraptor extends RideableCreatureEntity {
  	// ==================================================
     public EntityVentoraptor(EntityType<? extends EntityVentoraptor> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = false;
         
         // Setup:
         this.hasAttackSound = true;

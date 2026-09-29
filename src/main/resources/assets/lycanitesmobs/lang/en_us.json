@@ -1,4 +1,5 @@
 {
+  "lyc.port.placeholder": "%s is not functional yet due to %s not being ported.",
   "lycanitesmobs": "Lycanites Mobs",
   "death.attack.magic": "was killed using magic.",
   "_comment": "=================== Entites ===================",

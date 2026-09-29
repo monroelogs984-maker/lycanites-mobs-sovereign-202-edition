@@ -28,6 +28,8 @@ import java.util.List;
 public class EntitySalamander extends RideableCreatureEntity implements Enemy {
     public EntitySalamander(EntityType<? extends EntitySalamander> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         
         // Setup:
         this.isLavaCreature = true;

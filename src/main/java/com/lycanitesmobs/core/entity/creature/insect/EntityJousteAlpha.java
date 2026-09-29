@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -27,6 +28,8 @@ public class EntityJousteAlpha extends AgeableCreatureEntity {
         super(entityType, world);
         this.hasAttackSound = true;
         this.setAttackCooldownMax(10);
+        // Restored from official (2026-09-28 constructor audit):
+        this.attackCooldownMax = 10;
         this.setupMob();
     }
 
@@ -78,5 +81,22 @@ public class EntityJousteAlpha extends AgeableCreatureEntity {
     @Override
     public AgeableCreatureEntity createChild(AgeableCreatureEntity partner) {
         return (AgeableCreatureEntity) CreatureManager.getInstance().getCreature("jouste").createEntity(this.getCommandSenderWorld());
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

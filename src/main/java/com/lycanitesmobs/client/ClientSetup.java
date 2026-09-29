@@ -1,5 +1,12 @@
 package com.lycanitesmobs.client;
 
+import java.util.Map;
+import net.neoforged.neoforge.common.util.Lazy;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import com.lycanitesmobs.core.manager.EquipmentPartManager;
+import com.lycanitesmobs.core.item.equipment.ItemEquipmentPart;
+import com.lycanitesmobs.client.renderer.item.EquipmentPartRenderer;
 import com.lycanitesmobs.client.loader.ModelReloadListener;
 import com.lycanitesmobs.client.manager.ModelManager;
 import com.lycanitesmobs.client.renderer.entity.creature.CreatureRenderer;
@@ -75,6 +82,18 @@ public class ClientSetup {
      * for the underwater fog, with the official's short fog range.
      */
     public static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+        // Equipment parts: builtin/entity item models drawn by the OBJ part renderer (one shared instance).
+        EquipmentPartRenderer equipmentPartRenderer = new EquipmentPartRenderer();
+        IClientItemExtensions equipmentPartExtensions = new IClientItemExtensions() {
+            @Override
+            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                return equipmentPartRenderer;
+            }
+        };
+        for (Map.Entry<String, Lazy<ItemEquipmentPart>> part : EquipmentPartManager.getInstance().getEquipmentPartEntries()) {
+            event.registerItem(equipmentPartExtensions, part.getValue().get());
+        }
+
         for (FluidManager.FluidEntry fluid : FluidManager.getInstance().getFluids()) {
             ResourceLocation stillTexture = fluid.stillTexture();
             ResourceLocation flowingTexture = fluid.flowingTexture();

@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.actions.BreakDoorGoal;
+import com.lycanitesmobs.core.entity.goals.actions.MoveVillageGoal;
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.util.helpers.AssetHelper;
@@ -29,11 +32,16 @@ public class EntityJabberwock extends TameableCreatureEntity implements Enemy {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(this.claimTravelGoalIndex(), new MoveVillageGoal(this));
+
         super.registerGoals();
+
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new BreakDoorGoal(this));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setTargetClass(Player.class).setLongMemory(false));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
 
-        if (this.getNavigation() instanceof GroundPathNavigation pathNavigateGround) {
+        if (this.getNavigation() instanceof GroundPathNavigation) {
+            GroundPathNavigation pathNavigateGround = (GroundPathNavigation) this.getNavigation();
             pathNavigateGround.setCanOpenDoors(true);
         }
     }
@@ -47,5 +55,54 @@ public class EntityJabberwock extends TameableCreatureEntity implements Enemy {
 
         String textureName = this.getTextureName() + "_rudolph";
         return AssetHelper.entityTexture(textureName);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+    // ========== Living Update ==========
+    @Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Random Lunging:
+        if (this.onGround() && !this.getCommandSenderWorld().isClientSide) {
+            if (this.hasAttackTarget()) {
+                if (this.random.nextInt(10) == 0)
+                    this.leap(6.0F, 0.1D, this.getTarget());
+            }
+        }
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Immunities
+    // ==================================================
+    @Override
+    public float getFallResistance() {
+        return 50;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.imp;
 
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.level.pathfinder.PathType;
 import com.lycanitesmobs.core.entity.item.CustomItemEntity;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
@@ -19,7 +22,7 @@ import net.minecraft.world.level.pathfinder.PathType;
  * Trimmed - original's only attack is a ranged fireball via AttackRangedGoal/fireProjectile
  * (ProjectileManager not ported) - substituted AttackMeleeGoal so it isn't defenseless. Dropped
  * the land/leap flight-state machine (isSafeToLand/isSitting/leap not on this port's
- * BaseCreatureEntity), applyDropEffects/getDamageModifier (not real hooks here),
+ * BaseCreatureEntity), applyDropEffects (not a real hook here; getDamageModifier restored 2026-09-29),
  * getFallResistance/petControlsEnabled/bag getters (tame/equipment, not ported). Kept the
  * cosmetic smoke/flame particle trail and the ground-seeking wander position override.
  * isFlying() simplified to always true since the land-state machine is gone.
@@ -27,10 +30,18 @@ import net.minecraft.world.level.pathfinder.PathType;
  * substituted melee attack or ProjectileManager being unported is outdated.
  */
 public class EntityAfrit extends TameableCreatureEntity implements Enemy {
+    // Fields restored from official (2026-09-28 method audit):
+    protected boolean wantsToLand;
+
 
     public EntityAfrit(EntityType<? extends EntityAfrit> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.flySoundSpeed = 20;
+        this.isLavaCreature = true;
         this.setupMob();
         this.setPathfindingMalus(PathType.LAVA, 0F);
     }
@@ -97,5 +108,55 @@ public class EntityAfrit extends TameableCreatureEntity implements Enemy {
     @Override
     public void applyDropEffects(CustomItemEntity entityItem) {
         entityItem.setCanBurn(false);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Attacks
+    // ==================================================
+    // ========== Set Attack Target ==========
+    @Override
+    public boolean canAttackType(EntityType targetType) {
+        return super.canAttackType(targetType);
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    @Override
+    public float getFallResistance() {
+        return 100;
+    }
+
+    // ========== Get Flight Offset ==========
+    @Override
+    public double getFlightOffset() {
+        if(!this.wantsToLand) {
+            super.getFlightOffset();
+        }
+        return 0;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    @Override
+    public boolean petControlsEnabled() { return true; }
+
+    // Restored from official 2026-09-29 (method audit) - hooked in BaseCreatureEntity.hurt().
+    @Override
+    public float getDamageModifier(DamageSource damageSrc) {
+        if (damageSrc.is(DamageTypeTags.IS_FIRE))
+            return 0F;
+        return super.getDamageModifier(damageSrc);
     }
 }

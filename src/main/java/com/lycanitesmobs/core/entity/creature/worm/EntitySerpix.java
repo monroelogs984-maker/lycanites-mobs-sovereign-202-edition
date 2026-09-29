@@ -31,9 +31,10 @@ public class EntitySerpix extends TameableCreatureEntity implements IGroupHeavy 
     // ==================================================
     public EntitySerpix(EntityType<? extends EntitySerpix> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
         this.babySpawnChance = 0.25D;
         this.growthTime = -120000;

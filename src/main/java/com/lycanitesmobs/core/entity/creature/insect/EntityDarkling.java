@@ -1,5 +1,10 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.goals.actions.abilities.StealthGoal;
+import com.lycanitesmobs.core.manager.ObjectManager;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -53,8 +58,8 @@ public class EntityDarkling extends TameableCreatureEntity implements Enemy {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new StealthGoal(this).setStealthTime(20).setStealthAttack(true).setStealthMove(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
-        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAttackTargetGoal(this).addTargets(EntityType.PLAYER));
     }
 
     @Override
@@ -188,5 +193,57 @@ public class EntityDarkling extends TameableCreatureEntity implements Enemy {
     public boolean isInvulnerableTo(DamageSource source) {
         if (source.is(DamageTypes.IN_WALL)) return true;
         return super.isInvulnerableTo(source);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                     Stealth
+    // ==================================================
+    @Override
+    public boolean canStealth() {
+        if (this.getCommandSenderWorld().isClientSide) return false;
+        if (this.isMoving()) return false;
+        return this.testLightLevel() <= 0;
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public float getFallResistance() {
+        return 10;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
+    }
+
+    @Override
+    public void startStealth() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            ParticleOptions particle = ParticleTypes.WITCH;
+            double d0 = this.random.nextGaussian() * 0.02D;
+            double d1 = this.random.nextGaussian() * 0.02D;
+            double d2 = this.random.nextGaussian() * 0.02D;
+            for (int i = 0; i < 100; i++)
+                this.getCommandSenderWorld().addParticle(particle, this.position().x() + (double) (this.random.nextFloat() * this.getDimensions(Pose.STANDING).width() * 2.0F) - (double) this.getDimensions(Pose.STANDING).width(), this.position().y() + 0.5D + (double) (this.random.nextFloat() * this.getDimensions(Pose.STANDING).height()), this.position().z() + (double) (this.random.nextFloat() * this.getDimensions(Pose.STANDING).width() * 2.0F) - (double) this.getDimensions(Pose.STANDING).width(), d0, d1, d2);
+        }
+        super.startStealth();
     }
 }

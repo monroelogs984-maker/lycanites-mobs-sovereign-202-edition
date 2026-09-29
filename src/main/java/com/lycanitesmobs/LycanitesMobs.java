@@ -10,6 +10,7 @@ import com.lycanitesmobs.core.data.loaders.FileLoader;
 import com.lycanitesmobs.core.data.loaders.StreamLoader;
 import com.lycanitesmobs.core.event.RegistryEvents;
 import com.lycanitesmobs.core.manager.CreatureManager;
+import com.lycanitesmobs.core.manager.SpawnerManager;
 import com.lycanitesmobs.core.manager.ElementManager;
 import com.lycanitesmobs.core.manager.ItemManager;
 import com.lycanitesmobs.core.manager.FluidManager;
@@ -87,11 +88,16 @@ public class LycanitesMobs {
         ItemManager.register(modEventBus);
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
+        com.lycanitesmobs.core.capabilities.entity.ExtendedEntity.register(modEventBus);
         com.lycanitesmobs.core.container.creature.CreatureContainer.MENUS.register(modEventBus);
         modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
         com.lycanitesmobs.core.manager.DeferredLevelActionManager.register();
         com.lycanitesmobs.core.event.PlayerEventListener.register();
+        com.lycanitesmobs.core.event.EntityEventListener.register();
         com.lycanitesmobs.core.command.CommandManager.register();
+        com.lycanitesmobs.core.capabilities.level.ExtendedWorld.register();
+        com.lycanitesmobs.core.event.SpawnerEventListener.register();
+        com.lycanitesmobs.core.entity.spawner.StructureSpawnInjector.register(modEventBus);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -125,8 +131,7 @@ public class LycanitesMobs {
 
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 4d+: EquipmentPartManager registration - needs ItemEquipmentPart.
-        // TODO Phase 6: (ProjectileManager done in 6a) SpawnerManager/StructureSpawnInjector/AltarInfo/
+        // TODO Phase 6: (ProjectileManager done in 6a, spawners in 6b) AltarInfo/
         //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
         //       (SpawnerEventListener, CommandManager, GameEventListener, MobEventListener).
         // PacketManager: only PlayerControlPayload (mounts) so far - the other messages come with their systems.
@@ -161,6 +166,8 @@ public class LycanitesMobs {
         // creature definitions don't need config values to parse (only to compute stats at
         // runtime), so startup() is still safe to call synchronously here alongside the other
         // registration-touching calls.
+        // Equipment parts register items (so constructor time); they need elements loaded first.
+        com.lycanitesmobs.core.manager.EquipmentPartManager.getInstance().loadAllFromJson(modInfo);
         CreatureManager.getInstance().startup(modInfo);
         ProjectileManager.getInstance().startup(modInfo);
     }
@@ -173,5 +180,13 @@ public class LycanitesMobs {
         CreatureManager.getInstance().loadConfig();
         CreatureManager.getInstance().bindRegisteredValues();
         ProjectileManager.getInstance().bindRegisteredTypes();
+        // Spawners resolve blocks/items/materials from the registries and creature ids from CreatureManager, so they
+        // load here (registries frozen, Material lists built) rather than in loadContent() like the official.
+        com.lycanitesmobs.core.manager.DungeonManager.getInstance().loadAllFromJson(modInfo); // themes (Vespid hives)
+        SpawnerManager.getInstance().loadAllFromJson(modInfo);
+        // Treat Lists: (resolve items/creature entity types, so after registration)
+        com.lycanitesmobs.core.item.consumable.holiday.ItemHalloweenTreat.createObjectLists();
+        com.lycanitesmobs.core.item.consumable.holiday.ItemWinterGift.createObjectLists();
+        com.lycanitesmobs.core.entity.spawner.StructureSpawnInjector.getInstance().loadAllFromJson(modInfo);
     }
 }

@@ -29,6 +29,8 @@ public class EntityAbtu extends TameableCreatureEntity implements Enemy {
 
     public EntityAbtu(EntityType<? extends EntityAbtu> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.9D;
         this.canGrow = true;
@@ -119,4 +121,17 @@ public class EntityAbtu extends TameableCreatureEntity implements Enemy {
     public boolean canBreatheAir() {
         return false;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
 }

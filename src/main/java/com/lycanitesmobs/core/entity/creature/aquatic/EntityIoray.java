@@ -26,6 +26,8 @@ public class EntityIoray extends RideableCreatureEntity implements Enemy {
     // ==================================================
     public EntityIoray(EntityType<? extends EntityIoray> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
 
         // Setup:
         this.hasAttackSound = true;

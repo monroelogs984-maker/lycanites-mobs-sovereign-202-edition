@@ -22,6 +22,7 @@ public class EntityTriffid extends TameableCreatureEntity implements Enemy {
  	// ==================================================
     public EntityTriffid(EntityType<? extends EntityTriffid> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = false;
         
         // Setup:
         this.hasAttackSound = true;

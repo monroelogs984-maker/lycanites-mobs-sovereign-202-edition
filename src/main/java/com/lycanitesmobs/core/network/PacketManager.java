@@ -1,5 +1,9 @@
 package com.lycanitesmobs.core.network;
 
+import com.lycanitesmobs.core.network.message.MessageEntityPerched;
+import com.lycanitesmobs.core.network.message.MessageEntityPickedUp;
+import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import com.lycanitesmobs.core.network.message.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,6 +35,9 @@ public class PacketManager {
         registrar.playToClient(MessageCreatureKnowledge.TYPE, MessageCreatureKnowledge.STREAM_CODEC, MessageCreatureKnowledge::handle);
         registrar.playToClient(MessageCreature.TYPE, MessageCreature.STREAM_CODEC, MessageCreature::handle);
         registrar.playToClient(MessageOverlayMessage.TYPE, MessageOverlayMessage.STREAM_CODEC, MessageOverlayMessage::handle);
+        registrar.playToClient(MessageEntityPickedUp.TYPE, MessageEntityPickedUp.STREAM_CODEC, MessageEntityPickedUp::handle);
+        registrar.playToClient(MessageEntityPerched.TYPE, MessageEntityPerched.STREAM_CODEC, MessageEntityPerched::handle);
+        registrar.playToClient(MessageScreenRequest.TYPE, MessageScreenRequest.STREAM_CODEC, MessageScreenRequest::handle);
 
         // Both ways:
         registrar.playBidirectional(MessagePetEntry.TYPE, MessagePetEntry.STREAM_CODEC, MessagePetEntry::handle);
@@ -41,6 +48,13 @@ public class PacketManager {
 
     public void sendToPlayer(CustomPacketPayload message, ServerPlayer player) {
         PacketDistributor.sendToPlayer(player, message);
+    }
+
+    /** Sends to every player in the level's dimension (official sendToWorld). **/
+    public void sendToWorld(CustomPacketPayload message, Level level) {
+        if (level instanceof ServerLevel serverLevel) {
+            PacketDistributor.sendToPlayersInDimension(serverLevel, message);
+        }
     }
 
     public void sendToServer(CustomPacketPayload message) {

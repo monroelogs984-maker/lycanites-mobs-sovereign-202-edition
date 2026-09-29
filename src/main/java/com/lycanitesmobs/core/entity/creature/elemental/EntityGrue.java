@@ -41,10 +41,10 @@ public class EntityGrue extends TameableCreatureEntity implements Enemy {
     // ==================================================
     public EntityGrue(EntityType<? extends EntityGrue> entityType, Level world) {
         super(entityType, world);
+        this.spawnsInWater = true;
 
         // Setup:
         this.hasAttackSound = true;
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.setupMob();
 
         this.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(1.0F);

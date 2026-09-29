@@ -1,5 +1,10 @@
 package com.lycanitesmobs.core.manager;
 
+import com.lycanitesmobs.core.entity.projectile.hellfire.EntityHellLaserEnd;
+import com.lycanitesmobs.core.entity.projectile.hellfire.EntityHellLaser;
+import com.lycanitesmobs.core.entity.projectile.hellfire.EntityHellShield;
+import com.lycanitesmobs.core.entity.projectile.misc.EntityShadowfireBarrier;
+import com.lycanitesmobs.core.entity.projectile.misc.LaserEndProjectileEntity;
 import com.lycanitesmobs.core.entity.special.PortalEntity;
 import com.lycanitesmobs.core.entity.projectile.misc.EntityDevilGatling;
 import com.lycanitesmobs.core.entity.projectile.hellfire.*;
@@ -235,7 +240,13 @@ public class ProjectileManager extends JSONLoader {
                 RapidFireProjectileEntity::new,
                 null,
                 null);
+        this.addOldProjectile("laserend", LaserEndProjectileEntity.class,
+                LaserEndProjectileEntity::new,
+                null,
+                null);
+
         // Boss projectiles (Rahovart / Asmodeus), ported with the boss batch 2026-09-26:
+        this.addOldProjectile("shadowfirebarrier", EntityShadowfireBarrier.class, EntityShadowfireBarrier::new, EntityShadowfireBarrier::new, EntityShadowfireBarrier::new, false);
         this.addOldProjectile("hellfirewall", EntityHellfireWall.class, EntityHellfireWall::new, EntityHellfireWall::new, EntityHellfireWall::new, false);
         this.addOldProjectile("hellfireorb", EntityHellfireOrb.class, EntityHellfireOrb::new, EntityHellfireOrb::new, EntityHellfireOrb::new, false);
         this.addOldProjectile("hellfirewave", EntityHellfireWave.class, EntityHellfireWave::new, EntityHellfireWave::new, EntityHellfireWave::new, false);
@@ -243,8 +254,9 @@ public class ProjectileManager extends JSONLoader {
         this.addOldProjectile("hellfirebarrier", EntityHellfireBarrier.class, EntityHellfireBarrier::new, EntityHellfireBarrier::new, EntityHellfireBarrier::new, false);
         this.addOldProjectile("hellfirebarrierpart", EntityHellfireBarrierPart.class, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, EntityHellfireBarrierPart::new, false);
         this.addOldProjectile("devilgatling", EntityDevilGatling.class, EntityDevilGatling::new, EntityDevilGatling::new, EntityDevilGatling::new, false);
-        // TODO(port): laserend (lasers), shadowfirebarrier, hellshield, helllaser/helllaserend
-        // (not used by any ported creature yet).
+        this.addOldProjectile("hellshield", EntityHellShield.class, EntityHellShield::new, EntityHellShield::new, EntityHellShield::new, false);
+        this.addOldProjectile("helllaser", EntityHellLaser.class, EntityHellLaser::new, EntityHellLaser::new, EntityHellLaser::new, false);
+        this.addOldProjectile("helllaserend", EntityHellLaserEnd.class, EntityHellLaserEnd::new, null, null, false);
     }
 
     public void addOldProjectile(String name, Class<? extends BaseProjectileEntity> entityClass, OldProjectileBaseFactory baseFactory, OldProjectileOwnerFactory ownerFactory, OldProjectilePositionFactory positionFactory) {

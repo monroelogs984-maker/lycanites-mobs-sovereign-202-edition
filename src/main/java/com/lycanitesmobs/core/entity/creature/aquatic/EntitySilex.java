@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import net.minecraft.core.BlockPos;
@@ -18,6 +19,8 @@ public class EntitySilex extends AgeableCreatureEntity {
 
     public EntitySilex(EntityType<? extends EntitySilex> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
         this.hasAttackSound = false;
         this.babySpawnChance = 0.01D;
         this.canGrow = true;
@@ -27,6 +30,7 @@ public class EntitySilex extends AgeableCreatureEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
@@ -77,5 +81,22 @@ public class EntitySilex extends AgeableCreatureEntity {
     @Override
     public boolean canBurn() {
         return false;
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

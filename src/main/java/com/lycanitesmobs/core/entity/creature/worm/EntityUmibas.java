@@ -27,9 +27,10 @@ public class EntityUmibas extends TameableCreatureEntity implements IGroupHeavy 
     // ==================================================
     public EntityUmibas(EntityType<? extends EntityUmibas> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
 
         this.babySpawnChance = 0.25D;

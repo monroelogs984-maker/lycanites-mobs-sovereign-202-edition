@@ -29,9 +29,10 @@ public class EntityIgnibus extends RideableCreatureEntity implements IGroupHeavy
 
     public EntityIgnibus(EntityType<? extends EntityIgnibus> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.isLavaCreature = true;
         this.flySoundSpeed = 20;
         this.hasAttackSound = false;

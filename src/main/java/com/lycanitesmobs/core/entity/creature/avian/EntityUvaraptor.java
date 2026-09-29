@@ -18,6 +18,7 @@ public class EntityUvaraptor extends RideableCreatureEntity {
  	// ==================================================
     public EntityUvaraptor(EntityType<? extends EntityUvaraptor> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = false;
         
         // Setup:
         this.hasAttackSound = true;

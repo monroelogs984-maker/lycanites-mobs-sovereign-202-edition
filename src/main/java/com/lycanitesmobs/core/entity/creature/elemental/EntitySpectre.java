@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.elemental;
 
+import com.lycanitesmobs.core.entity.goals.actions.abilities.StealthGoal;
+import com.lycanitesmobs.core.manager.ObjectManager;
+import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupBoss;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
@@ -36,6 +39,7 @@ public class EntitySpectre extends TameableCreatureEntity implements Enemy, IGro
 
     public EntitySpectre(EntityType<? extends EntitySpectre> entityType, Level world) {
         super(entityType, world);
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.setupMob();
     }
@@ -48,6 +52,7 @@ public class EntitySpectre extends TameableCreatureEntity implements Enemy, IGro
     @Override
     protected void registerGoals() {
         super.registerGoals();
+        this.goalSelector.addGoal(this.claimPriorityGoalIndex(), new StealthGoal(this).setStealthTime(20).setStealthAttack(true).setStealthMove(true));
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(true));
     }
 
@@ -126,6 +131,40 @@ public class EntitySpectre extends TameableCreatureEntity implements Enemy, IGro
 
     @Override
     public boolean creatureCanBreatheUnderwater() {
+        return true;
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    /**
+     * An additional animation boolean that is passed to all clients through the animation mask.
+     **/
+    public boolean extraAnimation01() {
+        if (this.getCommandSenderWorld().isClientSide) {
+            return super.extraAnimation01();
+        }
+        return this.canPull();
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
         return true;
     }
 }

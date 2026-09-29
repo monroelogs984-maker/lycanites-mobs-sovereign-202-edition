@@ -23,6 +23,7 @@ public class EntityShambler extends TameableCreatureEntity implements Enemy {
  	// ==================================================
     public EntityShambler(EntityType<? extends EntityShambler> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = true;
         
         // Setup:
         this.hasAttackSound = true;

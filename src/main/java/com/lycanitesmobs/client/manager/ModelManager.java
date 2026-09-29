@@ -1,5 +1,8 @@
 package com.lycanitesmobs.client.manager;
 
+import com.lycanitesmobs.client.model.item.ItemObjModel;
+import com.lycanitesmobs.client.model.item.ModelEquipmentPart;
+import com.lycanitesmobs.core.item.equipment.ItemEquipmentPart;
 import com.lycanitesmobs.client.model.creature.base.CreatureObjModel;
 import com.lycanitesmobs.client.model.creature.base.CreatureObjModelOld;
 import com.lycanitesmobs.client.model.creature.base.CreatureModel;
@@ -35,6 +38,7 @@ public class ModelManager {
 
     public Map<CreatureInfo, CreatureModel> creatureModels = new HashMap<>();
     public Map<Subspecies, CreatureModel> creatureSubspeciesModels = new HashMap<>();
+    public Map<ItemEquipmentPart, ItemObjModel> equipmentPartModels = new HashMap<>();
 
     public void reloadModels(ResourceManager resourceManager) {
         LMHelperClass.logDebug("Resources", "ModelManager.reloadModels: begin");
@@ -60,6 +64,10 @@ public class ModelManager {
             } else if (model instanceof CreatureObjModelOld old) {
                 old.reloadModel(resourceManager);
             }
+        }
+
+        for (ItemObjModel model : this.equipmentPartModels.values()) {
+            model.reloadModel(resourceManager);
         }
 
         LMHelperClass.logDebug("Resources", "ModelManager.reloadModels: end");
@@ -131,6 +139,14 @@ public class ModelManager {
         if (model instanceof CreatureObjModel objModel) {
             objModel.removeModelState(entity);
         }
+    }
+
+    /**
+     * Gets the OBJ model for an equipment part item, created on first use (by then the client resources are loaded;
+     * resource reloads refresh them in reloadModels()).
+     */
+    public ItemObjModel getEquipmentPartModel(ItemEquipmentPart equipmentPart) {
+        return this.equipmentPartModels.computeIfAbsent(equipmentPart, ModelEquipmentPart::new);
     }
 
     public int getLoadedModelCount() {

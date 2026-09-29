@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -15,8 +18,8 @@ import net.minecraft.world.level.block.Blocks;
  * has a whole entity-pickup-and-carry mechanic (getPickupEntity/dropPickupEntity/pickupEntity/
  * canPickupEntity/getPickupOffset/leap, plus the ExtendedEntity capability) that isn't ported -
  * only the bare hasPickupEntity()/pickupEntity field exist on this port's BaseCreatureEntity,
- * none of the rest. Dropped entirely rather than half-port it. getDamageModifier() also dropped
- * - it's not an actual override point anywhere in this port's damage pipeline. setMaxUpStep()
+ * none of the rest. Dropped entirely rather than half-port it. getDamageModifier() restored
+ * 2026-09-29 (called from BaseCreatureEntity.hurt()). setMaxUpStep()
  * fixed to the 1.21.1 maxUpStep() getter override (no setter exists anymore).
  * PHASE 5e UPDATE (2026-09-26): re-parented to its official superclass now that TameableCreatureEntity is
  * ported (taming/ownership/pet behaviour work; RideableCreatureEntity is still a stub). Any wording above
@@ -26,6 +29,8 @@ public class EntitySkylus extends TameableCreatureEntity implements Enemy {
 
     public EntitySkylus(EntityType<? extends EntitySkylus> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.01D;
         this.canGrow = true;
@@ -86,5 +91,83 @@ public class EntitySkylus extends TameableCreatureEntity implements Enemy {
     @Override
     public boolean canBreatheAir() {
         return false;
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Updates
+    // ==================================================
+	// ========== Living Update ==========
+	@Override
+    public void aiStep() {
+        super.aiStep();
+
+        // Entity Pickup Update:
+        if(!this.getCommandSenderWorld().isClientSide && this.getControllingPassenger() == null && this.hasPickupEntity()) {
+
+            // Random Dropping:
+            ExtendedEntity extendedEntity = ExtendedEntity.getForEntity(this.getPickupEntity());
+            if (extendedEntity != null)
+                extendedEntity.setPickedUpByEntity(this);
+            if (this.tickCount % 100 == 0 && this.getRandom().nextBoolean()) {
+                this.dropPickupEntity();
+            }
+        }
+    }
+
+    // ==================================================
+    //                      Attacks
+    // ==================================================
+    // ========== Melee Attack ==========
+    @Override
+    public boolean attackMelee(Entity target, double damageScale) {
+    	if(!super.attackMelee(target, damageScale))
+    		return false;
+
+        // Pickup:
+        if(target instanceof LivingEntity) {
+            LivingEntity entityLivingBase = (LivingEntity)target;
+            if(this.canPickupEntity(entityLivingBase)) {
+                this.pickupEntity(entityLivingBase);
+            }
+        }
+        
+        return true;
+    }
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
+
+    @Override
+    public double[] getPickupOffset(Entity entity) {
+        return new double[]{0, 0, 2D};
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() { return true; }
+
+    @Override
+    public void pickupEntity(LivingEntity entity) {
+        super.pickupEntity(entity);
+        this.leap(-1.0F, -0.5D);
+    }
+
+    // Restored from official 2026-09-29 (method audit) - hooked in BaseCreatureEntity.hurt().
+    @Override
+    public float getDamageModifier(DamageSource damageSrc) {
+        if (this.getHealth() > (this.getMaxHealth() / 2)) // Stronger with shell.
+            return 0.25F;
+        return 1.0F;
     }
 }

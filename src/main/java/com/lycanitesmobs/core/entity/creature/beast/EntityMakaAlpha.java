@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.goals.targeting.DefendEntitiesGoal;
+import net.minecraft.world.damagesource.DamageSource;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAttackTargetGoal;
@@ -19,7 +21,6 @@ import net.minecraft.world.level.block.state.BlockState;
  * Trimmed - dropped DefendEntitiesGoal (not ported - the pack-defense AI goal); isProtective()
  * still returns true for EntityMaka so the "alpha protects its pack" relationship still applies
  * to targeting/AI checks that consult it, just not as its own dedicated goal. Dropped
- * getDamageModifier(DamageSource) (no such hook in this port's CreatureModel/BaseCreatureEntity),
  * getNoBagSize/getBagSize (bag subsystem not ported), and the MobType.UNDEFINED attribute
  * assignment. canBeLeashed() is the 1.21.1 no-arg signature (was canBeLeashed(Player)).
  */
@@ -35,9 +36,11 @@ public class EntityMakaAlpha extends AgeableCreatureEntity {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAttackTargetGoal(this).addTargets(this.getClass()));
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setTargetClass(Player.class).setLongMemory(false));
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
+		this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindAttackTargetGoal(this).addTargets(this.getClass()));
+		this.targetSelector.addGoal(this.claimSpecialTargetGoalIndex(), new DefendEntitiesGoal(this, EntityMaka.class));
+
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setTargetClass(Player.class).setLongMemory(false));
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this));
     }
 
     @Override
@@ -111,5 +114,27 @@ public class EntityMakaAlpha extends AgeableCreatureEntity {
     @Override
     public AgeableCreatureEntity createChild(AgeableCreatureEntity partner) {
         return (AgeableCreatureEntity) CreatureManager.getInstance().getCreature("maka").createEntity(this.getCommandSenderWorld());
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+	@Override
+	public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+	// ==================================================
+	//                     Equipment
+	// ==================================================
+	@Override
+	public int getNoBagSize() { return 0; }
+
+    // Restored from official 2026-09-29 (method audit) - hooked in BaseCreatureEntity.hurt().
+    @Override
+    public float getDamageModifier(DamageSource damageSrc) {
+        float damageMod = super.getDamageModifier(damageSrc);
+        if (damageSrc.getEntity() instanceof EntityMakaAlpha)
+            damageMod *= 2;
+        return damageMod;
     }
 }

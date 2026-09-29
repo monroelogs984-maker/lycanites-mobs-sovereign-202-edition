@@ -30,6 +30,7 @@ public class EntityTreant extends BaseCreatureEntity implements Enemy, IGroupHea
     // ==================================================
     public EntityTreant(EntityType<? extends EntityTreant> entityType, Level world) {
         super(entityType, world);
+        this.spawnsUnderground = false;
 
         // Setup:
         this.hasAttackSound = true;

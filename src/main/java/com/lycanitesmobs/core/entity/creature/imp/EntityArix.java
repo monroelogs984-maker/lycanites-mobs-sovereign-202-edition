@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.imp;
 
+import com.lycanitesmobs.core.entity.creature.elemental.EntityXaphan;
 import net.minecraft.world.entity.Entity;
 import org.joml.Vector3d;
 import com.lycanitesmobs.core.entity.goals.actions.AttackRangedGoal;
@@ -24,10 +25,17 @@ import net.minecraft.world.level.block.Blocks;
  * substituted melee attack or ProjectileManager being unported is outdated.
  */
 public class EntityArix extends TameableCreatureEntity implements Enemy {
+    // Fields restored from official (2026-09-28 method audit):
+    protected boolean wantsToLand;
+
 
     public EntityArix(EntityType<? extends EntityArix> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = true;
+        this.spawnsInWater = true;
         this.hasAttackSound = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.flySoundSpeed = 20;
         this.setupMob();
     }
 
@@ -88,5 +96,51 @@ public class EntityArix extends TameableCreatureEntity implements Enemy {
     public void attackRanged(Entity target, float range) {
         this.fireProjectile("icefireball", target, range, 0, new Vector3d(0, 0, 0), 0.8f, 2f, 6F);
         super.attackRanged(target, range);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    // ==================================================
+    //                      Attacks
+    // ==================================================
+    // ========== Set Attack Target ==========
+    @Override
+    public boolean canAttackType(EntityType targetType) {
+        return super.canAttackType(targetType);
+    }
+
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public float getFallResistance() {
+        return 100;
+    }
+
+    // ========== Get Flight Offset ==========
+    public double getFlightOffset() {
+        if (!this.wantsToLand) {
+            super.getFlightOffset();
+        }
+        return 0;
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

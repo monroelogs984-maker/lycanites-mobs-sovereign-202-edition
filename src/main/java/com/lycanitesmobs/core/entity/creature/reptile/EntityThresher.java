@@ -31,6 +31,8 @@ public class EntityThresher extends RideableCreatureEntity implements Enemy, IGr
     // ==================================================
     public EntityThresher(EntityType<? extends EntityThresher> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
 
         // Setup:
         this.hasAttackSound = true;

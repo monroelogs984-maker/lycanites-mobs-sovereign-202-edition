@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.base;
 
+import com.lycanitesmobs.core.entity.goals.targeting.FindParentGoal;
+import com.lycanitesmobs.core.entity.goals.actions.MateGoal;
 import com.lycanitesmobs.core.entity.goals.actions.FollowParentGoal;
 import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
 import com.lycanitesmobs.core.data.info.item.ItemDrop;
@@ -55,7 +57,15 @@ public abstract class AgeableCreatureEntity extends BaseCreatureEntity {
 
     @Override
     protected void registerGoals() {
+        // Greater Actions:
+        this.goalSelector.addGoal(this.claimTravelGoalIndex(), new MateGoal(this).setMateDistance(5.0D));
+
         super.registerGoals();
+
+        // Lesser Targeting:
+        this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindParentGoal(this).setSightCheck(false).setDistance(32.0D));
+
+        // Lesser Actions:
         this.goalSelector.addGoal(this.claimTravelGoalIndex(), new FollowParentGoal(this).setSpeed(1.0D).setStrayDistance(3.0D));
     }
 
@@ -171,8 +181,7 @@ public abstract class AgeableCreatureEntity extends BaseCreatureEntity {
         return adult ? 0.5F : 1.0F;
     }
 
-    // NOTE: BaseCreatureEntity.canBeTempted() isn't ported (TemptGoal isn't ported either) -
-    // kept as a plain method for when that comes back, not an override yet.
+    @Override
     public boolean canBeTempted() {
         return !this.isInLove();
     }

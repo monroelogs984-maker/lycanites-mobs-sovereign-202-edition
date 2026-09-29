@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
+import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -23,13 +25,16 @@ public class EntityAspid extends AgeableCreatureEntity {
         this.babySpawnChance = 0.1D;
         this.attackCooldownMax = 10;
         this.isAggressiveByDefault = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.fleeHealthPercent = 1.0F;
         this.setupMob();
     }
 
     @Override
     protected void registerGoals() {
-        super.registerGoals();
-        this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
+		super.registerGoals();
+		this.goalSelector.addGoal(this.claimDistractionGoalIndex(), new TemptGoal(this).setIncludeDiet(true));
+		this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setLongMemory(false));
     }
 
     @Override
@@ -65,4 +70,17 @@ public class EntityAspid extends AgeableCreatureEntity {
             return true;
         return super.canBeLeashed();
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() { return 0; }
 }

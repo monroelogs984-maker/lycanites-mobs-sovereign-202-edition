@@ -24,6 +24,7 @@ public class EntityBanshee extends TameableCreatureEntity implements Enemy {
 
     public EntityBanshee(EntityType<? extends EntityBanshee> entityType, Level world) {
         super(entityType, world);
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.setupMob();
         this.noPhysics = true;
@@ -75,6 +76,30 @@ public class EntityBanshee extends TameableCreatureEntity implements Enemy {
 
     @Override
     public boolean creatureCanBreatheUnderwater() {
+        return true;
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
         return true;
     }
 }

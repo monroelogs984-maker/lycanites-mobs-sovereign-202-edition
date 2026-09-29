@@ -18,8 +18,9 @@ public abstract class ProjectileBehaviour {
 		if("placeBlocks".equals(type)) {
 			projectileBehaviour = new ProjectileBehaviourPlaceBlocks();
 		}
-		// TODO(port): "summon" (ProjectileBehaviourSummon) needs the pets system (ExtendedPlayer/SummonSet) - such
-		// behaviours are skipped with a warning until then.
+		else if("summon".equals(type)) {
+			projectileBehaviour = new ProjectileBehaviourSummon();
+		}
 		else if("explosion".equals(type)) {
 			projectileBehaviour = new ProjectileBehaviourExplosion();
 		}

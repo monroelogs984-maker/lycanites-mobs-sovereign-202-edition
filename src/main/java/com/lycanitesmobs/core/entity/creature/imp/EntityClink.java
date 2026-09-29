@@ -25,6 +25,8 @@ public class EntityClink extends TameableCreatureEntity implements Enemy {
     public EntityClink(EntityType<? extends EntityClink> entityType, Level world) {
         super(entityType, world);
         this.hasAttackSound = false;
+        // Restored from official (2026-09-28 constructor audit):
+        this.attackPhaseMax = 3;
         this.setupMob();
         this.setAttackCooldownMax(10);
     }
@@ -46,5 +48,43 @@ public class EntityClink extends TameableCreatureEntity implements Enemy {
         this.fireProjectile("throwingscythe", target, range, 0, new Vector3d(0, 0, 0), 1.2f, 2f, 1F);
         this.nextAttackPhase();
         super.attackRanged(target, range);
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    @Override
+    public int getMeleeCooldown() {
+        if (this.getAttackPhase() == 2)
+            return super.getMeleeCooldown();
+        return Math.round((float) super.getMeleeCooldown() / 6);
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
+    }
+
+    @Override
+    public int getRangedCooldown() {
+        if (this.getAttackPhase() == 2)
+            return super.getRangedCooldown();
+        return Math.round((float) super.getRangedCooldown() / 6);
+    }
+
+    // ==================================================
+    //                     Pet Control
+    // ==================================================
+    public boolean petControlsEnabled() {
+        return true;
     }
 }

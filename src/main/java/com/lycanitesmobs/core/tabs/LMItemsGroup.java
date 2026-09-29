@@ -27,12 +27,12 @@ public class LMItemsGroup {
                 .title(Component.translatable("itemGroup." + LycanitesMobs.MODID + ".items"))
                 .icon(this::getIconItem)
                 .displayItems((enabledFeatures, entries) -> {
-                    // Spawn eggs and charges have their own tabs.
+                    // Spawn eggs, charges and equipment parts have their own tabs.
                     List<String> filtered = new ArrayList<>();
                     for (String name : itemNames) {
                         if (name.equals("equipment")) continue;
                         Item namedItem = ObjectManager.getItem(name);
-                        if (namedItem instanceof ItemCustomSpawnEgg || namedItem instanceof ChargeItem) continue;
+                        if (namedItem instanceof ItemCustomSpawnEgg || namedItem instanceof ChargeItem || namedItem instanceof com.lycanitesmobs.core.item.equipment.ItemEquipmentPart) continue;
                         filtered.add(name);
                     }
 

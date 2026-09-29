@@ -31,6 +31,8 @@ public class EntityAbaia extends TameableCreatureEntity implements Enemy {
 
     public EntityAbaia(EntityType<? extends EntityAbaia> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
         this.hasAttackSound = true;
         this.babySpawnChance = 0.05D;
         this.canGrow = true;
@@ -98,5 +100,22 @@ public class EntityAbaia extends TameableCreatureEntity implements Enemy {
     @Override
     public boolean canBreatheAir() {
         return false;
+    }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+    @Override
+    public int getBagSize() {
+        return this.creatureInfo.getBagSize();
+    }
+
+    // ==================================================
+    //                     Equipment
+    // ==================================================
+    @Override
+    public int getNoBagSize() {
+        return 0;
     }
 }

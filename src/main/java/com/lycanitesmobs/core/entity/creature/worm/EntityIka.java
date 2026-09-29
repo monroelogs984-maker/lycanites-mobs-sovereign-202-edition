@@ -22,9 +22,10 @@ public class EntityIka extends AgeableCreatureEntity {
     // ==================================================
     public EntityIka(EntityType<? extends EntityIka> entityType, Level world) {
         super(entityType, world);
+        this.spawnsOnLand = false;
+        this.spawnsInWater = true;
 
         // Setup:
-        // spawnsInWater dropped: handled by the JSON spawn config in this port.
         this.hasAttackSound = false;
 
         this.babySpawnChance = 0.01D;

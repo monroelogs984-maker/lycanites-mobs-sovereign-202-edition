@@ -1,5 +1,8 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.goals.targeting.CopyMasterAttackTargetGoal;
+import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
+import net.minecraft.world.entity.LivingEntity;
 import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -32,6 +35,9 @@ public class EntityGrigori extends TameableCreatureEntity implements Enemy {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(this.claimCombatGoalIndex(), new AttackMeleeGoal(this).setSpeed(2.0D).setLongMemory(false));
+
+		this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new FindMasterGoal(this).setTargetClass(EntityGrell.class).setSightCheck(false));
+		this.targetSelector.addGoal(this.claimFindTargetGoalIndex(), new CopyMasterAttackTargetGoal(this));
     }
 
     @Override
@@ -48,4 +54,21 @@ public class EntityGrigori extends TameableCreatureEntity implements Enemy {
     public boolean canBurn() {
         return false;
     }
+
+
+    // ==================================================
+    //   Restored from official 2026-09-28 (method audit)
+    // ==================================================
+	@Override
+	public boolean canAttack(LivingEntity target) {
+		if(target.getVehicle() instanceof EntityGrell)
+			return false;
+		return super.canAttack(target);
+	}
+
+    @Override
+    public int getBagSize() { return this.creatureInfo.getBagSize(); }
+
+    @Override
+    public int getNoBagSize() { return 0; }
 }
