@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.spawner;
 
+import com.lycanitesmobs.core.entity.spawner.trigger.MobEventSpawnTrigger;
 import com.lycanitesmobs.core.capabilities.level.ExtendedWorld;
 import com.lycanitesmobs.core.entity.spawner.trigger.BlockSpawnTrigger;
 import com.lycanitesmobs.core.entity.spawner.trigger.ChunkSpawnTrigger;
@@ -54,7 +55,7 @@ public class SpawnerTriggerDispatcher {
     private final List<SleepSpawnTrigger> sleepSpawnTriggers = new ArrayList<>();
     private final List<FishingSpawnTrigger> fishingSpawnTriggers = new ArrayList<>();
     private final List<ExplosionSpawnTrigger> explosionSpawnTriggers = new ArrayList<>();
-    // TODO(port): mobEventSpawnTriggers (MobEventSpawnTrigger) - mob event phase.
+    private final List<MobEventSpawnTrigger> mobEventSpawnTriggers = new ArrayList<>();
     private final List<MixBlockSpawnTrigger> mixBlockSpawnTriggers = new ArrayList<>();
 
     private final Map<String, Set<ChunkPos>> freshChunks = new HashMap<>();
@@ -108,6 +109,10 @@ public class SpawnerTriggerDispatcher {
             this.explosionSpawnTriggers.add(explosionTrigger);
             return true;
         }
+        if (spawnTrigger instanceof MobEventSpawnTrigger mobEventTrigger && !this.mobEventSpawnTriggers.contains(spawnTrigger)) {
+            this.mobEventSpawnTriggers.add(mobEventTrigger);
+            return true;
+        }
         return false;
     }
 
@@ -121,6 +126,7 @@ public class SpawnerTriggerDispatcher {
         this.sleepSpawnTriggers.remove(spawnTrigger);
         this.fishingSpawnTriggers.remove(spawnTrigger);
         this.explosionSpawnTriggers.remove(spawnTrigger);
+        this.mobEventSpawnTriggers.remove(spawnTrigger);
         this.mixBlockSpawnTriggers.remove(spawnTrigger);
     }
 
@@ -128,7 +134,7 @@ public class SpawnerTriggerDispatcher {
         if (world.isClientSide) {
             return;
         }
-        if (this.worldSpawnTriggers.isEmpty() && this.chunkSpawnTriggers.isEmpty()) {
+        if (this.worldSpawnTriggers.isEmpty() && this.chunkSpawnTriggers.isEmpty() && this.mobEventSpawnTriggers.isEmpty()) {
             return;
         }
         ExtendedWorld worldExt = ExtendedWorld.getForWorld(world);
@@ -168,6 +174,12 @@ public class SpawnerTriggerDispatcher {
         }
         if (!this.chunkSpawnTriggers.isEmpty()) {
             this.checkFreshChunks(world);
+        }
+
+        if (!this.mobEventSpawnTriggers.isEmpty() && worldExt.getWorldEvent() != null) {
+            for (MobEventSpawnTrigger spawnTrigger : this.mobEventSpawnTriggers) {
+                spawnTrigger.onTick(world, worldExt.getServerWorldEventPlayer());
+            }
         }
 
     }
@@ -212,6 +224,9 @@ public class SpawnerTriggerDispatcher {
             spawnTrigger.getSpawner().clearTriggerCount(player);
         }
         for (ExplosionSpawnTrigger spawnTrigger : this.explosionSpawnTriggers) {
+            spawnTrigger.getSpawner().clearTriggerCount(player);
+        }
+        for (MobEventSpawnTrigger spawnTrigger : this.mobEventSpawnTriggers) {
             spawnTrigger.getSpawner().clearTriggerCount(player);
         }
         for (MixBlockSpawnTrigger spawnTrigger : this.mixBlockSpawnTriggers) {

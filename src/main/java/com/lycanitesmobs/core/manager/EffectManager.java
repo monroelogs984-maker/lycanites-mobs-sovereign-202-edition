@@ -9,10 +9,8 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 /**
  * Creates Lycanites' custom mob effects (registered in RegistryEvents.registerEffects()). Ported 2026-09-26.
  *
- * <p>TODO(port): most effect <i>behaviour</i> (paralysis, fear, weight, plague, leech, ...) is implemented in the
- * ExtendedEntity capability, FearHandler and client handlers in the official source - none ported yet. Until then these
- * effects exist, apply and show, but many don't do anything. The official constructor also registered this class on the
- * event bus (nausea toggle etc.) - not needed yet.
+ * <p>Effect behaviour lives in MobEventListener (as in the official). Still missing: fear's haunting (needs the
+ * unported EntityFear); the official constructor also registered this class on the event bus - not needed.
  */
 public class EffectManager {
 

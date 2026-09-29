@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.spawner;
 
+import com.lycanitesmobs.core.event.mobevent.MobEventPlayerServer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -942,7 +943,17 @@ public class Spawner {
                 entityCreature.destroyArea(creaturePos.getX(), creaturePos.getY() - 1, creaturePos.getZ(), 100, true, this.blockBreakRadius, this.chainSpawning ? player : null, chain + 1);
             }
             entityCreature.setDropsRequirePlayerDamage(this.dropsRequirePlayerDamage);
-            // TODO(port): mob event spawners tag the creature with the event (applySpawnEvent) - mob event phase.
+
+            if (this.hasEventName() && worldExt != null) {
+                MobEventPlayerServer mobEventPlayerServer = worldExt.getMobEventPlayerServer(this.eventName);
+                if (mobEventPlayerServer != null) {
+                    int spawnEventCount = -1;
+                    if (mobEventPlayerServer.getMobEventName().equals(worldExt.getWorldEventName())) {
+                        spawnEventCount = worldExt.getWorldEventCount();
+                    }
+                    entityCreature.applySpawnEvent(mobEventPlayerServer.getMobEvent().getTitleName(), spawnEventCount);
+                }
+            }
         }
 
         if (!(world instanceof ServerLevel serverLevel)) {
@@ -960,7 +971,12 @@ public class Spawner {
             }
             executingLevel.addFreshEntity(entityLiving);
             mobSpawn.onSpawned(entityLiving, player);
-            // TODO(port): MobEvent.onSpawn for mob event spawners - mob event phase.
+            if (this.hasEventName() && worldExt != null) {
+                MobEventPlayerServer mobEventPlayerServer = worldExt.getMobEventPlayerServer(this.eventName);
+                if (mobEventPlayerServer != null) {
+                    mobEventPlayerServer.getMobEvent().onSpawn(entityLiving, mobEventPlayerServer.getWorld(), mobEventPlayerServer.getPlayer(), mobEventPlayerServer.getOrigin(), mobEventPlayerServer.getLevel(), mobEventPlayerServer.getTicks(), -1);
+                }
+            }
         });
     }
 }

@@ -62,7 +62,10 @@ public class SpawnerManager extends JSONLoader {
         this.loadAllJson(modInfo, "Spawner", "spawners", "name", true, "spawner", FileLoader.common(), StreamLoader.common());
         LMHelperClass.logDebug("Spawner", "Complete! " + this.spawners.size() + " JSON Spawners Loaded In Total.");
 
-        // TODO(port): Mob Event Spawners (the "spawner" entries in mobevents/) load here once mob events are ported.
+        // Mob Event Spawners:
+        this.loadingDefinitionPath = "mobevents";
+        this.loadAllJson(modInfo, "Spawner", "mobevents", "name", true, "spawner", FileLoader.common(), StreamLoader.common());
+        LMHelperClass.logDebug("Spawner", "Complete! " + this.spawners.size() + " JSON Spawners Loaded In Total.");
 
         // Load Global Spawn Conditions:
         Gson gson = (new GsonBuilder()).setPrettyPrinting().disableHtmlEscaping().create();

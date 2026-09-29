@@ -38,6 +38,8 @@ public class PacketManager {
         registrar.playToClient(MessageEntityPickedUp.TYPE, MessageEntityPickedUp.STREAM_CODEC, MessageEntityPickedUp::handle);
         registrar.playToClient(MessageEntityPerched.TYPE, MessageEntityPerched.STREAM_CODEC, MessageEntityPerched::handle);
         registrar.playToClient(MessageScreenRequest.TYPE, MessageScreenRequest.STREAM_CODEC, MessageScreenRequest::handle);
+        registrar.playToClient(MessageMobEvent.TYPE, MessageMobEvent.STREAM_CODEC, MessageMobEvent::handle);
+        registrar.playToClient(MessageWorldEvent.TYPE, MessageWorldEvent.STREAM_CODEC, MessageWorldEvent::handle);
 
         // Both ways:
         registrar.playBidirectional(MessagePetEntry.TYPE, MessagePetEntry.STREAM_CODEC, MessagePetEntry::handle);

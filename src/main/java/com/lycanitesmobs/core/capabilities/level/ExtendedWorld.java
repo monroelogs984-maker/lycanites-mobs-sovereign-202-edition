@@ -1,6 +1,16 @@
 package com.lycanitesmobs.core.capabilities.level;
 
+import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.capabilities.util.BossEntry;
+import com.lycanitesmobs.core.event.mobevent.MobEvent;
+import com.lycanitesmobs.core.event.mobevent.MobEventPlayerServer;
+import com.lycanitesmobs.core.manager.MobEventManager;
+import com.lycanitesmobs.core.network.message.MessageMobEvent;
+import com.lycanitesmobs.core.network.message.MessageWorldEvent;
+import com.lycanitesmobs.core.util.helpers.LMHelperClass;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -20,11 +30,9 @@ import java.util.UUID;
 /**
  * Per-level Lycanites data (the official 1.20.1 class is a SavedData too, this keeps that).
  *
- * Port scope (Phase 6b, spawners): spawner tick bookkeeping, world day base time, boss tracking (boss block
- * protection + spawner boss-proximity checks) and the saved world-event name/count fields. The mob event runtime
- * (MobEventPlayerServer, starting/stopping events, client sync) and dungeon instances are NOT ported yet - they come
- * with the mob event and dungeon phases. Until then there is never an active world event: getWorldEvent() is always
- * null and getMobEventPlayerServer() always returns null, so event-gated spawners stay off.
+ * Port scope: spawner tick bookkeeping, world day base time, boss tracking (boss block protection + spawner
+ * boss-proximity checks) and the mob event runtime (world event + per-area mob event players, saved world event,
+ * client sync). Dungeon instances are NOT ported yet (dungeon phase).
  */
 public class ExtendedWorld extends SavedData {
     protected static final String EXT_PROP_NAME = "LycanitesMobs";
@@ -39,7 +47,9 @@ public class ExtendedWorld extends SavedData {
     // Mob Events World Config:
     protected boolean useTotalWorldTime = true;
 
-    // Mob Events (saved state only, see class comment):
+    // Mob Events:
+    protected Map<String, MobEventPlayerServer> serverMobEventPlayers = new HashMap<>();
+    protected MobEventPlayerServer serverWorldEventPlayer = null;
     long worldEventStartTargetTime = 0;
     long worldEventLastStartedTime = 0;
     String worldEventName = "";
@@ -122,7 +132,20 @@ public class ExtendedWorld extends SavedData {
         this.lastEventScheduleTime = this.world.getGameTime() - 1;
         this.lastEventUpdateTime = this.world.getGameTime() - 1;
 
-        // TODO(port): restoreSavedWorldEvent() - restarts the saved world event (mob event phase).
+        this.restoreSavedWorldEvent();
+    }
+
+    private void restoreSavedWorldEvent() {
+        if (this.world.isClientSide || "".equals(this.worldEventName) || this.hasServerWorldEventPlayer()) {
+            return;
+        }
+
+        long savedLastStartedTime = this.worldEventLastStartedTime;
+        this.startMobEvent(this.worldEventName, null, new BlockPos(0, 0, 0), 1, -1);
+        MobEventPlayerServer worldEventPlayer = this.getServerWorldEventPlayer();
+        if (worldEventPlayer != null) {
+            worldEventPlayer.changeStartedWorldTime(savedLastStartedTime);
+        }
     }
 
 
@@ -141,12 +164,11 @@ public class ExtendedWorld extends SavedData {
         return this.worldEventName;
     }
 
-    /**
-     * The active world mob event. Always null until mob events are ported (the official returns
-     * MobEventManager.getMobEvent(worldEventName)), so this returns a plain Object for now.
-     */
-    public Object getWorldEvent() {
-        return null;
+    public MobEvent getWorldEvent() {
+        if (this.getWorldEventName() == null || "".equals(this.getWorldEventName())) {
+            return null;
+        }
+        return MobEventManager.getInstance().getMobEvent(this.getWorldEventName());
     }
 
     public int getWorldEventCount() {
@@ -157,12 +179,29 @@ public class ExtendedWorld extends SavedData {
         return this.useTotalWorldTime ? world.getGameTime() : world.getDayTime();
     }
 
+    public boolean hasServerWorldEventPlayer() {
+        return this.serverWorldEventPlayer != null;
+    }
+
+    public MobEventPlayerServer getServerWorldEventPlayer() {
+        return this.serverWorldEventPlayer;
+    }
+
+    public MobEventPlayerServer[] getServerMobEventPlayerSnapshot() {
+        return this.serverMobEventPlayers.values().toArray(new MobEventPlayerServer[0]);
+    }
+
     /**
-     * The running mob event with this name. Always null until mob events are ported (official type:
-     * MobEventPlayerServer).
-     */
-    public Object getMobEventPlayerServer(String mobEventName) {
-        return null;
+     * Returns a Mob Event Server Player if an event by the provided event name is currently active, otherwise null.
+     **/
+    public MobEventPlayerServer getMobEventPlayerServer(String mobEventName) {
+        if (mobEventName == null || "".equals(mobEventName)) {
+            return null;
+        }
+        if (mobEventName.equals(this.getWorldEventName())) {
+            return this.getServerWorldEventPlayer();
+        }
+        return this.serverMobEventPlayers.get(mobEventName);
     }
 
     public boolean markSpawnerTickIfFresh(long gameTime) {
@@ -206,6 +245,9 @@ public class ExtendedWorld extends SavedData {
             this.setDirty();
         }
         this.worldEventStartTargetTime = setLong;
+        if (setLong > 0) {
+            LMHelperClass.logDebug("MobEvents", "Next random mob will start after " + ((this.worldEventStartTargetTime - this.world.getGameTime()) / 20) + "secs.");
+        }
     }
 
     public void setWorldEventLastStartedTime(long setLong) {
@@ -225,6 +267,140 @@ public class ExtendedWorld extends SavedData {
     public void increaseMobEventCount() {
         this.worldEventCount++;
         this.setDirty();
+    }
+
+
+    // ==================================================
+    //                Random Event Delay
+    // ==================================================
+    /**
+     * Gets a random time until the next random event will start.
+     **/
+    public int getRandomEventDelay(RandomSource random) {
+        int min = Math.max(200, MobEventManager.getInstance().getMinTicksUntilEvent());
+        int max = Math.max(200, MobEventManager.getInstance().getMaxTicksUntilEvent());
+        if (max <= min) {
+            return min;
+        }
+        return min + random.nextInt(max - min);
+    }
+
+
+    // ==================================================
+    //                     World Event
+    // ==================================================
+    /**
+     * Starts the provided Mob Event on the provided world.
+     **/
+    public void startWorldEvent(MobEvent mobEvent) {
+        if (mobEvent == null) {
+            LMHelperClass.logWarningMessage("Tried to start a null world event, stopping any event instead.");
+            this.stopWorldEvent();
+            return;
+        }
+
+        boolean extended = false;
+        MobEventPlayerServer worldEventPlayer = this.getServerWorldEventPlayer();
+        if (worldEventPlayer != null) {
+            extended = worldEventPlayer.getMobEvent() == mobEvent;
+        }
+        if (!extended) {
+            worldEventPlayer = mobEvent.getServerEventPlayer(this.world);
+            this.serverWorldEventPlayer = worldEventPlayer;
+        }
+        worldEventPlayer.setExtended(extended);
+
+        this.setWorldEventName(mobEvent.getName());
+        this.increaseMobEventCount();
+        this.setWorldEventStartTargetTime(0);
+        this.setWorldEventLastStartedTime(this.world.getGameTime());
+        worldEventPlayer.onStart();
+        this.updateAllClientsEvents();
+    }
+
+    /**
+     * Stops the World Event.
+     **/
+    public void stopWorldEvent() {
+        MobEventPlayerServer worldEventPlayer = this.getServerWorldEventPlayer();
+        if (worldEventPlayer != null) {
+            worldEventPlayer.onFinish();
+            this.setWorldEventName("");
+            this.serverWorldEventPlayer = null;
+            this.updateAllClientsEvents();
+        }
+    }
+
+
+    // ==================================================
+    //                     Mob Events
+    // ==================================================
+    /**
+     * Starts a provided Mob Event (provided by INSTANCE) on the provided world.
+     **/
+    public void startMobEvent(MobEvent mobEvent, Player player, BlockPos pos, int level, int variant) {
+        if (mobEvent == null) {
+            LMHelperClass.logWarningMessage("Tried to start a null mob event.");
+            return;
+        }
+
+        MobEventPlayerServer mobEventPlayerServer = mobEvent.getServerEventPlayer(this.world);
+        this.serverMobEventPlayers.put(mobEvent.getName(), mobEventPlayerServer);
+        mobEventPlayerServer.configure(player, pos, level, variant);
+        mobEventPlayerServer.onStart();
+        this.updateAllClientsEvents();
+    }
+
+    /**
+     * Starts a provided Mob Event (provided by name) on the provided world.
+     **/
+    public MobEvent startMobEvent(String mobEventName, Player player, BlockPos pos, int level, int variant) {
+        MobEvent mobEvent = MobEventManager.getInstance().getMobEvent(mobEventName);
+        if (mobEvent == null) {
+            LMHelperClass.logWarningMessage("Tried to start a mob event with the invalid name: '" + mobEventName + "' on " + (this.world.isClientSide ? "Client" : "Server"));
+            return null;
+        }
+        if (!mobEvent.isEnabled()) {
+            LMHelperClass.logWarningMessage("Tried to start a mob event that was disabled with the name: '" + mobEventName + "' on " + (this.world.isClientSide ? "Client" : "Server"));
+            return null;
+        }
+
+        mobEvent.trigger(this.world, player, pos, level, variant);
+        return mobEvent;
+    }
+
+    /**
+     * Stops a Mob Event.
+     **/
+    public void stopMobEvent(String mobEventName) {
+        MobEventPlayerServer mobEventPlayerServer = this.serverMobEventPlayers.remove(mobEventName);
+        if (mobEventPlayerServer != null) {
+            mobEventPlayerServer.onFinish();
+            this.updateAllClientsEvents();
+        }
+    }
+
+
+    // ==================================================
+    //                  Update Clients
+    // ==================================================
+    /**
+     * Sends a packet to all clients updating their events for the provided world.
+     **/
+    public void updateAllClientsEvents() {
+        MobEventPlayerServer worldEventPlayer = this.getServerWorldEventPlayer();
+        BlockPos pos = worldEventPlayer != null ? worldEventPlayer.getOrigin() : new BlockPos(0, 0, 0);
+        int level = worldEventPlayer != null ? worldEventPlayer.getLevel() : 0;
+        int subspecies = worldEventPlayer != null ? worldEventPlayer.getVariant() : -1;
+        LycanitesMobs.PACKET_MANAGER.sendToWorld(new MessageWorldEvent(this.getWorldEventName(), pos, level, subspecies), this.world);
+        for (MobEventPlayerServer mobEventPlayerServer : this.serverMobEventPlayers.values()) {
+            LycanitesMobs.PACKET_MANAGER.sendToWorld(new MessageMobEvent(
+                    mobEventPlayerServer.getMobEventName(),
+                    mobEventPlayerServer.getOrigin(),
+                    mobEventPlayerServer.getLevel(),
+                    mobEventPlayerServer.getVariant()
+            ), this.world);
+        }
     }
 
 

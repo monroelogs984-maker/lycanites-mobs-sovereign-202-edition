@@ -86,10 +86,11 @@ public abstract class SpawnTrigger {
             spawnTrigger = new ExplosionSpawnTrigger(spawner);
         } else if ("mix".equalsIgnoreCase(type)) {
             spawnTrigger = new MixBlockSpawnTrigger(spawner);
+        } else if ("mobEvent".equalsIgnoreCase(type)) {
+            spawnTrigger = new MobEventSpawnTrigger(spawner);
         }
 
         if (spawnTrigger == null) {
-            // "mobEvent" triggers come back with the mob event phase.
             LMHelperClass.logWarningMessage("[Spawner] Skipped unsupported trigger type '" + type + "' in spawner: " + spawner.getName());
             return null;
         }

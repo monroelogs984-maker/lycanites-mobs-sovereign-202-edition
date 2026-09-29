@@ -36,7 +36,7 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  *
  * <p>1.21 port: drawn as a NeoForge GUI layer above the experience bar (was RenderGuiOverlayEvent). Vanilla's
  * icons.png is gone, so the stamina bar uses the jump bar sprites it came from (same size and position).
- * TODO(port): mob event titles (mob events aren't ported).
+ * Also draws the mob event title graphics (ClientMobEventEvents).
  */
 public class OverlayEvents {
     private static final ResourceLocation LAYER_ID = ResourceLocation.fromNamespaceAndPath(LycanitesMobs.MODID, "overlay");
@@ -68,6 +68,9 @@ public class OverlayEvents {
 
         int sWidth = minecraft.getWindow().getGuiScaledWidth();
         int sHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        // ========== Mob/World Events Title ==========
+        com.lycanitesmobs.client.event.mobevent.ClientMobEventEvents.render(player.level(), guiGraphics, drawHelper, sWidth, sHeight);
 
         // ========== Summoning Focus Bar ==========
         ExtendedPlayer playerExt = ExtendedPlayer.getForPlayer(player);

@@ -771,7 +771,7 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         byte tamed = this.behaviourBitMask();
         if (isTamed) {
             this.getEntityData().set(TAMED, (byte) (tamed | TAMED_ID.IS_TAMED.id));
-            // TODO(port): clearSpawnEventTracking() (mob events).
+            this.clearSpawnEventTracking();
         } else {
             this.getEntityData().set(TAMED, (byte) (tamed - (tamed & TAMED_ID.IS_TAMED.id)));
         }

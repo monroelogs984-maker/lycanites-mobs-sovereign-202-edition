@@ -1470,3 +1470,52 @@ Asmodeus's devilstar stream piles up about 85 frozen projectiles per burst at z=
 spawn chunks when no player is online, which had reached 81,807 entities. That is a headless artifact (vanilla freezes
 any projectile outside ticking chunks), not a lifetime bug, but it slows the dev server; remove those bosses when
 convenient.
+
+## Phase 6c: mob events + custom effect behaviour (2026-09-29)
+
+Faithful port of the official mob event system with all 33 official events and 40 event spawners unchanged. The
+S202 redesign (about 10 events, no boss-random/holiday events, 3 world events, half time-based/half RNG) is data work
+for later. The official `MobEventListener` also holds the behaviour of most custom effects, which the port never had,
+so **every Lycanites debuff was cosmetic until now**. That is ported here too.
+
+**Ported:** `MobEvent`, `MobEventPlayerServer`, `MobEventSchedule`, triggers (random, tick, altar), effects (world,
+structure, command), `StructureBuilder` + the Rahovart/Asmodeus/Amalgalich arena builders, `MobEventManager`
+(+ `globalmobevent.json`, `mobeventschedule.json`), `MobEventListener`, `MobEventSpawnTrigger` (+ dispatcher and
+`Spawner` hooks: `applySpawnEvent` tagging and `MobEvent.onSpawn`), mob event spawners loaded by `SpawnerManager`,
+`ExtendedWorld` runtime (world event + per-area players, restore of a saved world event, client sync),
+`clearSpawnEventTracking` on taming, minions inheriting the spawn event, `/lm mobevents reload|enable|disable|creative|list`,
+`/lm mobevent start|random|stop`, `MessageMobEvent`/`MessageWorldEvent`, client `ClientMobEventEvents`/
+`MobEventPlayerClient`/`MobEventSound` (chat messages, looping event music, the 12-second title graphic drawn in the
+overlay layer). Assets: 33 sounds.json entries + 42 oggs (16 MB), 33 title textures, 73 event JSONs.
+Effect behaviour: paralysis, weight, instability, plague (poison + spread), smited, bleed, smouldering, swiftswimming,
+immunization, cleansed, lifeleak, fallresist, penetration, leech, repulsion, rejuvenation, decay, insomnia, aphagia.
+
+**1.21 / NeoForge changes:** events load in common setup after the spawners; the global/schedule JSON moved to
+`common/` like `globalspawner.json`; the arena builders register in `MobEventManager` (officially `AltarInfo`, not ported);
+`AltarMobEventTrigger` keeps a by-altar-name registry (`getTriggers(name)`) for the altar phase to use. Client dispatch
+goes through `LycanitesMobs.APPLY_MOB_EVENT`, set in `ClientSetup` (the ClientProxy pattern this port already uses).
+Effects: LivingAttack+LivingHurt -> one `LivingIncomingDamageEvent` listener; `PlayerSleepInBedEvent` ->
+`CanPlayerSleepEvent`; item use -> the cancellable `Start`/`Tick` phases; swiftswimming modifiers use
+ResourceLocation ids.
+
+**Official bugs fixed:** (1) `WorldMobEventEffect` checked `world instanceof ServerLevelData`, which is never true, so
+thunder never started; started rain/thunder now also get a 5-minute duration so vanilla's countdown can't flip them
+straight back. (2) `MobEvent.getTitle()` used `mobevent.<title>.name`, but the lang keys are `mobevent.<title>`, so
+chat showed raw keys. (3) `CommandMobEventEffect` ran `performCommand(null, ...)` (a crash; no official event uses
+it); it now runs as the server in the event's level.
+
+**Not ported:** the fear effect's haunting and its login cleanup (both need `EntityFear`, the dummy creature); the
+jump cancel for paralysis/weight (`LivingJumpEvent` was never cancellable, so it was dead code upstream too); the extra
+random `MessageEntityVelocity` for instability (the vanilla motion packet the official sent first still syncs it).
+**Official behaviour kept:** random events are **off by default** (`random.enabled = false` in the config);
+events only tick in worlds with a player online; a stopped per-area event isn't broadcast to clients (the title
+simply times out).
+
+**Verified:** headless (runServer + RCON): all 33 events load; decay halved healing; penetration x1.5 at amplifier 1;
+fall damage cancelled under fallresist; plague spread one amplifier lower to a neighbour. Real client
+(scripted save `run/client/saves/eventtest` with an `evt` datapack; temporary `--quickPlaySingleplayer` args, removed):
+`bamstorm` started rain + thunder and spawned about 10 Lycanites every 10 s for its 60 s, then finished with the chat
+message; the Rahovart boss event in the Nether built the arena and spawned Rahovart with Belphegor minions (boss bar
+visible in a screenshot). Not verified: the title graphic and the event music by eye/ear, bleed (needs a
+moving target), schedules (none in official data), tick triggers (unused in official data), world-event restore after
+a restart. Asmodeus/Amalgalich arenas untested.

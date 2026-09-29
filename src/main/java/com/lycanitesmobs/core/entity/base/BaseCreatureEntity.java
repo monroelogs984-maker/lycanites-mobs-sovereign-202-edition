@@ -500,6 +500,11 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.spawnEventCount = source.spawnEventCount;
     }
 
+    public void clearSpawnEventTracking() {
+        this.spawnEventType = "";
+        this.spawnEventCount = -1;
+    }
+
     /**
      * Returns true if this mob should not despawn in unloaded chunks (official: set by spawners with forceNoDespawn
      * and by setPersistenceRequired()). Subclasses add tamed/farmed/master checks.
@@ -3154,7 +3159,6 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Spawns the provided minion around this creature at the given angle and distance and registers it.
-     * TODO(port): the official also copies spawn-event state (mob events not ported).
      **/
     public void summonMinion(LivingEntity minion, double angle, double distance) {
         double angleRadians = Math.toRadians(angle);
@@ -3176,6 +3180,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
                 }
                 creatureMinion.setSubspecies(this.getSubspeciesIndex());
                 creatureMinion.setMasterTarget(this);
+                creatureMinion.spawnEventType = this.spawnEventType;
                 creatureMinion.onFirstSpawn();
             }
             if (this.getTarget() != null) {

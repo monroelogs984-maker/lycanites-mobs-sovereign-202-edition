@@ -50,6 +50,8 @@ public class LycanitesMobs {
     public static java.util.function.Supplier<net.minecraft.world.entity.player.Player> CLIENT_PLAYER = () -> null;
     /** Opens a client screen by id (0 = Beastiary index, 1 = summoning), no-op on a server. Set during client setup. **/
     public static java.util.function.IntConsumer OPEN_SCREEN = screenId -> {};
+    /** Starts/stops a mob event on the client (name, isWorldEvent); an empty name stops it. No-op on a server. Set during client setup. **/
+    public static java.util.function.BiConsumer<String, Boolean> APPLY_MOB_EVENT = (mobEventName, worldEvent) -> {};
     public static final String versionMC = "1.21.1";
 
     // Lycanite's links (credit for the original mod, shown in the Beastiary index):
@@ -97,6 +99,8 @@ public class LycanitesMobs {
         com.lycanitesmobs.core.command.CommandManager.register();
         com.lycanitesmobs.core.capabilities.level.ExtendedWorld.register();
         com.lycanitesmobs.core.event.SpawnerEventListener.register();
+        com.lycanitesmobs.core.manager.MobEventManager.register();
+        com.lycanitesmobs.core.event.MobEventListener.register();
         com.lycanitesmobs.core.entity.spawner.StructureSpawnInjector.register(modEventBus);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
@@ -127,14 +131,12 @@ public class LycanitesMobs {
             modEventBus.addListener(com.lycanitesmobs.client.manager.KeyManager::registerKeyMappings);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onClientTick);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onKeyInput);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.event.mobevent.ClientMobEventEvents::onClientUpdate);
         }
 
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 6: (ProjectileManager done in 6a, spawners in 6b) AltarInfo/
-        //       MobEventManager/DungeonManager, and their NeoForge.EVENT_BUS listener registrations
-        //       (SpawnerEventListener, CommandManager, GameEventListener, MobEventListener).
-        // PacketManager: only PlayerControlPayload (mounts) so far - the other messages come with their systems.
+        // TODO Phase 6: (projectiles 6a, spawners 6b, mob events 6c done) AltarInfo/DungeonManager.
         // TODO Phase 7: WorldGenManager, ModStructureTypes/ModStructurePieceTypes, the dynamic
         //       dungeon datapack (addPackFinders/AddPackFindersEvent -> DungeonVirtualPack).
         // TODO Phase 8: client setup (see LycanitesMobsClient) - TextureManager/ModelManager/
@@ -184,6 +186,9 @@ public class LycanitesMobs {
         // load here (registries frozen, Material lists built) rather than in loadContent() like the official.
         com.lycanitesmobs.core.manager.DungeonManager.getInstance().loadAllFromJson(modInfo); // themes (Vespid hives)
         SpawnerManager.getInstance().loadAllFromJson(modInfo);
+        // Mob events (after spawners, as in the official; their spawners load with SpawnerManager above):
+        com.lycanitesmobs.core.manager.MobEventManager.getInstance().loadConfig();
+        com.lycanitesmobs.core.manager.MobEventManager.getInstance().loadAllFromJson(modInfo);
         // Treat Lists: (resolve items/creature entity types, so after registration)
         com.lycanitesmobs.core.item.consumable.holiday.ItemHalloweenTreat.createObjectLists();
         com.lycanitesmobs.core.item.consumable.holiday.ItemWinterGift.createObjectLists();

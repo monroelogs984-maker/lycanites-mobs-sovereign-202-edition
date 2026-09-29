@@ -61,6 +61,7 @@ public class ClientSetup {
         com.lycanitesmobs.client.manager.TextureManager.getInstance().createTextures(com.lycanitesmobs.LycanitesMobs.modInfo);
         com.lycanitesmobs.LycanitesMobs.CLIENT_PLAYER = () -> net.minecraft.client.Minecraft.getInstance().player;
         com.lycanitesmobs.LycanitesMobs.OPEN_SCREEN = com.lycanitesmobs.client.manager.KeyManager::openScreen;
+        com.lycanitesmobs.LycanitesMobs.APPLY_MOB_EVENT = com.lycanitesmobs.client.event.mobevent.ClientMobEventEvents::apply;
     }
 
     /**
