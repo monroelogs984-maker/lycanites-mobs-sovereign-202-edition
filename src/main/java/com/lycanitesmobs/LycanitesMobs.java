@@ -101,6 +101,7 @@ public class LycanitesMobs {
         com.lycanitesmobs.core.event.SpawnerEventListener.register();
         com.lycanitesmobs.core.manager.MobEventManager.register();
         com.lycanitesmobs.core.event.MobEventListener.register();
+        com.lycanitesmobs.core.altar.BossAltar.registerListeners();
         com.lycanitesmobs.core.entity.spawner.StructureSpawnInjector.register(modEventBus);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
@@ -136,7 +137,7 @@ public class LycanitesMobs {
 
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 6: (projectiles 6a, spawners 6b, mob events 6c done) AltarInfo/DungeonManager.
+        // TODO Phase 6: (projectiles 6a, spawners 6b, mob events 6c, boss altars 6d done) DungeonManager.
         // TODO Phase 7: WorldGenManager, ModStructureTypes/ModStructurePieceTypes, the dynamic
         //       dungeon datapack (addPackFinders/AddPackFindersEvent -> DungeonVirtualPack).
         // TODO Phase 8: client setup (see LycanitesMobsClient) - TextureManager/ModelManager/

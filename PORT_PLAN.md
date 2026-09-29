@@ -1519,3 +1519,36 @@ message; the Rahovart boss event in the Nether built the arena and spawned Rahov
 visible in a screenshot). Not verified: the title graphic and the event music by eye/ear, bleed (needs a
 moving target), schedules (none in official data), tick triggers (unused in official data), world-event restore after
 a restart. Asmodeus/Amalgalich arenas untested.
+
+## Phase 6d: boss altars, S202 redesign (2026-09-29)
+
+Glenn's design: no block formations, the 8 rare-variant altars cut, one pedestal and one soulkey per boss using the
+old textures, and the soulkey takes the player straight to the boss fight. Implemented in `core/altar/BossAltar`
+(the official `AltarInfo*` classes are not ported).
+
+- **Pedestals** are the old soulcubes (ids and textures kept, renamed in lang): Demonic -> **Rahovart Pedestal**,
+  Aberrant -> **Asmodeus Pedestal**, Undead -> **Amalgalich Pedestal**.
+- **Soulkeys**, matched by colour (ids kept, renamed): `soulkey` (red) -> **Rahovart Soulkey**, `soulkeydiamond` (cyan)
+  -> **Asmodeus Soulkey**, `soulkeyemerald` (green) -> **Amalgalich Soulkey**. The official tier/variant meaning is gone;
+  the boss rolls its variant normally. A key on the wrong pedestal fails with a message.
+- **Activation** teleports the player into the arena, onto a small obsidian arrival pocket 20 blocks from the arena
+  centre facing it (the floor is only built a few seconds in), then fires the boss event's `AltarMobEventTrigger`
+  there. The event's own StructureBuilder builds the arena and spawns the boss as upstream (20-25 s intro). Arena
+  location: Rahovart in the Nether at the pedestal's coordinates / 8 (y 64); Asmodeus in the outer End 1000 blocks out
+  in the pedestal's direction (y 64; the event needs 500+ from the centre); Amalgalich in the pedestal's dimension at
+  least 520 blocks from world spawn (surface height; the event needs 500+). A pedestal already in a valid spot puts
+  the arena 90 blocks ahead of the player so the pedestal survives. If the event refuses to start (e.g. that boss is
+  already being fought: `message.soulkey.busy`), the player is sent back and keeps the key.
+- **Return trip:** 10 s after the boss dies, every player who came through a pedestal to that arena (and is still
+  within 150 blocks of it) is teleported back to where they used the key. Return points are in memory only, so a
+  server restart mid-fight loses them (the player can walk/portal home as normal).
+- Recipes unchanged from official: the Asmodeus and Amalgalich keys are still crafted by upgrading a Rahovart key
+  (soulkey + 8 diamonds / 8 emeralds). Needs a tuning decision.
+
+**Verified** with a real client (temporary test driver calling the real `useItemOn` on each pedestal, removed after):
+all three keys teleported the player to the right dimension (Rahovart Nether (4,65,1) from an overworld pedestal at
+(36,137,10); Asmodeus End (943,65,331); Amalgalich overworld (234,64,546)), the arenas built and the bosses spawned
+(21-31 s), and after each boss was killed the player was returned to the pedestal. Screenshots in
+`run/client/screenshots/altartest_*.png`. **Not verified:** key consumption (the test player was in creative, which
+skips it, as upstream), multiplayer (several players using one pedestal), and a real fight to the death. The first
+teleport took ~10 s (fresh Nether chunk generation).
