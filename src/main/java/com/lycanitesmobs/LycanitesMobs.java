@@ -110,6 +110,12 @@ public class LycanitesMobs {
         com.lycanitesmobs.core.worldgen.structure.ModStructureTypes.register(modEventBus);
         com.lycanitesmobs.core.worldgen.dungeon.DeferredBossSpawner.register();
         modEventBus.addListener(this::addPackFinders);
+        // Port: replaces the official ReloadCommandMixin - /reload clears the log-once caches so repeat problems show again.
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.AddReloadListenerEvent event) -> {
+            com.lycanitesmobs.core.util.helpers.LMHelperClass.errorMessagesLogged.clear();
+            com.lycanitesmobs.core.util.helpers.LMHelperClass.warningMessagesLogged.clear();
+            com.lycanitesmobs.core.util.helpers.LMHelperClass.infoMessagesLogged.clear();
+        });
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all

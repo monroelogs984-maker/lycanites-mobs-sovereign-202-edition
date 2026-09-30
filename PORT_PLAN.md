@@ -352,7 +352,7 @@ Each phase depends on the ones above it being in place and registered.
 - [ ] **Phase 8 — Client rendering**: custom OBJ model loader/renderer, animation system,
       block render types, the 5 custom GUIs (Creature Inventory, Summoning Pedestal,
       Equipment Forge/Infuser/Station).
-- [ ] **Phase 9 — Compat + mixins**: Oculus/Iris shader compat (matters — S202 ships Iris
+- [x] **Phase 9 — Compat + mixins** (done 2026-09-30, see "Phase 9" in Status): Oculus/Iris shader compat (matters — S202 ships Iris
       + a custom shader edition), the 4 mixins. NeoForge 1.21 mixins run against Mojang
       mappings directly, no SRG remap step — simpler than the 1.12.2 mixin story in this
       workspace's CLAUDE.md.
@@ -1682,3 +1682,25 @@ from the entity type id (this affected sprite projectiles too).
 
 **Verified** with a real client: all 5 summoned and rendered with their models and textures (screenshot
 `run/client/screenshots/projtest_1.png`).
+
+## Phase 9: shader compat + mixins (2026-09-30)
+
+**Iris/shader compat needs no port code.** The official ~3,000-line Iris layer (`OculusCompat`, `IrisHelper`,
+`IrisDrawIds`, `VBOObjModel`, the VBO/Iris batchers, `RecolorTextureCache`) exists because the official draws OBJ models
+from its own VBOs with a custom shader and vertex format, which Iris can't intercept. The port draws everything
+through `RenderType`s using vanilla entity shaders and `NEW_ENTITY` (see `CustomRenderStates`), which Iris remaps to the
+pack's entity programs by itself. **Verified** in the dev client with Lycannots' Iris 1.8.14-beta.1 + Sodium 0.8.13 and
+Complementary Unbound r5.9.3 (the S202 base): creatures (cinder, wisp, geonach, volcan, spectre, reiver), glow layers
+at night and all 5 model projectiles rendered correctly with shadows; no shader errors from Lycanites. Screenshots
+`run/client/screenshots/shadertest_*.png`. Iris/Sodium were only dropped into `run/client/mods` for the test and removed.
+
+**Known gap: Fear's light dimming doesn't show under shader packs.** Packs compute lighting themselves and ignore the
+vanilla lightmap texture that `LightTextureMixin` dims (the muffle, heartbeat and ghost push still work). The official
+has the same gap. Possible fix, needs Glenn's call: while a shader pack is active, feed fear into the vanilla Darkness
+effect's blend factor, which Iris exposes as `darknessFactor` and Complementary already reacts to.
+
+**The other official mixins:** `EntityTypeMixin` (registry name holder: the port uses the registry) and the two structure
+accessors (replaced by 6b's structure modifier) aren't needed; `ReloadCommandMixin` became an `AddReloadListenerEvent`
+listener that clears the log-once caches; `CreativeModeTabRegistryMixin` (groups Lycanites' tabs) isn't needed, since
+NeoForge already keeps a mod's tabs together in registration order.
+
