@@ -49,6 +49,12 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
   items: low 50 (redstone, glowstone dust, slime ball), medium 100 (lapis, blaze powder, gunpowder, phantom membrane,
   frostyfur, poisongland, geistliver), high 500 (experience bottle, magma cream, any Lycanites charge), max (nether star).
 
+- **Blocks keep the official three roles:** **Equipment Forge** imprints and extracts; **Equipment Infuser** levels the
+  imprinted part by feeding it charges (official XP source; kills give no XP); **Equipment Station** recharges mana
+  with the items above. Proposed default: forge tier (Lesser/Greater/Master) = the highest part level it can imprint
+  or extract (1/2/3), as officially.
+- **Leveling:** charges only (Glenn 2026-09-30).
+
 ## Per-part draft (edit me)
 
 Rule used: a part whose features are *only* projectiles -> right-click ability; otherwise a passive (on-hit
