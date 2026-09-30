@@ -156,6 +156,14 @@ Format: `creature (type): old -> new`. **Bold** = changes; edit the part after t
 
 Fusion is defined by creature pairs, not elements, so it keeps working. But 7 elementals lose their namesake element (Banshee = Phase, Nymph = Fae, Raidra = Lightning, Spectre = Void, Spriggan = Arbour, Wisp = Light, Xaphan = Acid), so their Beastiary text needs updating.
 
+## End forms (Glenn 2026-09-30)
+
+Astaroth (Void form), Trite (Void form) and Kathoga (Moloch form) are End-only subspecies with their own models. They
+always replace the base form in the End. **Kept as-is, including the Void element.** So **Void stays as a 15th
+element**, used only by these three End forms. Shade and Spectre still move off Void as mapped above. Void keeps its
+own effects (Leech, Decay); Nether also gains them per the table above. Variant rule per form: 80 / 10 / 10 (2
+uncommon colours each).
+
 ## Creature type moves (approved by Glenn, 2026-09-30; not applied yet)
 
 Goal: even out the groups, every type at least 3 members. Types don't affect fusion. Beastiary text for the moved "X Elementals" gets rewritten with the element rework. Taming/summoning is being reworked separately, so tameability is ignored here.

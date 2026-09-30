@@ -392,8 +392,8 @@ for Phase 10; new systems = own phases (below).**
   rare, rare >= 65% of common ("Mythic Beasts": see a few of everything). Packs preserved. Common/rare
   assignment TBD.
 - Variants: base 80%, each rare variant 2%, uncommon variants share the rest (2 uncommon only -> 80/10/10;
-  2 uncommon + 1 rare -> 80/9/9/2). 2-3 variants per mob. Open: astaroth/trite/kathoga have 2 subspecies
-  (forms) x 2 colors — how to treat.
+  2 uncommon + 1 rare -> 80/9/9/2). 2-3 variants per mob. Astaroth/Trite/Kathoga End forms: kept as-is with
+  the Void element, 80/10/10 per form (see `design/CREATURE_REWORK.md`).
 - Creature types: keep all, rebalance counts; give the currently empty `angel` and `slime` types a few mobs.
 - Dungeons: **official system kept as-is for the first version** (Glenn 2026-09-30), all 7 schematics in all their
   dimensions incl. Nether and End. The earlier "rarer and smaller" and custom Nether/End dungeon plans are shelved.
@@ -1748,7 +1748,7 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
   Windstorm mob events (spawners list it as `lycanitesmobs:raidra`; an earlier bare-name search missed that). It can
   also come from fusing a Zephyr with a Cinder. The 1.12.2 lightning/fire transformation into it broke in 1.16.5 and
   was removed in Incursion.
-- **True sight** (1.12.2 only, added 2022-12): 17 creatures (triffid, serpix, reaper, rahovart, krake, jouste,
+- **True sight** (1.12.2 only, added 2022-12; **not restored**, Glenn 2026-09-30): 17 creatures (triffid, serpix, reaper, rahovart, krake, jouste,
   joustealpha, grell, ostimien, grigori, umibas, epion, naxiris, crusk, asmodeus, banshee, amalgalich) ignore
   invisibility and the sneaking range reduction when targeting (`TargetingGoal`).
 - **Random-placed dungeon variants** (1.12.2): `aberrantstation_random` / `shadowlabyrinth_random` placed at random
