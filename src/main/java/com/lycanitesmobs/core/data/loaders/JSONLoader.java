@@ -287,7 +287,14 @@ public abstract class JSONLoader {
         if (custom) {
             for (String jsonName : customJSONs.keySet()) {
                 if (!defaultJSONs.containsKey(jsonName)) {
-                    mixedJSONs.put(jsonName, customJSONs.get(jsonName));
+                    // S202: a leftover copy of a default that the mod no longer ships (cut creatures, removed
+                    // elements...) still says loadDefault: true, so skip it rather than bring it back as custom.
+                    JsonObject customJSON = customJSONs.get(jsonName);
+                    if (customJSON.has("loadDefault") && customJSON.get("loadDefault").getAsBoolean()) {
+                        LMHelperClass.logDebug("JSON", "Skipping stale default copy: " + dataPath + "/" + jsonName);
+                        continue;
+                    }
+                    mixedJSONs.put(jsonName, customJSON);
                 }
             }
         }

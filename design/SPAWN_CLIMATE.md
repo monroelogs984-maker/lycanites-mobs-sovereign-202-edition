@@ -48,6 +48,105 @@ its broken biome list (see below). Needs a creature-level `minY` spawn field (no
 spawner with a y range.
 
 
+## Result in the dev environment (vanilla biomes only, 2026-09-30)
+
+Implemented. Output of `/lm creatures climate`. In S202 the ranges are computed from that pack's biomes (BOP, Jagged...)
+at runtime, so rerun the command there. "anywhere" = no Overworld climate limit. Outside the Overworld, only the dimension
+rule applies. Temperature scale is about -0.7 to 2.0 and downfall 0 to 1, so ranges past those edges just mean "no limit
+on that side".
+
+- abaia: anywhere | blacklist [minecraft:the_nether, minecraft:the_end]
+- afrit: anywhere | all dimensions
+- aglebemu: temperature 0.30 to 1.20, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- apollyon: anywhere | whitelist [minecraft:the_nether]
+- argus: anywhere (no biome condition) | whitelist [minecraft:the_end]
+- arisaur: temperature -0.60 to 1.20, downfall 0.25 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- arix: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- aspid: temperature 0.30 to 1.30, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- astaroth: anywhere (no biome condition) | whitelist [minecraft:the_end]
+- balayang: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- banshee: temperature 0.30 to 1.20, downfall 0.25 to 0.95 | all dimensions
+- barghest: temperature -1.10 to 2.40, downfall 0.00 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- behemophet: anywhere | whitelist [minecraft:the_nether]
+- belphegor: anywhere | whitelist [minecraft:the_nether]
+- bobeko: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- calpod: temperature -0.60 to 1.10, downfall 0.45 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- cephignis: anywhere | all dimensions
+- cherufe: anywhere | all dimensions
+- chupacabra: anywhere (no biome condition) | blacklist [minecraft:the_nether]
+- clink: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- cockatrice: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- conba: temperature 0.55 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- concapede: temperature 0.55 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- crusk: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- darkling: anywhere (no biome condition) | blacklist [minecraft:the_nether]
+- ent: temperature -0.60 to 1.10, downfall 0.45 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- epion: temperature 0.30 to 1.20, downfall 0.25 to 0.95 | whitelist [minecraft:overworld, minecraft:the_end]
+- erepede: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ettin: temperature 0.30 to 1.20, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- frostweaver: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- geist: temperature 0.30 to 1.20, downfall 0.25 to 0.95 | whitelist [minecraft:overworld, minecraft:the_end]
+- ghoul: temperature 0.30 to 1.20, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- gnekk: anywhere (no biome condition) | blacklist [minecraft:the_nether]
+- gorgomite: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- grell: anywhere | whitelist [minecraft:the_nether]
+- grigori: anywhere | whitelist [minecraft:the_nether]
+- grue: anywhere (no biome condition) | blacklist [minecraft:the_nether]
+- herma: temperature -0.40 to 1.20, downfall 0.15 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ignibus: anywhere | all dimensions
+- ika: temperature -0.40 to 1.20, downfall 0.15 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ioray: temperature -0.40 to 0.90, downfall 0.35 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- jabberwock: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- jengu: anywhere (no biome condition) | all dimensions
+- jouste: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- kathoga: anywhere (no biome condition) | whitelist [minecraft:the_end]
+- khalk: anywhere | all dimensions
+- kobold: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- krake: temperature -0.40 to 0.90, downfall 0.35 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- lacedon: temperature -0.40 to 1.20, downfall 0.15 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- lycosa: temperature 0.40 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- maka: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- maug: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- morock: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- naxiris: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- necrovore: temperature 0.30 to 1.20, downfall 0.25 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ningen: temperature 0.30 to 1.35, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ostimien: temperature -0.60 to 1.20, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- quetzodracl: temperature -0.40 to 0.90, downfall 0.35 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- raiko: temperature -0.40 to 0.90, downfall 0.35 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- reaper: temperature 0.30 to 1.20, downfall 0.25 to 0.95 | all dimensions
+- reiver: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- remobra: temperature 0.30 to 1.20, downfall 0.25 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- roa: temperature -0.40 to 1.20, downfall 0.15 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- roc: temperature -0.60 to 2.40, downfall 0.00 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- salamander: anywhere | all dimensions
+- serpix: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- shade: anywhere (no biome condition) | blacklist [minecraft:the_nether]
+- shambler: temperature -0.60 to 1.35, downfall 0.45 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- silex: anywhere | blacklist [minecraft:the_nether, minecraft:the_end]
+- skylus: temperature -0.40 to 1.20, downfall 0.15 to 0.65 | blacklist [minecraft:the_nether, minecraft:the_end]
+- spectre: anywhere (no biome condition) | whitelist [minecraft:the_end]
+- stryder: anywhere | blacklist [minecraft:the_nether, minecraft:the_end]
+- sutiramu: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- thresher: anywhere | blacklist [minecraft:the_nether, minecraft:the_end]
+- treant: temperature -0.60 to 1.10, downfall 0.45 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- trite: anywhere (no biome condition) | whitelist [minecraft:the_end]
+- troll: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- umibas: anywhere | all dimensions
+- uvaraptor: temperature 0.55 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- ventoraptor: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+- vespid: temperature 0.55 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- vespidqueen: temperature 0.55 to 1.35, downfall 0.65 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- volcan: anywhere | all dimensions
+- vorach: anywhere | whitelist [minecraft:the_nether]
+- warg: temperature -0.60 to 1.10, downfall 0.45 to 0.95 | blacklist [minecraft:the_nether, minecraft:the_end]
+- wendigo: temperature -1.10 to 0.90, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- wildkin: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- wraamon: anywhere (no biome condition) | whitelist [minecraft:overworld, minecraft:the_end]
+- wraith: anywhere (no biome condition) | whitelist [minecraft:the_nether] | y >= 64
+- yale: temperature -1.10 to 1.40, downfall 0.15 to 1.00 | blacklist [minecraft:the_nether, minecraft:the_end]
+- zoataur: temperature 0.40 to 2.40, downfall 0.00 to 0.55 | blacklist [minecraft:the_nether, minecraft:the_end]
+
 ## Superseded keyword draft (kept for reference)
 
 | Creature | Old biome words | Climate |
