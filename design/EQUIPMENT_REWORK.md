@@ -131,3 +131,22 @@ The block screens need a significant redesign so they explain the new system.
 - **Infuser / Station:** officially they take a part or an assembled Lycanites weapon. They now also need to accept
   an **imprinted weapon** (leveling or recharging the part inside it), and show part, level/XP and mana the same way.
 - Layout to be designed with Glenn before implementing.
+
+## Implementation status
+
+**Part 1 done (2026-09-30, 54fbafa, deployed to Lycannots):** `core/item/equipment/imprint/Imprints`.
+- Stored as data component `lycanitesmobs:imprint` (a copy of the part stack, keeping its level/experience/mana).
+  Verified it saves and loads.
+- Eligible: attack damage + attack speed attributes, plus the `lycanitesmobs:imprintable` /
+  `lycanitesmobs:not_imprintable` item tags (both empty for now).
+- Passive: on player melee hits, the part's effect and summon features plus `hit` projectile procs. Damage features
+  add 25% of their value (min +1), `Imprints.DAMAGE_BONUS_SCALE`. Costs 1 mana per hit that triggers something.
+- Ability: right-click with nothing targeted fires the part's primary/secondary projectiles on their cooldowns, costing
+  1 mana per shot. Skipped for items with their own use (bows, tridents, shields, food). Block uses (strip, till,
+  path) win because the event only fires on empty air.
+- Passive vs ability comes from the part json `imprintMode` ("passive" / "ability"), or by default the draft rule
+  (projectile-only = ability). Add `imprintMode` to a part json to override.
+- Tooltip (Shift only): part + level, mana x/1500, passive/ability, feature summaries; "inactive" at 0 mana.
+- `/lm imprint set <part> [level]`, `/lm imprint extract`, `/lm imprint mana <n>` on the held item (dev/admin).
+- **Not verified in-game yet.** Still to build: Forge (imprint/extract), Infuser (level with charges), Station
+  (recharge mana), with the GUI redesign.
