@@ -32,7 +32,8 @@ import java.util.UUID;
  *
  * Port scope: spawner tick bookkeeping, world day base time, boss tracking (boss block protection + spawner
  * boss-proximity checks) and the mob event runtime (world event + per-area mob event players, saved world event,
- * client sync). Dungeon instances are NOT ported yet (dungeon phase).
+ * client sync). Dungeon instances are not ported: they belonged to the legacy dungeon generator, which is disabled
+ * upstream; dungeons are structures now (see LMDungeonStructure).
  */
 public class ExtendedWorld extends SavedData {
     protected static final String EXT_PROP_NAME = "LycanitesMobs";
@@ -471,7 +472,6 @@ public class ExtendedWorld extends SavedData {
         if (nbtTagCompound.contains("WorldEventCount")) {
             this.worldEventCount = nbtTagCompound.getInt("WorldEventCount");
         }
-        // TODO(port): dungeon instances (dungeon phase).
     }
 
 

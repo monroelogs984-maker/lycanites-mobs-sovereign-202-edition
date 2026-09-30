@@ -5,7 +5,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 /**
- * Registers the /lm command tree. TODO(port): dungeons, equipment and debug
+ * Registers the /lm command tree. TODO(port): equipment and debug
  * subcommands come with their systems.
  */
 public class CommandManager {
@@ -22,6 +22,7 @@ public class CommandManager {
                         .then(SpawnerCommand.register())
                         .then(MobEventsCommand.register())
                         .then(MobEventCommand.register())
+                        .then(DungeonsCommand.register())
         );
     }
 }

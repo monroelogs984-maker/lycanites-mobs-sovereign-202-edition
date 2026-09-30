@@ -29,6 +29,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import com.lycanitesmobs.core.entity.creature.aberration.EntityFear;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
@@ -74,6 +76,7 @@ public class MobEventListener {
         MobEventListener listener = getInstance();
         NeoForge.EVENT_BUS.addListener((LevelTickEvent.Pre event) -> listener.onWorldUpdate(event.getLevel()));
         NeoForge.EVENT_BUS.addListener(listener::onEntityUpdate);
+        NeoForge.EVENT_BUS.addListener(listener::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, listener::onLivingDamage);
         NeoForge.EVENT_BUS.addListener(listener::onEntityHeal);
         NeoForge.EVENT_BUS.addListener(listener::onSleep);
@@ -255,6 +258,7 @@ public class MobEventListener {
 
         this.handleParalysis(entity, invulnerable);
         this.handleWeight(entity, invulnerable);
+        this.handleFear(entity, invulnerable);
         this.handleInstability(entity, invulnerable);
         this.handlePlague(entity, invulnerable);
         this.handleSmited(entity, invulnerable);
@@ -360,6 +364,22 @@ public class MobEventListener {
         if (!invulnerable && has(entity, this.paralysisEffect)) {
             entity.setDeltaMovement(0, entity.getDeltaMovement().y() > 0 ? 0 : entity.getDeltaMovement().y(), 0);
             entity.setOnGround(false);
+        }
+    }
+
+    /** A feared player is haunted by EntityFear ghosts (one per fear level), which do the fear movement. **/
+    private void handleFear(LivingEntity entity, boolean invulnerable) {
+        if (!invulnerable && !entity.level().isClientSide && entity instanceof Player player && has(entity, this.fearEffect)) {
+            EntityFear.spawnForPlayer(player, null);
+        }
+    }
+
+    /** Ghosts aren't saved, but ones still following a player who relogged are removed. **/
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        Player player = event.getEntity();
+        for (EntityFear fearEntity : player.level().getEntitiesOfClass(EntityFear.class, player.getBoundingBox().inflate(128.0D),
+                fear -> player.equals(fear.getHauntTarget()))) {
+            fearEntity.discard();
         }
     }
 
@@ -515,6 +535,7 @@ public class MobEventListener {
     private boolean hasLycanitesTickEffect(LivingEntity entity) {
         return has(entity, this.paralysisEffect)
                 || has(entity, this.weightEffect)
+                || has(entity, this.fearEffect)
                 || has(entity, this.instabilityEffect)
                 || has(entity, this.plagueEffect)
                 || has(entity, this.smitedEffect)

@@ -2,6 +2,7 @@ package com.lycanitesmobs.core.worldgen.dungeon.definition;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.lycanitesmobs.core.worldgen.dungeon.instance.SectorInstance;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -12,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Port: themes only (see DungeonManager). The sector-instance parameters are Object until dungeons are ported. **/
 public class DungeonTheme {
     /** Dungeon Themes set the blocks that Dungeon Sectors and Structures should use. **/
 
@@ -166,7 +166,7 @@ public class DungeonTheme {
 	 * @param random The instance of random, used for characters that are random.
 	 * @return A block state for placing.
 	 */
-	public BlockState getFloor(Object sectorInstance, char patternChar, RandomSource random) {
+	public BlockState getFloor(SectorInstance sectorInstance, char patternChar, RandomSource random) {
 		return this.getBlockState(sectorInstance, patternChar, random, this.floorBlocks);
 	}
 
@@ -177,7 +177,7 @@ public class DungeonTheme {
 	 * @param random The instance of random, used for characters that are random.
 	 * @return A block state for placing.
 	 */
-	public BlockState getWall(Object sectorInstance, char patternChar, RandomSource random) {
+	public BlockState getWall(SectorInstance sectorInstance, char patternChar, RandomSource random) {
 		return this.getBlockState(sectorInstance, patternChar, random, this.wallBlocks);
 	}
 
@@ -188,7 +188,7 @@ public class DungeonTheme {
 	 * @param random The instance of random, used for characters that are random.
 	 * @return A block state for placing.
 	 */
-	public BlockState getCeiling(Object sectorInstance, char patternChar, RandomSource random) {
+	public BlockState getCeiling(SectorInstance sectorInstance, char patternChar, RandomSource random) {
 		return this.getBlockState(sectorInstance, patternChar, random, this.ceilingBlocks);
 	}
 
@@ -245,14 +245,34 @@ public class DungeonTheme {
 	 * @param blockList The list of Theme Blocks to select from.
 	 * @return A block state for placing.
 	 */
-	public BlockState getBlockState(Object sectorInstance, char patternChar, RandomSource random, List<ThemeBlock> blockList) {
+	public BlockState getBlockState(SectorInstance sectorInstance, char patternChar, RandomSource random, List<ThemeBlock> blockList) {
 		// Nothing:
 		if(patternChar == '0') {
 			return Blocks.CAVE_AIR.defaultBlockState();
 		}
 
-		// Sector Instantiated: (TODO(port): SectorInstance light/torch/stair/pit blocks come with the dungeon phase;
-		// until then the only caller, CreatureStructure (Vespid hives), passes null.)
+		// Sector Instantiated:
+		if(sectorInstance != null) {
+			// Light:
+			if (patternChar == 'L') {
+				return sectorInstance.getLightBlock();
+			}
+
+			// Torch:
+			else if (patternChar == 'T') {
+				return sectorInstance.getTorchBlock();
+			}
+
+			// Stairs:
+			else if (patternChar == 'R') {
+				return sectorInstance.getStairBlock();
+			}
+
+			// Pit:
+			else if (patternChar == 'P') {
+				return sectorInstance.getPitBlock();
+			}
+		}
 
 		// Chest:
 		if(patternChar == 'C') {

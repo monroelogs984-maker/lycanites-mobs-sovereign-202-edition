@@ -9,8 +9,8 @@ import net.minecraft.world.entity.boss.wither.WitherBoss;
 /**
  * Creates Lycanites' custom mob effects (registered in RegistryEvents.registerEffects()). Ported 2026-09-26.
  *
- * <p>Effect behaviour lives in MobEventListener (as in the official). Still missing: fear's haunting (needs the
- * unported EntityFear); the official constructor also registered this class on the event bus - not needed.
+ * <p>Effect behaviour lives in MobEventListener (as in the official; fear's haunting is EntityFear, its client side
+ * FearClientEvents). The official constructor also registered this class on the event bus - not needed.
  */
 public class EffectManager {
 

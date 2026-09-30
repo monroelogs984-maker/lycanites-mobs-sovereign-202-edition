@@ -343,11 +343,12 @@ Each phase depends on the ones above it being in place and registered.
           `RegistryEvents.registerEntityAttributes()`, mirroring the original's Forge-side
           `EntityAttributeCreationEvent` listener but iterating `BuiltInRegistries.ENTITY_TYPE`
           instead of `ForgeRegistries.ENTITY_TYPES`.
-- [ ] **Phase 6 — Gameplay systems on top of creatures**: `ProjectileManager`,
-      `SpawnerManager`, `StructureSpawnInjector`, `AltarInfo`, `MobEventManager`,
-      `DungeonManager`.
-- [ ] **Phase 7 — World gen**: custom biome features/structures, the virtual dungeon
-      datapack (`DungeonVirtualPack`, `WorldgenJsonDumper`).
+- [x] **Phase 6 — Gameplay systems on top of creatures**: `ProjectileManager`,
+      `SpawnerManager`, `StructureSpawnInjector`, `AltarInfo` (redesigned, 6d), `MobEventManager`,
+      `DungeonManager` (done with Phase 7, 2026-09-30).
+- [x] **Phase 7 — World gen** (done 2026-09-30, see "Phase 7" in Status): dungeon structures + the
+      virtual dungeon datapack (`DungeonVirtualPack`), fluid pools. `WorldgenJsonDumper` (dev tool) and the
+      `chunkspawn` feature (superseded by 6b's `ChunkEvent.Load` hook) deliberately not ported.
 - [ ] **Phase 8 — Client rendering**: custom OBJ model loader/renderer, animation system,
       block render types, the 5 custom GUIs (Creature Inventory, Summoning Pedestal,
       Equipment Forge/Infuser/Station).
@@ -1577,3 +1578,79 @@ right-clicking opens the screen with all 33 summonable creatures listed and the 
 the screen reaches the server; with redstone in the fuel slot it burned one dust, summoned a Geonach about every 10 s,
 each bound to the pedestal and owned by the player, and stopped at 5 when capacity hit 10/10. A water creature (Lacedon)
 was also selectable; whether it summons sensibly out of water is untested.
+
+## Phase 7: dungeons + fluid pools (2026-09-30)
+
+**Dungeons.** Ported the official 1.20.1 structure path: `LMDungeonStructure` (a `lycanitesmobs:lm_dungeon`
+structure type) + `LMDungeonPiece`, the full definition set (`DungeonSchematic`/`Sector`/`Structure`/`SectorSegment`/
+`SectorLayer`, themes now wired to `SectorInstance` for light/torch/stair/pit blocks), the layout generator
+(`DungeonLayout`, `SectorInstance`, `SectorConnector`, `SectorBounds`, `SectorBuildSequence`), `DeferredBossSpawner`
+and `DungeonVirtualPack`, the built-in datapack that turns each schematic's `world` condition into a structure, a
+biome tag (`has_structure/<name>`) and one combined `lycanitesmobs:dungeons` structure set. All 7 schematics, 14
+sectors and 8 themes copied unchanged. Command: `/lm dungeons reload|enable|disable|locate <name>`.
+
+Not ported (dead upstream): the legacy ExtendedWorld-tracked generator (`DungeonFeature` is commented out in the
+official `WorldGenManager`), so `DungeonInstance` is trimmed to what the structure path uses and there are no async
+build plans or dungeon NBT in `ExtendedWorld`; `StructureSpawnEvents` (debug right-click, disabled upstream);
+`WorldgenJsonDumper` (dev-only JSON dump).
+
+**1.21 / NeoForge changes:** structure + piece types via `DeferredRegister` (official `Registry.register`d them
+directly); `PackResources.location()`/`PackLocationInfo`/`PackSelectionConfig`, pack_format 48; schematics read
+through `FileLoader` instead of Forge's `IModFile`; `LevelData.getSpawnPos()`; chest loot as
+`ResourceKey<LootTable>`; `LevelTickEvent.Post`.
+
+**Fixes over official:**
+- **`forge:` biome tags.** The official JSONs (creatures, spawners, dungeons) use Forge 1.20 tags like
+  `forge:is_snowy`, which don't exist on NeoForge 1.21 (they became `c:` tags), so they silently matched nothing:
+  **this also affected creature spawning since Phase 5/6b.** `JSONHelper.normalizeBiomeTag` maps `forge:X` -> `c:X`
+  (`is_coniferous` -> `c:is_tree/coniferous`, `is_dense` -> `c:is_dense_vegetation`), applied in
+  `getBiomesFromTags` (every spawn/biome check) and the dungeon pack. Generated dungeon biome tag entries are all
+  `required: false`, since one missing required reference fails the tag and the world load.
+- **Height cap.** Towers were capped at a hardcoded y 255, so a Nether temple's tower went through the bedrock roof
+  (verified: sections up to y 224). Now capped at `min(255, generator minY + genDepth - 6)` (Nether: 122), stored in
+  the piece NBT so regenerated layouts match; dungeon blocks never replace bedrock.
+- The `dungeons.enabled` config (and `/lm dungeons enable|disable`) was only read by the dead legacy feature; it now
+  gates `findGenerationPoint`.
+- `locate` used a per-schematic spacing/salt grid that no longer matched the combined structure set; it now uses the
+  chunk generator's `findNearestMapStructure` like `/locate structure`.
+
+**Verified** headless (fresh worlds, RCON + a small region-file reader): the pack loads and is enabled; `locate` finds
+all 6 overworld/nether dungeons; a Lush Tomb 925+ blocks out built across 96 chunks (lush stone set, crystals, poison
+clouds, 56 spawners set to the schematic's mobs, 46 chests with level-scaled loot tables, 12 named bosses: Pong Kong,
+Princess, Malevolent Observer); a Demonic Temple in the Nether (demonstone, hellfire, doomfire; after the cap, highest
+section y 112-127); a waterlogged Stream Shrine (water inside). **Gotchas:** a dungeon whose 113-block footprint
+comes within `minDistanceFromSpawn` (500) of spawn is registered as a structure (and shows in `locate`) but skipped at
+build time - that's the official runtime check - so test 1000+ blocks out. `/forceload add` caps at 256 chunks.
+**Not verified:** a player actually walking/fighting through one, End placement (aberrantstation), the midnight
+dimension. **Tuning pending (Glenn: "rarer and smaller"):** a dungeon currently spans y 0-255 with up to 10 levels,
+spacing 32-38 chunks.
+
+**Fluid pools.** Copied the official acid/moglava/ooze/poison lake + spring configured/placed features, biome tags and
+biome modifiers (`forge:add_features` -> `neoforge:add_features`, `neoforge/biome_modifier/`). Verified natural acid
+lakes generating in a desert (rare: lakes 1 in 120 chunks, as upstream).
+
+
+## Fear effect (2026-09-30)
+
+Before this the Fear effect did nothing (only the Shade applies it). Ported the official 1.20.1 system:
+- **`EntityFear`** (dummy creature `fear.json`): invisible, intangible ghosts, one per fear level, that haunt a feared
+  survival/adventure player for 15-30 s (`HauntPlayerGoal` orbits; `FearMoveGoal` pushes the player away with wobble
+  when close, erratic "ghost tugs" when far, +0.5 step height). Spawned from `MobEventListener.handleFear` (fear added
+  to the tick-effect gate) and by the Shade's attack; stale ghosts removed on login; creative/spectator immune.
+- **Client** (`client/effect/`, `FearClientEvents`): the lightmap dims in two phases (block light, then sky light;
+  `LightTextureMixin`, the port's first mixin, `lycanitesmobs.mixins.json` declared in neoforge.mods.toml), flickering
+  with the heartbeat's decoded amplitude envelope; all other sounds muffled (volume + pitch, distance-scaled via
+  `MuffledSoundInstance`, which also delegates 1.21's stream methods); a looping heartbeat. Config in the existing
+  `ConfigClient` fear values.
+- Dummy creatures now get a `NoneRenderer` (was the pig placeholder).
+
+**Not ported (dead upstream):** `FearHandler` (nothing calls it), the ghost mesh renderer (`FearRenderer`'s render body
+is commented out, so `FearMesh`/`FearMeshProfile`/`GhostTendrilMesh` are unused) and the `FearRedGlow` shader uniform
+(part of the unported VBO/Iris renderer). Same for the blocky models (`registerBlocky = false` upstream).
+1.21 changes: step height is the vanilla `Attributes.STEP_HEIGHT` with a `ResourceLocation` modifier id; the extra
+`MessageEntityVelocity` push packet is dropped (vanilla motion packet only, as for instability).
+
+**Verified** with a real client (temporary driver, removed): Fear IV on a survival player -> 4 ghosts, player pushed
+0.6-6 blocks per 2 s, block dim ~0.99 / sky dim 0.6 with heartbeat flicker, muffle 1.0, heartbeat decoded (27.4 s
+envelope); when the effect ended the ghosts were discarded and light/audio returned to normal. Screenshots
+`run/client/screenshots/feartest_*.png`. **Gotcha:** the old test saves' player is in creative, which is immune.

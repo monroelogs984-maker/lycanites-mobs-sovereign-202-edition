@@ -131,8 +131,9 @@ public class EntityShade extends RideableCreatureEntity {
                 if (doDamage) {
                     if (ObjectManager.getEffectHolder("fear") != null) {
                         possibleTarget.addEffect(new MobEffectInstance(ObjectManager.getEffectHolder("fear"), this.getEffectDuration(5), 1));
-                        // TODO(port): EntityFear.spawnForPlayer(player, this) - the fear "haunt" entity comes with the
-                        // effect-behaviour work (ExtendedEntity/FearHandler); the fear effect itself is applied.
+                        if (possibleTarget instanceof Player player) {
+                            EntityFear.spawnForPlayer(player, this);
+                        }
                     } else {
                         possibleTarget.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 10 * 20, 0));
                     }

@@ -138,6 +138,11 @@ public class ClientSetup {
                 continue;
             }
 
+            if (creatureInfo.isDummy()) {
+                event.registerEntityRenderer(entityType, com.lycanitesmobs.client.renderer.NoneRenderer::new);
+                continue;
+            }
+
             // Creatures with a real ported model class get the real OBJ renderer; everything
             // else still falls back to the pig placeholder (see PlaceholderCreatureRenderer).
             if (ModelManager.getInstance().getCreatureModel(creatureInfo, null) != null) {

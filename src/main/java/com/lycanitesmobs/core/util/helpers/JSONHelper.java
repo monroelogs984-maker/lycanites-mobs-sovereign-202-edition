@@ -176,6 +176,23 @@ public class JSONHelper {
     }
 
 
+    /**
+     * Port: the official JSONs use Forge 1.20's "forge:" biome tags, which don't exist on NeoForge 1.21 - they were
+     * replaced by the shared "c:" convention tags, so a "forge:" tag silently matched no biomes. Maps them across;
+     * two were renamed rather than just re-namespaced. Anything else is returned unchanged.
+     */
+    public static String normalizeBiomeTag(String tag) {
+        if (!tag.startsWith("forge:")) {
+            return tag;
+        }
+        String path = tag.substring("forge:".length());
+        return switch (path) {
+            case "is_coniferous" -> "c:is_tree/coniferous";
+            case "is_dense" -> "c:is_dense_vegetation";
+            default -> "c:" + path;
+        };
+    }
+
     public static List<String> getBiomesFromTags(Level world, List<String> biomeTags) {
         List<String> cachedResult = biomeTagCache.get(biomeTags);
         if (cachedResult != null) {
@@ -227,7 +244,7 @@ public class JSONHelper {
                 continue;
             }
 
-            ResourceLocation tagLoc = ResourceLocation.parse(entry);
+            ResourceLocation tagLoc = ResourceLocation.parse(normalizeBiomeTag(entry));
             List<String> selectedBiomeIds = new ArrayList<>();
 
             TagKey<Biome> vanillaKey =

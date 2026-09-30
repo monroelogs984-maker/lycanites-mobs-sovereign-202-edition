@@ -105,6 +105,11 @@ public class LycanitesMobs {
         com.lycanitesmobs.core.event.MobEventListener.register();
         com.lycanitesmobs.core.altar.BossAltar.registerListeners();
         com.lycanitesmobs.core.entity.spawner.StructureSpawnInjector.register(modEventBus);
+        // Dungeons (Phase 7): the structure type, and the virtual datapack that turns the schematic JSONs into
+        // structure/structure_set/biome tag JSONs.
+        com.lycanitesmobs.core.worldgen.structure.ModStructureTypes.register(modEventBus);
+        com.lycanitesmobs.core.worldgen.dungeon.DeferredBossSpawner.register();
+        modEventBus.addListener(this::addPackFinders);
 
         // Forces ObjectManager's Lazy-deferred blocks/block-items to actually construct and
         // register while the registry is still open (fires on the mod event bus, after all
@@ -135,13 +140,12 @@ public class LycanitesMobs {
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onClientTick);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.manager.KeyManager::onKeyInput);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.event.mobevent.ClientMobEventEvents::onClientUpdate);
+            com.lycanitesmobs.client.event.FearClientEvents.register();
         }
 
         modEventBus.addListener(this::commonSetup);
 
-        // TODO Phase 6: (projectiles 6a, spawners 6b, mob events 6c, boss altars 6d done) DungeonManager.
-        // TODO Phase 7: WorldGenManager, ModStructureTypes/ModStructurePieceTypes, the dynamic
-        //       dungeon datapack (addPackFinders/AddPackFindersEvent -> DungeonVirtualPack).
+        // TODO Phase 7: WorldGenManager (fluid pools, chunk spawn feature).
         // TODO Phase 8: client setup (see LycanitesMobsClient) - TextureManager/ModelManager/
         //       ClientManager, menu screen registration.
         // TODO Phase 9: Oculus/Iris compat (OculusCompat.init()), DyntopoLib dev-tooling hook.
@@ -177,6 +181,40 @@ public class LycanitesMobs {
         ProjectileManager.getInstance().startup(modInfo);
     }
 
+    /**
+     * Registers a virtual datapack that generates the dungeon worldgen structure, structure_set and biome tag JSONs
+     * from the dungeon schematic JSONs (so dungeon placement is configured through the schematics alone).
+     */
+    private void addPackFinders(final net.neoforged.neoforge.event.AddPackFindersEvent event) {
+        if (event.getPackType() != net.minecraft.server.packs.PackType.SERVER_DATA) {
+            return;
+        }
+        event.addRepositorySource(consumer -> {
+            net.minecraft.server.packs.PackLocationInfo location = new net.minecraft.server.packs.PackLocationInfo(
+                    "lycanitesmobs_dynamic_dungeons",
+                    net.minecraft.network.chat.Component.literal("Lycanites Mobs Dynamic Dungeons"),
+                    net.minecraft.server.packs.repository.PackSource.BUILT_IN,
+                    java.util.Optional.empty());
+            net.minecraft.server.packs.repository.Pack.ResourcesSupplier supplier = new net.minecraft.server.packs.repository.Pack.ResourcesSupplier() {
+                @Override
+                public net.minecraft.server.packs.PackResources openPrimary(net.minecraft.server.packs.PackLocationInfo info) {
+                    return new com.lycanitesmobs.core.worldgen.structure.DungeonVirtualPack(info);
+                }
+
+                @Override
+                public net.minecraft.server.packs.PackResources openFull(net.minecraft.server.packs.PackLocationInfo info, net.minecraft.server.packs.repository.Pack.Metadata metadata) {
+                    return new com.lycanitesmobs.core.worldgen.structure.DungeonVirtualPack(info);
+                }
+            };
+            net.minecraft.server.packs.repository.Pack pack = net.minecraft.server.packs.repository.Pack.readMetaAndCreate(
+                    location, supplier, net.minecraft.server.packs.PackType.SERVER_DATA,
+                    new net.minecraft.server.packs.PackSelectionConfig(true, net.minecraft.server.packs.repository.Pack.Position.TOP, false));
+            if (pack != null) {
+                consumer.accept(pack);
+            }
+        });
+    }
+
     private void commonSetup(final FMLCommonSetupEvent event) {
         configReady = true;
         ObjectManager.setCurrentModInfo(modInfo);
@@ -187,7 +225,7 @@ public class LycanitesMobs {
         ProjectileManager.getInstance().bindRegisteredTypes();
         // Spawners resolve blocks/items/materials from the registries and creature ids from CreatureManager, so they
         // load here (registries frozen, Material lists built) rather than in loadContent() like the official.
-        com.lycanitesmobs.core.manager.DungeonManager.getInstance().loadAllFromJson(modInfo); // themes (Vespid hives)
+        com.lycanitesmobs.core.manager.DungeonManager.getInstance().loadAllFromJson(modInfo);
         SpawnerManager.getInstance().loadAllFromJson(modInfo);
         // Mob events (after spawners, as in the official; their spawners load with SpawnerManager above):
         com.lycanitesmobs.core.manager.MobEventManager.getInstance().loadConfig();
