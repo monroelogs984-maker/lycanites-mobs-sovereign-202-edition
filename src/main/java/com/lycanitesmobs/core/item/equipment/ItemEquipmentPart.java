@@ -70,6 +70,9 @@ public class ItemEquipmentPart extends BaseItem {
      **/
     protected String slotType;
 
+    /** S202 imprinting: "passive" (on-hit features) or "ability" (right-click projectiles). Empty = derived from features. **/
+    protected String imprintMode = "";
+
     /**
      * The id of the mob that drops this part.
      **/
@@ -212,6 +215,29 @@ public class ItemEquipmentPart extends BaseItem {
                 effectCount);
     }
 
+    /**
+     * S202: whether this part imprints as a right-click ability. Uses the json imprintMode, otherwise a part whose only
+     * features are primary/secondary projectiles is an ability and everything else is a passive.
+     */
+    public boolean isImprintAbility() {
+        if (!this.imprintMode.isEmpty()) {
+            return "ability".equals(this.imprintMode);
+        }
+        boolean hasProjectile = false;
+        for (EquipmentFeature feature : this.features) {
+            String type = feature.getFeatureType();
+            if ("projectile".equalsIgnoreCase(type)) {
+                if ("hit".equalsIgnoreCase(((com.lycanitesmobs.core.item.equipment.features.ProjectileEquipmentFeature) feature).getProjectileTrigger())) {
+                    return false;
+                }
+                hasProjectile = true;
+            } else if ("effect".equalsIgnoreCase(type) || "summon".equalsIgnoreCase(type)) {
+                return false;
+            }
+        }
+        return hasProjectile;
+    }
+
     public String getSlotType() {
         return this.slotType;
     }
@@ -235,6 +261,9 @@ public class ItemEquipmentPart extends BaseItem {
         this.itemName = "equipmentpart_" + json.get("itemName").getAsString();
 
         this.slotType = json.get("slotType").getAsString();
+
+        if (json.has("imprintMode"))
+            this.imprintMode = json.get("imprintMode").getAsString().toLowerCase();
 
         if (json.has("dropMobId")) {
             this.dropMobId = json.get("dropMobId").getAsString();

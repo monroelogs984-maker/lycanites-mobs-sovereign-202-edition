@@ -109,6 +109,14 @@ public class ProjectileEquipmentFeature extends EquipmentFeature {
             this.bonusDamage = json.get("bonusDamage").getAsInt();
     }
 
+    public String getProjectileName() {
+        return this.projectileName;
+    }
+
+    public String getProjectileTrigger() {
+        return this.projectileTrigger;
+    }
+
     public int getCooldown() {
         return this.cooldown;
     }

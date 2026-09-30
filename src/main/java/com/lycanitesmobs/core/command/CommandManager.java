@@ -23,6 +23,7 @@ public class CommandManager {
                         .then(MobEventsCommand.register())
                         .then(MobEventCommand.register())
                         .then(DungeonsCommand.register())
+                        .then(ImprintCommand.register())
         );
     }
 }

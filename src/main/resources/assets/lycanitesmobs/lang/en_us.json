@@ -1692,5 +1692,11 @@
   "entity.lycanitesmobs.summoningseed": "Summoning Seed",
   "entity.lycanitesmobs.primeember": "Prime Ember",
   "message.soulkey.busy": "That boss is already being fought.",
-  "message.soulkey.return": "The boss is defeated! Returning you to the pedestal in %s seconds..."
+  "message.soulkey.return": "The boss is defeated! Returning you to the pedestal in %s seconds...",
+  "imprint.lycanitesmobs.part": "Imprint:",
+  "imprint.lycanitesmobs.level": "(Level %s)",
+  "imprint.lycanitesmobs.mana": "Mana: %s/%s",
+  "imprint.lycanitesmobs.passive": "Passive: works on every hit.",
+  "imprint.lycanitesmobs.ability": "Ability: right-click to use.",
+  "imprint.lycanitesmobs.inactive": "Out of mana: the imprint is inactive until recharged."
 }

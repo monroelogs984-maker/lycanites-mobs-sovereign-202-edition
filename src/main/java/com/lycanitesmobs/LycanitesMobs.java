@@ -87,6 +87,7 @@ public class LycanitesMobs {
         BLOCKS.register(modEventBus);
         ENTITY_TYPES.register(modEventBus);
         ModAttributes.ATTRIBUTES.register(modEventBus);
+        com.lycanitesmobs.core.item.equipment.imprint.Imprints.register(modEventBus);
         ItemManager.register(modEventBus);
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
@@ -135,6 +136,7 @@ public class LycanitesMobs {
         // (AI/combat/sounds) before models exist.
         if (FMLEnvironment.dist.isClient()) {
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerEntityRenderers);
+            net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(com.lycanitesmobs.client.event.ImprintTooltip::onTooltip);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerReloadListeners);
             modEventBus.addListener(com.lycanitesmobs.client.ClientSetup::registerItemColors);
             com.lycanitesmobs.client.ClientSetup.setClientPlayerSupplier();
