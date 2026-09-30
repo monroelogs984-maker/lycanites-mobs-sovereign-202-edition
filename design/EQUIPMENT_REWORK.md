@@ -119,3 +119,14 @@ instead be on-swing passive procs.
 - **wraithskull** (wraith): **Passive:** wither, +damage
 - **xaphanspine** (xaphan): **Passive:** penetration
 - **zephyrcloud** (zephyr): **Passive:** levitation, summon zephyr
+
+## GUI (implementation note, Glenn 2026-09-30)
+
+The block screens need a significant redesign so they explain the new system.
+- **Equipment Forge:** the official screen is a 7-slot assembly tree (base, head, 3 tips, pommel, piece). It gets
+  replaced by something like: a weapon slot + a part slot, an Imprint / Extract action, and an info panel showing what
+  will happen: the part, its level vs. the forge tier's cap, its mana, the passive or ability, and why it's blocked
+  (not eligible, already imprinted, level too high for this forge).
+- **Infuser / Station:** officially they take a part or an assembled Lycanites weapon. They now also need to accept
+  an **imprinted weapon** (leveling or recharging the part inside it), and show part, level/XP and mana the same way.
+- Layout to be designed with Glenn before implementing.
