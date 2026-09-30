@@ -18,7 +18,7 @@ Every event gets a dimension whitelist for its own dimension, replacing the curr
 
 **Disabled (18):** aberrant_assimilation, arachnophobia, bladeflurry, dragonsroar, marchofthegorgomites, raptorrampage,
 reptileruckus, seastorm, sharknado, subzero, theswarm, tsunami, windstorm, and the 5 seasonal ones (halloween, roasting,
-rudolph, saltytree, satanclaws). Seasonal events are open: keep them outside the rotation, or turn them off.
+rudolph, saltytree, satanclaws). **Seasonal events scrapped** (Glenn 2026-09-30; Halloween relied on cut creatures).
 
 ## Timing
 
@@ -27,11 +27,11 @@ rudolph, saltytree, satanclaws). Seasonal events are open: keep them outside the
 - Event duration: **keep the official 1 min (1200 ticks)** (Glenn 2026-09-30: events should interrupt only a small
   minority of playtime). Event mobs still force-despawn after 10 min (`Mob Events.duration = 12000`).
 
-## Fixes needed for the picks (proposed, awaiting Glenn)
+## Fixes for the picks
 
-- **Shadow Games:** remove its `dayTime: 20000` effect. `WorldMobEventEffect` sets the clock on *all* levels, so in
+- **Shadow Games: remove its `dayTime: 20000` effect (approved).** `WorldMobEventEffect` sets the clock on *all* levels, so in
   the End it would force night in the Overworld. The End has no day cycle anyway.
-- **Root Riot:** loses Triffid + Tpumpkyn (cut) -> only Shambler (land) + Spriggan (sky). Proposal: add Ent + Treant.
+- **Root Riot:** loses Triffid + Tpumpkyn (cut) -> only Shambler (land) + Spriggan (sky). **Add Ent + Treant (approved).**
 - **Primal Fury:** loses Dawon + Feradon (cut) -> Warg, Barghest, Maug. Fine as-is.
 - **Hells Fury:** sky wave loses Malwrath (cut) -> Wraith only.
 - Thin rosters: Poop Party (Conba), Cinderfall (Cinder), Winters Grasp (Wendigo, Serpix).

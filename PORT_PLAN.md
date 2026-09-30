@@ -1558,7 +1558,10 @@ old textures, and the soulkey takes the player straight to the boss fight. Imple
   within 150 blocks of it) is teleported back to where they used the key. Return points are in memory only, so a
   server restart mid-fight loses them (the player can walk/portal home as normal).
 - Recipes unchanged from official: the Asmodeus and Amalgalich keys are still crafted by upgrading a Rahovart key
-  (soulkey + 8 diamonds / 8 emeralds). Needs a tuning decision.
+  (soulkey + 8 diamonds / 8 emeralds). **Decided (Glenn 2026-09-30): swap Rahovart and Asmodeus keys.** The red
+  `soulkey` (Soulgazer + Nether Star + 7 diamonds) becomes the **Asmodeus Soulkey** and stays the ingredient of the
+  other two: cyan `soulkeydiamond` (red + 8 diamonds) -> **Rahovart Soulkey**, green `soulkeyemerald` (red + 8
+  emeralds) -> Amalgalich (unchanged). Needs `BossAltar` key names swapped + lang names.
 
 **Verified** with a real client (temporary test driver calling the real `useItemOn` on each pedestal, removed after):
 all three keys teleported the player to the right dimension (Rahovart Nether (4,65,1) from an overworld pedestal at
@@ -1698,7 +1701,7 @@ Complementary Unbound r5.9.3 (the S202 base): creatures (cinder, wisp, geonach, 
 at night and all 5 model projectiles rendered correctly with shadows; no shader errors from Lycanites. Screenshots
 `run/client/screenshots/shadertest_*.png`. Iris/Sodium were only dropped into `run/client/mods` for the test and removed.
 
-**Known gap: Fear's light dimming doesn't show under shader packs.** Packs compute lighting themselves and ignore the
+**Known gap: Fear's light dimming doesn't show under shader packs.** **Decided (Glenn 2026-09-30): leave it off under shaders**, no Darkness fallback. Packs compute lighting themselves and ignore the
 vanilla lightmap texture that `LightTextureMixin` dims (the muffle, heartbeat and ghost push still work). The official
 has the same gap. Possible fix, needs Glenn's call: while a shader pack is active, feed fear into the vanilla Darkness
 effect's blend factor, which Iris exposes as `darknessFactor` and Complementary already reacts to.
@@ -1756,4 +1759,4 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
 - **Smitefire fireball** projectile (1.12.2; Incursion keeps only an unused charge item model). **Dropped (Glenn 2026-09-30): not needed for now, so it will not be ported.**
 - 1.16.5: five elements (bose, coda, glasma, mote, murati) that Incursion replaced with chrono, fate, flux, gravity,
   nova, vortex (+ xeno); temple/village spawners became Incursion's structure spawns (`structurespawns/`).
-- Incursion-new, not in Hellforged: Stream Shrine dungeon, the stick recolor (`CreatureRecolorScreen`, unported here).
+- Incursion-new, not in Hellforged: Stream Shrine dungeon, the stick recolor (`CreatureRecolorScreen`, a client-only debug tool: **scrapped**, Glenn 2026-09-30; also drop `RecolorDebug`).
