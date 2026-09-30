@@ -109,7 +109,7 @@ public class FollowOwnerGoal extends FollowGoal {
 			if(!this.host.canBreatheAir() && ((!this.host.isLavaCreature() && !target.isInWater()) || (this.host.isLavaCreature() && !target.isInLava()))) {
 				return;
 			}
-			if(!this.host.canBreatheUnderwater() && target.isInWater()) {
+			if(!this.host.creatureCanBreatheUnderwater() && target.isInWater()) {
 				return;
 			}
 

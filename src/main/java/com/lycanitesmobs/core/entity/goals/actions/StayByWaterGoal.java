@@ -153,7 +153,7 @@ public class StayByWaterGoal extends Goal {
     }
 
     public boolean isValidWaterPosition(BlockPos pos) {
-        if (!this.host.canBreatheUnderwater())
+        if (!this.host.creatureCanBreatheUnderwater())
             return false;
         if (!this.host.waterDamage()) {
             if (this.host.getCommandSenderWorld().getBlockState(pos).getBlock() == Blocks.WATER)

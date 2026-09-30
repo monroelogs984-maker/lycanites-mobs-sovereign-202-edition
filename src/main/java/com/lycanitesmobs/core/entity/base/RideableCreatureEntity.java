@@ -334,8 +334,16 @@ public abstract class RideableCreatureEntity extends TameableCreatureEntity {
             this.abilityToggled = false;
         }
 
-        // Mount Inventory: TODO(port): open the creature GUI once it's ported.
-        this.inventoryToggled = playerExt.isControlActive(ExtendedPlayer.CONTROL_ID.MOUNT_INVENTORY);
+        // Mount Inventory:
+        if (playerExt.isControlActive(ExtendedPlayer.CONTROL_ID.MOUNT_INVENTORY)) {
+            if (!this.inventoryToggled) {
+                this.openGUI(player);
+            }
+            this.inventoryToggled = true;
+        }
+        else {
+            this.inventoryToggled = false;
+        }
     }
 
     // ========== Jumping Start ==========

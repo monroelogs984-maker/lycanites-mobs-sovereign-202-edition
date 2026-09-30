@@ -4252,7 +4252,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     /**
      * Trimmed (Phase 5g) from the official tickEnvironmentalState(): water damage and suffocation out of water for
-     * creatures that can't breathe air. TODO(port): daylight burning (tickDaylightBurn).
+     * creatures that can't breathe air, and daylight burning (tickDaylightBurn).
      **/
     void tickEnvironmentalState(boolean isClient) {
         // Stealth runs on both sides (invisibility + target clearing server side, start/onStealth hooks both).
@@ -4784,8 +4784,8 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     }
 
     /**
-     * Trimmed (Phase 5g) from the official tickMovementRuntime(): fire clearing, land-lock for non-walkers and the
-     * climbing flag. TODO(port): fly sounds (playFlySound) and the flyer attack leap (leap()).
+     * Fire clearing, land-lock for non-walkers, the climbing flag, fly sounds and the flyer attack leap (restored
+     * 2026-09-30; Phase 5g had trimmed the last two).
      **/
     void tickMovementRuntime(boolean isClient) {
         if (this.isOnFire() && !this.canBurn()) {
@@ -4798,6 +4798,12 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
         if (!isClient || this.isControlledByLocalInstance()) {
             this.setBesideClimbableBlock(this.horizontalCollision);
+            if (!this.onGround() && this.flySoundSpeed > 0 && this.tickCount % 20 == 0) {
+                this.playFlySound();
+            }
+        }
+        if (!isClient && this.isFlying() && this.hasAttackTarget() && this.updateTick % 40 == 0) {
+            this.leap(0, 0.4D);
         }
     }
 

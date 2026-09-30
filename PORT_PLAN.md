@@ -1704,3 +1704,24 @@ accessors (replaced by 6b's structure modifier) aren't needed; `ReloadCommandMix
 listener that clears the log-once caches; `CreativeModeTabRegistryMixin` (groups Lycanites' tabs) isn't needed, since
 NeoForge already keeps a mod's tabs together in registration order.
 
+
+## Leftover audit + creature fixes (2026-09-30)
+
+Re-ran the creature method audit (official vs port methods per creature class, with the port's renames mapped) and
+went through every remaining unported file and `TODO(port)`:
+- **Water breathers treated as air breathers in 5 goals.** The port renamed the hook to `creatureCanBreatheUnderwater()`
+  (vanilla's is final in 1.21), but `StayByWaterGoal`, `PaddleGoal`, `StayGoal`, `StayByHomeGoal` and
+  `FollowOwnerGoal` still called vanilla `canBreatheUnderwater()`, so aquatic creatures floated instead of sinking
+  and pets misjudged water. Fixed; verified a Lacedon now stays on the pool floor.
+- **Kobold thievery never worked** (upstream too): it overrode vanilla `canPickUpLoot()` instead of `canPickupItems()`,
+  and even with that fixed an unbagged Kobold had no slots, and `CreatureInventory.onInventoryChanged()` drops the bag
+  slots when no bag is equipped, so anything picked up was dropped straight away. Kobolds now get their bag size
+  without a bag. Verified headless: a Kobold walked to a diamond and kept it.
+- Restored from Phase 5g trims: fly sounds and the flyer attack leap (`tickMovementRuntime`), the mount inventory key
+  opening the creature GUI, and a sitting pet dropping its leash past 10 blocks (`handleLeashAtDistance`, like vanilla's
+  TamableAnimal).
+- Not needed / dead upstream: `GameEventListener` (split into the port's listeners; clone handled by the `copyOnDeath`
+  attachment; left-click only served equipment; entity-mount handler disabled upstream), `getBrightnessForRender`
+  (overrides nothing), the navigator's fluid element check (only gated vanilla water/lava), Kobold's
+  `onRemovedFromWorld` bag drop (fired on chunk unload - the port drops on discard only).
+- Still open, minor: the boss ARENA sync slot, the Soulgazer interact-command priority, pet GUI refresh scheduling.

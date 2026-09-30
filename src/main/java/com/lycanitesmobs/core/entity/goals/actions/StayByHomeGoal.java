@@ -41,7 +41,7 @@ public class StayByHomeGoal extends Goal {
     		return false;
     	if(!this.host.hasHome() || this.host.getDistanceFromHome() <= 1.0F)
     		return false;
-        if(!this.host.canBreatheUnderwater() && this.host.isInWater())
+        if(!this.host.creatureCanBreatheUnderwater() && this.host.isInWater())
             return false;
         
         return true;

@@ -22,8 +22,9 @@ import net.minecraft.world.phys.Vec3;
  * Phase 5g: ported from the official source. Ground navigation for walkers, with flight/swim path following,
  * swim-surface pathing for floaters and wall-climb targeting for climbers.
  *
- * <p>1.21.1: BlockPathTypes -> PathType. TODO(port): isStableDestination()'s element check for Lycanites' own
- * fluids (BaseLiquidBlock.getElement()) - custom fluids aren't ported, so every liquid counts as element-safe.
+ * <p>1.21.1: BlockPathTypes -> PathType. The official isStableDestination() also computed an element check for
+ * Lycanites' own fluids, but it only gated the vanilla water/lava returns, which a Lycanites fluid never reaches, so it
+ * was dead code and isn't ported.
  */
 public class CreaturePathNavigator extends GroundPathNavigation {
 

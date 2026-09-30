@@ -20,7 +20,7 @@ import net.minecraft.world.level.Level;
 /**
  * Trimmed - dropped GetItemGoal/GetBlockGoal (not ported - the "theivery"/"griefing" item- and
  * torch-stealing abilities) and the torch-looting aiStep block that went with them. Kept the
- * `theivery` flag wired into vanilla's own canPickupItems() (self-contained) and the
+ * `theivery` flag wired into canPickupItems() (self-contained) and the
  * health-threshold canAttack()/shouldCreatureGroupRevenge() tweaks (self-contained). Dropped
  * MobType.UNDEFINED attribute assignment. (Bag drop, group hunt/flee restored 2026-09-28.)
  */
@@ -73,9 +73,21 @@ public class EntityKobold extends TameableCreatureEntity implements Enemy {
         return super.canAttack(targetEntity);
     }
 
+    // Port fix: this overrode vanilla canPickUpLoot() (vanilla armour/loot pickup, not upstream behaviour), so the
+    // Lycanites pickup loop and GetItemGoal/GetBlockGoal, which check canPickupItems(), never let Kobolds steal.
     @Override
-    public boolean canPickUpLoot() {
+    public boolean canPickupItems() {
         return this.theivery;
+    }
+
+    /**
+     * Port fix: Kobolds carry their stolen loot without a bag. Upstream they had no slots without one, and
+     * CreatureInventory.onInventoryChanged() drops everything in the bag slots when no bag is equipped, so a Kobold
+     * picked an item up and dropped it again straight away (thievery never worked). It still spills on death.
+     **/
+    @Override
+    public int getNoBagSize() {
+        return this.theivery ? this.getBagSize() : super.getNoBagSize();
     }
 
 

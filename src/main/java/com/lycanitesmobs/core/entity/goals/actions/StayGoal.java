@@ -54,7 +54,7 @@ public class StayGoal extends Goal {
         if(!this.host.isTamed())
             return false;
         if(this.host.isInWater()) {
-        	if(!this.host.canBreatheUnderwater())
+        	if(!this.host.creatureCanBreatheUnderwater())
         		return false;
 		}
         else if(!this.host.onGround() && !this.host.isFlying()) {

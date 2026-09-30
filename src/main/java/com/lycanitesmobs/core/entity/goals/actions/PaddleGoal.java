@@ -20,7 +20,7 @@ public class PaddleGoal extends Goal {
         this.host = setEntity;
         if(setEntity.getNavigation() instanceof GroundPathNavigation || setEntity.getNavigation() instanceof CreaturePathNavigator)
             setEntity.getNavigation().setCanFloat(true);
-		this.sink = this.host.canBreatheUnderwater() || (this.host.canBreatheUnderlava() && this.host.isLavaCreature());
+		this.sink = this.host.creatureCanBreatheUnderwater() || (this.host.canBreatheUnderlava() && this.host.isLavaCreature());
     }
     
     

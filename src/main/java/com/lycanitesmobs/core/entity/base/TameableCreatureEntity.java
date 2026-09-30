@@ -185,9 +185,23 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
     // ==================================================
     //                     Movement
     // ==================================================
+    /**
+     * Official testLeash(): a sitting pet stays put and drops the leash when stretched past 10 blocks (1.21 moved leash
+     * ticking to Leashable.handleLeashAtDistance, the same hook vanilla's TamableAnimal uses for this).
+     **/
+    @Override
+    public boolean handleLeashAtDistance(net.minecraft.world.entity.Entity leashHolder, float distance) {
+        if (this.isSitting()) {
+            if (distance > 10.0F) {
+                this.dropLeash(true, true);
+            }
+            return false;
+        }
+        return super.handleLeashAtDistance(leashHolder, distance);
+    }
+
     // 1.21: canBeLeashed() is no-arg and has no player. Tamed creatures can be leashed (the official only
     // allowed the owner - TODO(port): restrict to the owner via getInteractCommands if that matters).
-    // TODO(port): official testLeash() dropped the leash of a sitting pet stretched past 10 blocks.
     @Override
     public boolean canBeLeashed() {
         return this.isTamed() || super.canBeLeashed();
