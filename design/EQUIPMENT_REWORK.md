@@ -43,7 +43,8 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
   weapons), plus a `lycanitesmobs:imprintable` item tag to add items (e.g. bows) or exclude them.
 - **Eligible = has both an attack-damage and an attack-speed attribute** (Glenn 2026-09-30), plus the tag for
   exceptions. **Tools included on purpose** (Glenn 2026-09-30): pickaxes, shovels and hoes qualify. A wide range is a
-  safety net so every weapon, vanilla or modded, can take a Lycanites imprint.
+  safety net so every weapon, vanilla or modded, can take a Lycanites imprint. Imprints work exactly the same on
+  tools as on weapons; there are no mining/harvest imprints (the `harvest` feature stays dropped).
 - **No visual change to the weapon** (no glint, no model/texture change).
 - **Tooltip:** the expanded tooltip (hold Shift while hovering) shows the infused part, current / max mana, and
   the effect.
