@@ -357,7 +357,8 @@ Each phase depends on the ones above it being in place and registered.
       mappings directly, no SRG remap step — simpler than the 1.12.2 mixin story in this
       workspace's CLAUDE.md.
 - [ ] **Phase 10 — S202 tuning**: once it's a working straight port, apply the actual
-      requested tweaks to fit S202 as the core creature mod.
+      requested tweaks to fit S202 as the core creature mod. **Apply pass done 2026-09-30** (see "Phase 10 apply
+      pass" in Status); equipment rework and in-game verification remain.
 
 ## S202 redesign decisions (from `LYCANITES-REVIEW.txt`, 2026-09-26)
 
@@ -1761,3 +1762,31 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
 - 1.16.5: five elements (bose, coda, glasma, mote, murati) that Incursion replaced with chrono, fate, flux, gravity,
   nova, vortex (+ xeno); temple/village spawners became Incursion's structure spawns (`structurespawns/`).
 - Incursion-new, not in Hellforged: Stream Shrine dungeon, the stick recolor (`CreatureRecolorScreen`, a client-only debug tool: **scrapped**, Glenn 2026-09-30; also drop `RecolorDebug`).
+
+## Phase 10 apply pass (2026-09-30)
+
+Everything in `design/` applied except the equipment rework. Commits 99837b4..2196778, deployed to Lycannots.
+- **Creatures:** 15 elements (8 gained effects; acid/arbour/fae/light/lightning/phase + 7 empty placeholders deleted;
+  projectiles/parts remapped acid->poison, arbour->earth, fae->chaos, lightning->air, phase->shadow, light->aether),
+  15 type moves, Glenn's 57 tame / 48 summon picks (Grell loses mounting), 10 cuts (JSONs, entity tags, spawner/event/
+  dungeon lists, 3 equipment parts). Ashen Mausoleum's `modId` typo fixed (Cherufe now spawns there).
+- **Spawning:** `spawnRarity` common/rare -> config `spawnWeightCommon` 8 / `spawnWeightRare` 6. Variants 80% base, 2%
+  per rare, uncommons share the rest (`Subspecies.getRandomVariant`). Wild creatures always start at level 1
+  (`getStartingLevel`); dungeon boss `mobLevel`, pet XP and fusion levels still apply.
+- **Climate:** `CreatureSpawn.isValidBiome` -> Overworld only, temperature/downfall range of the old biome list
+  widened 0.4 / 0.15; Nether/End only use the dimension rule. Dimension-proxy tags converted (Argus, Spectre,
+  Astaroth, Trite, Kathoga End-only; Epion, Geist, Wraamon Overworld + End). Wraith: Nether, `spawnMinY` 64. Side
+  effect: Abaia (empty biome list, water spawner) now spawns in all Overworld water; it never spawned naturally
+  before. `/lm creatures climate` dumps the ranges.
+- **Mob events:** 12 enabled with dimension whitelists + `rotationOrder`; `MobEventListener` runs them as a fixed
+  per-dimension rotation (last event saved as `RotationLastEvent` in ExtendedWorld) and skips a turn when the
+  dimension has no players. Defaults: random on, 45-50 min. Shadow Games' night effect removed; Cinderfall/Eruption
+  weather removed too (Nether weather is the Overworld's). Root Riot +Ent/Treant. Other 18 disabled.
+- **Trigger spawners:** S202 chances; Chaos enabled with a working dawn reset, Disruption + Pumpkin disabled; Death
+  `hostileOnly`; Mix needs a player within 32 blocks; Darkness checks every 7.5 s.
+- **Other:** soulkeys swapped (red `soulkey` = Asmodeus, cyan = Rahovart); RecolorDebug removed; Beastiary text
+  rewritten (7 elementals, moved types, element descriptions, Lycanite credit); dropped element lang removed.
+- **Loader fix:** stale config copies of removed defaults (`loadDefault: true`, no built-in file) are skipped, else
+  every existing instance brought the cut creatures back as "custom" JSON.
+- **Verified headless:** clean load (no Lycanites warnings), cut creatures unregistered, Wraith registered, climate
+  dump. **Not verified:** event rotation (needs a player), trigger spawners, taming new tameables, Beastiary text.

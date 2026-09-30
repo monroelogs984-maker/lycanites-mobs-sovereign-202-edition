@@ -25,7 +25,7 @@ first release (2026-09-26); Glenn pulled it forward on 2026-09-30.
 
 **Structural-only parts (9, all level 1, no creature):** woodenrod, woodenguard, woodenpaxel, ironrod, ironguard,
 ironpaxel, ironaxehead, ironpikejoint, goldscepterhead. No passive to imprint.
-**Parts from cut creatures:** bruchaquill (Brucha), eyewigeye (Eyewig).
+**Parts from cut creatures (removed 2026-09-30):** bruchaquill (Brucha), eyewigeye (Eyewig), malwratheye (Malwrath).
 **10 jewel parts are projectile-only** (afritlung, arixbrain, cherufecore, conbabutt, eyewigeye, gammasphere,
 malwratheye, naxiriseye, sprigganheart, stryderheart).
 
@@ -34,7 +34,7 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
 - Imprintable passives: `effect`, `damage`, `summon`, and `hit` projectiles.
 - Dropped: `harvest` and `slot` (the host tool already defines both) and **sharpness** (the host tool's own durability
   replaces it). **Mana stays** (see below).
-- Scrapped: the 9 structural parts, plus the 2 from cut creatures -> **48 imprintable parts**.
+- Scrapped: the 9 structural parts, plus the 3 from cut creatures -> **47 imprintable parts**.
 - Part elements remapped with the element rework (acid, fae, lightning, arbour, phase, light -> new set; Void kept).
 
 ## Decided (Glenn 2026-09-30)
@@ -97,7 +97,7 @@ instead be on-swing passive procs.
 - **grueclaw** (grue): **Passive:** blindness, invisibility (self), +damage, summon grue
 - **ioraystinger** (ioray): **Ability:** right-click waterjet
 - **lacedonhead** (lacedon): **Passive:** weight
-- **malwratheye** (malwrath): **Ability:** right-click demonicspark/demonicblast
+- **malwratheye** (malwrath): **CUT** (creature cut)
 - **naxiriseye** (naxiris): **Ability:** right-click arcanelaserstorm
 - **raidrablade** (raidra): **Passive:** paralysis, +damage, summon raidra
 - **reaperclaw** (reaper): **Ability:** right-click spectralbolt (+damage passive)
