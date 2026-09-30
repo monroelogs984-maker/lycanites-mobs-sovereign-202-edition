@@ -4711,21 +4711,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         nbt.putBoolean("IsBoundPet", this.isBoundPet());
     }
 
+    /**
+     * S202: creature levels are scrapped for spawned creatures (Power Scale handles scaling), so every creature starts at
+     * level 1. The startingLevel/levelPerDay/levelPerLocalDifficulty configs are ignored. Explicit levels (dungeon
+     * bosses' mobLevel, pet experience, fusion) still apply.
+     */
     public int getStartingLevel() {
-        int startingLevelMin = Math.max(1, CreatureManager.getInstance().getConfig().startingLevelMin());
-        if (CreatureManager.getInstance().getConfig().startingLevelMax() > startingLevelMin) {
-            return startingLevelMin + this.getRandom().nextInt(CreatureManager.getInstance().getConfig().startingLevelMax() - startingLevelMin);
-        }
-        if (CreatureManager.getInstance().getConfig().levelPerDay() > 0 && CreatureManager.getInstance().getConfig().levelPerDayMax() > 0) {
-            int day = (int) Math.floor(this.getCommandSenderWorld().getGameTime() / 23999D);
-            double levelGain = Math.min(CreatureManager.getInstance().getConfig().levelPerDay() * day, CreatureManager.getInstance().getConfig().levelPerDayMax());
-            startingLevelMin += (int) Math.floor(levelGain);
-        }
-        if (CreatureManager.getInstance().getConfig().levelPerLocalDifficulty() > 0) {
-            double levelGain = this.getCommandSenderWorld().getCurrentDifficultyAt(this.blockPosition()).getEffectiveDifficulty();
-            startingLevelMin += Math.max(0, (int) Math.floor(levelGain - 1.5D));
-        }
-        return startingLevelMin;
+        return 1;
     }
 
     public void getRandomSubspecies() {

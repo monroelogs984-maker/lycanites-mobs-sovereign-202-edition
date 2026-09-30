@@ -253,15 +253,20 @@ public class Subspecies {
         }
         LMHelperClass.logDebug("Subspecies", "Variants Available: " + this.variants.size());
 
-        // Get Weights:
-        int baseSpeciesWeightScaled = Variant.getBaseWeight();
+        // Get Weights (S202): out of 1000, base 80%, each rare variant 2%, uncommon variants share the rest.
+        int rareCount = 0;
+        int uncommonCount = 0;
+        for (Variant variant : this.variants.values()) {
+            if ("rare".equals(variant.getRarity())) rareCount++;
+            else uncommonCount++;
+        }
+        int rareWeight = 20;
+        int uncommonWeight = uncommonCount > 0 ? Math.max(0, (200 - rareWeight * rareCount) / uncommonCount) : 0;
+        int baseSpeciesWeightScaled = 1000 - rareWeight * rareCount - uncommonWeight * uncommonCount;
         if (rare) {
             baseSpeciesWeightScaled = Math.round((float) baseSpeciesWeightScaled / 4);
         }
-        int totalWeight = baseSpeciesWeightScaled;
-        for (Variant variant : this.variants.values()) {
-            totalWeight += variant.getWeight();
-        }
+        int totalWeight = baseSpeciesWeightScaled + rareWeight * rareCount + uncommonWeight * uncommonCount;
         LMHelperClass.logDebug("Subspecies", "Total Weight: " + totalWeight);
 
         // Roll and Check Default:
@@ -275,7 +280,7 @@ public class Subspecies {
         // Get Random Subspecies:
         int checkWeight = baseSpeciesWeightScaled;
         for (Variant variant : this.variants.values()) {
-            checkWeight += variant.getWeight();
+            checkWeight += "rare".equals(variant.getRarity()) ? rareWeight : uncommonWeight;
             if (roll <= checkWeight) {
                 LMHelperClass.logDebug("Subspecies", "Variant selected: " + variant.toString());
                 return variant;
