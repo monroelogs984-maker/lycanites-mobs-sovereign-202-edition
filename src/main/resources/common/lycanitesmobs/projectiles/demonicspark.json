@@ -13,10 +13,7 @@
 	"velocity": 1.1,
 	"weight": 0,
 	"lifetime": 40,
-	"elements": [
-		"lightning",
-		"nether"
-	],
+	"elements": ["air", "nether"],
 	"behaviours": [],
 	"waterproof": true,
 	"lavaproof": true,

@@ -2,10 +2,12 @@
 	"name": "shadow",
 	"loadDefault": true,
 	"buffs": [
-		"minecraft:invisibility"
+		"minecraft:invisibility",
+		"minecraft:speed"
 	],
 	"debuffs": [
-		"minecraft:blindness"
+		"minecraft:blindness",
+		"lycanitesmobs:fear"
 	],
 	"components": [
 		"fire",

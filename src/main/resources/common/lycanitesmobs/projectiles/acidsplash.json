@@ -12,9 +12,7 @@
 	"velocity": 0.9,
 	"weight": 1,
 	"lifetime": 100,
-	"elements": [
-		"acid"
-	],
+	"elements": ["poison"],
 	"behaviours": [],
 	"waterproof": true,
 	"lavaproof": false,

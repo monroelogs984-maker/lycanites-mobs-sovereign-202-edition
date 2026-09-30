@@ -2,9 +2,11 @@
 	"name": "air",
 	"loadDefault": true,
 	"buffs": [
-		"lycanitesmobs:fallresist"
+		"lycanitesmobs:fallresist",
+		"lycanitesmobs:staticaura"
 	],
 	"debuffs": [
-		"minecraft:levitation"
+		"minecraft:levitation",
+		"lycanitesmobs:paralysis"
 	]
 }

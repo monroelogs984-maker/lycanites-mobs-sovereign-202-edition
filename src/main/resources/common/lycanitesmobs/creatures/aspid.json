@@ -26,6 +26,7 @@
       "forge:is_mushroom"
     ],
     "spawnWeight": 16,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,13 +72,13 @@
       ]
     }
   ],
-  "element": "poison",
+  "elements": ["poison"],
   "diets": [
     "fungivore"
   ],
   "peaceful": true,
   "farmable": true,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

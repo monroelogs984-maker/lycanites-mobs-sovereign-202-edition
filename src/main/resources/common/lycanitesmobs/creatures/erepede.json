@@ -28,6 +28,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 4,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -74,7 +75,7 @@
       ]
     }
   ],
-  "element": "arcane",
+  "elements": ["arcane"],
   "diets": [
     "geovore"
   ],

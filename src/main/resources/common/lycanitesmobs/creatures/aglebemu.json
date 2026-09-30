@@ -26,6 +26,7 @@
       "forge:is_spooky"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,7 +72,7 @@
       ]
     }
   ],
-  "element": "poison",
+  "elements": ["poison"],
   "diets": [
     "carnivore",
     "piscivore",
@@ -79,8 +80,8 @@
     "venevore"
   ],
   "peaceful": false,
-  "summonable": true,
-  "tameable": false,
+  "summonable": false,
+  "tameable": true,
   "mountable": false,
   "perchable": true,
   "summonCost": 2,

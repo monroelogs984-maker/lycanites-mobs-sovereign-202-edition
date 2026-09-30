@@ -27,6 +27,7 @@
       "-minecraft:is_end"
     ],
     "spawnWeight": 4,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -73,7 +74,7 @@
       ]
     }
   ],
-  "element": "frost",
+  "elements": ["frost"],
   "diets": [
     "carnivore",
     "piscivore"

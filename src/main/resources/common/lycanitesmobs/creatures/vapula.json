@@ -1,6 +1,6 @@
 {
     "name": "vapula",
-    "creatureType": "elemental",
+    "creatureType": "golem",
     "groups": [
         "monster"
     ],
@@ -17,6 +17,7 @@
         "ignoreBiome": false,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -62,9 +63,9 @@
             ]
         }
     ],
-    "element": "arcane",
+    "elements": ["arcane"],
     "peaceful": false,
-    "summonable": false,
+    "summonable": true,
     "tameable": false,
     "mountable": false,
     "summonCost": 2,

@@ -6,10 +6,7 @@
   "dropChance": 0.05,
   "levelMin": 1,
   "levelMax": 3,
-  "elements": [
-    "fire",
-    "acid"
-  ],
+  "elements": ["fire", "poison"],
   "features": [
     {
       "featureType": "projectile",

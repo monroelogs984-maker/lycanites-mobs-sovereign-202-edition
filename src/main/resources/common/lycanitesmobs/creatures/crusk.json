@@ -28,6 +28,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 3,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -75,7 +76,7 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "insectivore"

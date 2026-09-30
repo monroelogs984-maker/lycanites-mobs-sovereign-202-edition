@@ -24,6 +24,7 @@
       "forge:is_mountain"
     ],
     "spawnWeight": 16,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -69,13 +70,13 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "herbivore"
   ],
   "peaceful": true,
   "farmable": true,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 1,

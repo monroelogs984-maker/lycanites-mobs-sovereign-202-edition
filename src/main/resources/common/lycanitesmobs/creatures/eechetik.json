@@ -17,6 +17,7 @@
         "ignoreBiome": false,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 3,
         "spawnGroupMin": 1,
@@ -62,9 +63,9 @@
             ]
         }
     ],
-    "element": "poison",
+    "elements": ["poison"],
     "peaceful": false,
-    "summonable": false,
+    "summonable": true,
     "tameable": false,
     "mountable": false,
     "summonCost": 2,

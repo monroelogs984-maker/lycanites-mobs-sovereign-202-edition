@@ -1,6 +1,6 @@
 {
     "name": "grell",
-    "creatureType": "aberration",
+    "creatureType": "slime",
     "groups": [
         "monster"
     ],
@@ -24,6 +24,7 @@
             "minecraft:crimson_forest"
         ],
         "spawnWeight": 4,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -70,16 +71,16 @@
             ]
         }
     ],
-    "element": "fae",
+    "elements": ["poison"],
     "diets": [
         "carnivore",
         "piscivore",
         "insectivore"
     ],
     "peaceful": false,
-    "summonable": false,
-    "tameable": true,
-    "mountable": true,
+    "summonable": true,
+    "tameable": false,
+    "mountable": false,
     "summonCost": 2,
     "dungeonLevel": 3,
     "drops": [

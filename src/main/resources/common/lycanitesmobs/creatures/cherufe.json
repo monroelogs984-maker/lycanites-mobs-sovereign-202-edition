@@ -20,6 +20,7 @@
     "biomeTags": [
     ],
     "spawnWeight": 2,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 1,
     "spawnGroupMin": 1,
@@ -71,14 +72,12 @@
       ]
     }
   ],
-  "elements": [
-    "lava"
-  ],
+  "elements": ["lava"],
   "diets": [
     "geovore"
   ],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 6,

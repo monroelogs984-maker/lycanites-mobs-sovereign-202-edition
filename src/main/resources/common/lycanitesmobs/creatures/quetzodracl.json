@@ -24,6 +24,7 @@
       "minecraft:is_ocean"
     ],
     "spawnWeight": 1,
+    "spawnRarity": "rare",
     "dungeonWeight": 0,
     "spawnAreaLimit": 1,
     "spawnGroupMin": 1,
@@ -70,7 +71,7 @@
       ]
     }
   ],
-  "element": "air",
+  "elements": ["air"],
   "diets": [
     "carnivore",
     "piscivore",

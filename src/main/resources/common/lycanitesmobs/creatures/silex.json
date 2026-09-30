@@ -26,6 +26,7 @@
       "-minecraft:is_beach"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 6,
     "spawnGroupMin": 1,
@@ -71,13 +72,13 @@
       ]
     }
   ],
-  "element": "water",
+  "elements": ["water"],
   "diets": [
     "geovore"
   ],
   "peaceful": true,
   "farmable": true,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

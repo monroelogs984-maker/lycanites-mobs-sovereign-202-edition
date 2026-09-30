@@ -22,8 +22,16 @@
 	"locations": [
 		{
 			"type": "random",
-			"rangeMin": [24, 0, 24],
-			"rangeMax": [32, 48, 32],
+			"rangeMin": [
+				24,
+				0,
+				24
+			],
+			"rangeMax": [
+				32,
+				48,
+				32
+			],
 			"sorting": "random",
 			"limit": 32,
 			"solidGround": false
@@ -41,10 +49,6 @@
 			"mobNameTag": "Maniacal Ghost"
 		},
 		{
-			"mobId": "lycanitesmobs:malwrath",
-			"weight": 4
-		},
-		{
 			"mobId": "lycanitesmobs:afrit",
 			"weight": 8
 		},
@@ -52,11 +56,6 @@
 			"mobId": "lycanitesmobs:grue",
 			"weight": 8,
 			"mobNameTag": "Shadow Clown"
-		},
-		{
-			"mobId": "lycanitesmobs:malwrath",
-			"weight": 8,
-			"mobNameTag": "Pumpkin"
 		},
 		{
 			"mobId": "lycanitesmobs:epion",

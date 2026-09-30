@@ -30,6 +30,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -75,14 +76,14 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "insectivore"
   ],
   "peaceful": false,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 1,

@@ -10,6 +10,8 @@ public class ConfigCreatureSpawning {
 	public final ModConfigSpec.ConfigValue<Boolean> disableAllSpawning;
 	public final ModConfigSpec.ConfigValue<Boolean> enforceBlockCost;
 	public final ModConfigSpec.ConfigValue<Double> spawnWeightScale;
+	public final ModConfigSpec.ConfigValue<Integer> spawnWeightCommon;
+	public final ModConfigSpec.ConfigValue<Integer> spawnWeightRare;
 	public final ModConfigSpec.ConfigValue<Boolean> useSurfaceLightLevel;
 	public final ModConfigSpec.ConfigValue<Boolean> ignoreWorldGenSpawning;
 	public final ModConfigSpec.ConfigValue<Boolean> controlVanillaSpawns;
@@ -39,6 +41,12 @@ public class ConfigCreatureSpawning {
 		spawnWeightScale = builder.comment("Scales the spawn weights of all mobs from this mod. For example, you can use this to quickly half the spawn rates of mobs from this mod compared to vanilla/other mod mobs by setting it to 0.5.")
 				.translation(CoreConfig.CONFIG_PREFIX + "spawning.spawnWeightScale")
 				.define("spawnWeightScale", 1.0D);
+		spawnWeightCommon = builder.comment("S202: the spawn weight of every creature whose json sets spawnRarity to common.")
+				.translation(CoreConfig.CONFIG_PREFIX + "spawning.spawnWeightCommon")
+				.defineInRange("spawnWeightCommon", 8, 0, 1000);
+		spawnWeightRare = builder.comment("S202: the spawn weight of every creature whose json sets spawnRarity to rare. Keep it at 65% of the common weight or higher.")
+				.translation(CoreConfig.CONFIG_PREFIX + "spawning.spawnWeightRare")
+				.defineInRange("spawnWeightRare", 6, 0, 1000);
 		useSurfaceLightLevel = builder.comment("If true, when water mobs spawn, instead of checking the light level of the block the mob is spawning at, the light level of the surface (if possible) is checked. This stops mobs like Jengus from spawning at the bottom of deep rivers during the day, set to false for the old way.")
 				.translation(CoreConfig.CONFIG_PREFIX + "spawning.useSurfaceLightLevel")
 				.define("useSurfaceLightLevel", true);

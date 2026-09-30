@@ -26,6 +26,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 1,
+    "spawnRarity": "rare",
     "dungeonWeight": 0,
     "spawnAreaLimit": 1,
     "spawnGroupMin": 1,
@@ -72,10 +73,7 @@
       ]
     }
   ],
-  "elements": [
-    "quake",
-    "earth"
-  ],
+  "elements": ["quake", "earth"],
   "diets": [
     "carnivore",
     "piscivore",

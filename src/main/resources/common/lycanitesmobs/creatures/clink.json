@@ -1,6 +1,6 @@
 {
   "name": "clink",
-  "creatureType": "imp",
+  "creatureType": "golem",
   "groups": [
     "monster"
   ],
@@ -28,6 +28,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -73,7 +74,7 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "insectivore"

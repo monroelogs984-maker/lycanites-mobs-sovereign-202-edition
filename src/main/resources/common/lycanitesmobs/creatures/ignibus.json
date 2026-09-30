@@ -21,6 +21,7 @@
             "all"
         ],
         "spawnWeight": 1,
+        "spawnRarity": "rare",
         "dungeonWeight": 0,
         "spawnAreaLimit": 1,
         "spawnGroupMin": 1,
@@ -68,7 +69,7 @@
             ]
         }
     ],
-    "element": "lava",
+    "elements": ["lava"],
     "diets": [
         "carnivore",
         "piscivore"

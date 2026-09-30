@@ -1,6 +1,6 @@
 {
   "name": "lacedon",
-  "creatureType": "aquatic",
+  "creatureType": "amphibian",
   "groups": [
     "monster"
   ],
@@ -25,6 +25,7 @@
       "minecraft:is_beach"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -70,10 +71,7 @@
       ]
     }
   ],
-  "elements": [
-    "water",
-    "earth"
-  ],
+  "elements": ["water", "earth"],
   "diets": [
     "carnivore",
     "piscivore",

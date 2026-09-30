@@ -21,6 +21,7 @@
       "minecraft:is_end"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -66,9 +67,9 @@
       ]
     }
   ],
-  "element": "void",
+  "elements": ["chaos"],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

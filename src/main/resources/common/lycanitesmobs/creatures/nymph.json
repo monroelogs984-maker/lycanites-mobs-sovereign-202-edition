@@ -20,6 +20,7 @@
         "ignoreBiome": false,
         "biomeTags": [],
         "spawnWeight": 2,
+        "spawnRarity": "common",
         "dungeonWeight": 0,
         "spawnAreaLimit": 1,
         "spawnGroupMin": 1,
@@ -65,10 +66,10 @@
             ]
         }
     ],
-    "element": "fae",
+    "elements": ["aether"],
     "peaceful": true,
     "summonable": false,
-    "tameable": false,
+    "tameable": true,
     "mountable": false,
     "summonCost": 4,
     "dungeonLevel": 1,

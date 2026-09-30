@@ -26,6 +26,7 @@
       "minecraft:is_jungle"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,7 +72,7 @@
       ]
     }
   ],
-  "element": "arbour",
+  "elements": ["water"],
   "diets": [
     "carnivore",
     "piscivore"

@@ -2,7 +2,8 @@
 	"name": "earth",
 	"loadDefault": true,
 	"buffs": [
-		"minecraft:resistance"
+		"minecraft:resistance",
+		"lycanitesmobs:rejuvenation"
 	],
 	"debuffs": [
 		"lycanitesmobs:weight"

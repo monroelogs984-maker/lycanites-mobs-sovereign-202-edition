@@ -12,9 +12,7 @@
 	"velocity": 0.9,
 	"weight": 0.25,
 	"lifetime": 100,
-	"elements": [
-		"fae"
-	],
+	"elements": ["chaos"],
 	"behaviours": [
 		{
 			"type": "drainHealth",

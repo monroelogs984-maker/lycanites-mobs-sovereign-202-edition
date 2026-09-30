@@ -25,6 +25,7 @@
       "minecraft:soul_sand_valley"
     ],
     "spawnWeight": 1,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -76,17 +77,15 @@
       ]
     }
   ],
-  "elements": [
-    "fire"
-  ],
+  "elements": ["fire"],
   "diets": [
     "carnivore",
     "piscivore",
     "insectivore"
   ],
   "peaceful": false,
-  "summonable": true,
-  "tameable": false,
+  "summonable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 2,

@@ -29,6 +29,7 @@
       "-minecraft:is_end"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -75,15 +76,15 @@
       ]
     }
   ],
-  "element": "frost",
+  "elements": ["frost"],
   "diets": [
     "carnivore",
     "piscivore",
     "insectivore"
   ],
   "peaceful": false,
-  "summonable": false,
-  "tameable": true,
+  "summonable": true,
+  "tameable": false,
   "mountable": false,
   "summonCost": 8,
   "dungeonLevel": 3,

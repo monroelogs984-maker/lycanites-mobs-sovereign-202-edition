@@ -26,6 +26,7 @@
       "minecraft:is_beach"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,7 +72,7 @@
       ]
     }
   ],
-  "element": "shadow",
+  "elements": ["shadow"],
   "diets": [
     "carnivore",
     "piscivore",

@@ -27,6 +27,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -72,7 +73,7 @@
       ]
     }
   ],
-  "element": "arbour",
+  "elements": ["earth"],
   "diets": [
     "herbivore",
     "frugivore"
@@ -80,7 +81,7 @@
   "peaceful": true,
   "farmable": true,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 1,

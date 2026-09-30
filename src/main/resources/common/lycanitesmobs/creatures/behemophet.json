@@ -25,6 +25,7 @@
       "minecraft:soul_sand_valley"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -70,15 +71,15 @@
       ]
     }
   ],
-  "element": "nether",
+  "elements": ["nether"],
   "diets": [
     "carnivore",
     "piscivore",
     "insectivore"
   ],
   "peaceful": false,
-  "summonable": true,
-  "tameable": false,
+  "summonable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 4,
   "dungeonLevel": 2,

@@ -27,6 +27,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 16,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 2,
     "spawnGroupMin": 1,
@@ -73,7 +74,7 @@
       ]
     }
   ],
-  "element": "order",
+  "elements": ["order"],
   "diets": [
     "carnivore",
     "piscivore",

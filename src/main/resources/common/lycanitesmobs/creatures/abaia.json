@@ -1,6 +1,6 @@
 {
   "name": "abaia",
-  "creatureType": "aquatic",
+  "creatureType": "slime",
   "groups": [
     "predator"
   ],
@@ -23,6 +23,7 @@
     "biomeTags": [
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -74,7 +75,7 @@
       ]
     }
   ],
-  "element": "lightning",
+  "elements": ["water", "air"],
   "diets": [
     "carnivore",
     "piscivore"

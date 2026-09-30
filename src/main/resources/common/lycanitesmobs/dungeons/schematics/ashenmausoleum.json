@@ -121,7 +121,7 @@
       "dungeonLevelMin": 3
     },
     {
-      "modId": "lycanitesmobs:cherufe",
+      "mobId": "lycanitesmobs:cherufe",
       "weight": 2,
       "dungeonLevelMin": 3
     },

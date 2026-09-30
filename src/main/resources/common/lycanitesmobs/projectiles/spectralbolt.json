@@ -12,10 +12,7 @@
 	"velocity": 0.9,
 	"weight": 0,
 	"lifetime": 100,
-	"elements": [
-		"phase",
-		"shadow"
-	],
+	"elements": ["shadow"],
 	"debuffs": [],
 	"behaviours": [],
 	"waterproof": true,

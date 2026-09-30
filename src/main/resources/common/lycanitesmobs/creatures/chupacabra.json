@@ -21,6 +21,7 @@
     "ignoreBiome": true,
     "biomeTags": [],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -73,7 +74,7 @@
       ]
     }
   ],
-  "element": "chaos",
+  "elements": ["chaos"],
   "diets": [
     "carnivore",
     "piscivore",

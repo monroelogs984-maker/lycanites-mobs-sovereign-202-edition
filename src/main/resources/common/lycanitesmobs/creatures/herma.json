@@ -26,6 +26,7 @@
       "minecraft:is_beach"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -72,7 +73,7 @@
       ]
     }
   ],
-  "element": "water",
+  "elements": ["water"],
   "diets": [
     "carnivore",
     "piscivore",

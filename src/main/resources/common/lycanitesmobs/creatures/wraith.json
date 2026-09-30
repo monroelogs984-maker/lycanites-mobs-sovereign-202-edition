@@ -25,6 +25,7 @@
       "minecraft:is_forest"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -70,9 +71,9 @@
       ]
     }
   ],
-  "element": "nether",
+  "elements": ["nether"],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

@@ -27,6 +27,7 @@
       "-minecraft:is_end"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -72,9 +73,9 @@
       ]
     }
   ],
-  "element": "frost",
+  "elements": ["frost"],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

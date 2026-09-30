@@ -17,6 +17,7 @@
     "ignoreBiome": false,
     "biomeTags": [],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -62,7 +63,7 @@
       ]
     }
   ],
-  "element": "fire",
+  "elements": ["fire"],
   "peaceful": false,
   "summonable": true,
   "tameable": false,

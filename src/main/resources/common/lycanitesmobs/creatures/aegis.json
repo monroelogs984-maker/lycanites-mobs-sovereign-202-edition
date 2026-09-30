@@ -1,6 +1,6 @@
 {
   "name": "aegis",
-  "creatureType": "elemental",
+  "creatureType": "angel",
   "groups": [
     "guardian"
   ],
@@ -17,6 +17,7 @@
     "ignoreBiome": false,
     "biomeTags": [],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -62,7 +63,7 @@
       ]
     }
   ],
-  "element": "order",
+  "elements": ["order"],
   "peaceful": false,
   "summonable": true,
   "tameable": false,

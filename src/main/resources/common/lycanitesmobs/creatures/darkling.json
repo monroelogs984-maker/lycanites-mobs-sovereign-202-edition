@@ -1,6 +1,6 @@
 {
     "name": "darkling",
-    "creatureType": "insect",
+    "creatureType": "arachnid",
     "groups": [
         "predator",
         "dark"
@@ -22,6 +22,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -67,7 +68,7 @@
             ]
         }
     ],
-    "element": "shadow",
+    "elements": ["shadow"],
     "diets": [
         "carnivore"
     ],

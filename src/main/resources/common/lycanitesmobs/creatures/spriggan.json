@@ -17,6 +17,7 @@
         "ignoreBiome": false,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -62,10 +63,10 @@
             ]
         }
     ],
-    "element": "arbour",
+    "elements": ["earth"],
     "peaceful": false,
     "summonable": false,
-    "tameable": false,
+    "tameable": true,
     "mountable": false,
     "summonCost": 2,
     "dungeonLevel": 1,

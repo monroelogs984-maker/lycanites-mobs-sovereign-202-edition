@@ -2,7 +2,8 @@
 	"name": "poison",
 	"loadDefault": true,
 	"buffs": [
-		"lycanitesmobs:envenom"
+		"lycanitesmobs:envenom",
+		"lycanitesmobs:immunization"
 	],
 	"debuffs": [
 		"lycanitesmobs:plague",

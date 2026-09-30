@@ -22,8 +22,16 @@
 	"locations": [
 		{
 			"type": "random",
-			"rangeMin": [24, 0, 24],
-			"rangeMax": [32, 48, 32],
+			"rangeMin": [
+				24,
+				0,
+				24
+			],
+			"rangeMax": [
+				32,
+				48,
+				32
+			],
 			"sorting": "random",
 			"limit": 32,
 			"solidGround": true
@@ -32,10 +40,6 @@
 	"mobSpawns": [
 		{
 			"mobId": "lycanitesmobs:clink",
-			"weight": 8
-		},
-		{
-			"mobId": "lycanitesmobs:brucha",
 			"weight": 8
 		}
 	]

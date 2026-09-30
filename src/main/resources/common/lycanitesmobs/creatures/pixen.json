@@ -22,6 +22,7 @@
       "minecraft:is_forest"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 100,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -67,7 +68,7 @@
       ]
     }
   ],
-  "element": "fae",
+  "elements": ["chaos"],
   "diets": [
     "carnivore",
     "piscivore",
@@ -76,8 +77,8 @@
     "fungivore"
   ],
   "peaceful": false,
-  "summonable": true,
-  "tameable": false,
+  "summonable": false,
+  "tameable": true,
   "mountable": false,
   "perchable": true,
   "summonCost": 2,

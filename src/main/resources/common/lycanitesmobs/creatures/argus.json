@@ -24,6 +24,7 @@
       "minecraft:warped_forest"
     ],
     "spawnWeight": 4,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -69,7 +70,7 @@
       ]
     }
   ],
-  "element": "chaos",
+  "elements": ["chaos"],
   "peaceful": false,
   "summonable": true,
   "tameable": false,

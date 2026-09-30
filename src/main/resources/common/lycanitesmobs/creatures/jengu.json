@@ -19,6 +19,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -64,7 +65,7 @@
             ]
         }
     ],
-    "element": "water",
+    "elements": ["water"],
     "peaceful": false,
     "summonable": true,
     "tameable": false,

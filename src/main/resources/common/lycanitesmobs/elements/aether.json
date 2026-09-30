@@ -2,10 +2,13 @@
 	"name": "aether",
 	"loadDefault": true,
 	"buffs": [
-		"lycanitesmobs:cleansed"
+		"lycanitesmobs:cleansed",
+		"minecraft:regeneration",
+		"minecraft:night_vision"
 	],
 	"debuffs": [
-		"lycanitesmobs:smited"
+		"lycanitesmobs:smited",
+		"minecraft:glowing"
 	],
 	"components": [
 		"air",

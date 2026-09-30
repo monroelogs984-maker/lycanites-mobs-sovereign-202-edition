@@ -29,6 +29,7 @@
       "minecraft:basalt_deltas"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "rare",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -104,7 +105,7 @@
       ]
     }
   ],
-  "element": "nether",
+  "elements": ["nether"],
   "diets": [
     "carnivore",
     "piscivore",

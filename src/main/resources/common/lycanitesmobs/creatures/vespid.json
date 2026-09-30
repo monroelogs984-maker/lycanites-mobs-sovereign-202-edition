@@ -25,6 +25,7 @@
       "minecraft:is_jungle"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 10,
     "spawnGroupMin": 3,
@@ -70,14 +71,14 @@
       ]
     }
   ],
-  "element": "poison",
+  "elements": ["poison"],
   "diets": [
     "carnivore",
     "insectivore",
     "frugivore"
   ],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

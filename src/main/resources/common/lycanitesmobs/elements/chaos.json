@@ -5,6 +5,7 @@
 		"minecraft:haste"
 	],
 	"debuffs": [
-		"lycanitesmobs:instability"
+		"lycanitesmobs:instability",
+		"lycanitesmobs:bleed"
 	]
 }

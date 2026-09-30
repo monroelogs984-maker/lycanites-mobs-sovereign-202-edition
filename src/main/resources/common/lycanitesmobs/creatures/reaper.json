@@ -21,6 +21,7 @@
       "forge:is_spooky"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -66,10 +67,7 @@
       ]
     }
   ],
-  "elements": [
-    "phase",
-    "nether"
-  ],
+  "elements": ["shadow", "nether"],
   "peaceful": false,
   "summonable": true,
   "tameable": false,

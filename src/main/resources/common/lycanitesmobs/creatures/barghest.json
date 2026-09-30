@@ -25,6 +25,7 @@
       "minecraft:is_savanna"
     ],
     "spawnWeight": 4,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,7 +72,7 @@
       ]
     }
   ],
-  "element": "fae",
+  "elements": ["quake"],
   "diets": [
     "carnivore"
   ],

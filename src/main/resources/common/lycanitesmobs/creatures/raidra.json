@@ -1,6 +1,6 @@
 {
     "name": "raidra",
-    "creatureType": "elemental",
+    "creatureType": "angel",
     "groups": [
         "monster"
     ],
@@ -17,6 +17,7 @@
         "ignoreBiome": false,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -62,9 +63,9 @@
             ]
         }
     ],
-    "element": "lightning",
+    "elements": ["air"],
     "peaceful": false,
-    "summonable": false,
+    "summonable": true,
     "tameable": false,
     "mountable": false,
     "summonCost": 2,

@@ -20,6 +20,7 @@
     "biomeTags": [
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 2,
     "spawnGroupMin": 1,
@@ -66,9 +67,7 @@
       ]
     }
   ],
-  "elements": [
-    "fire"
-  ],
+  "elements": ["fire"],
   "diets": [
     "carnivore",
     "piscivore",

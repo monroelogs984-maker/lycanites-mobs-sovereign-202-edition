@@ -24,6 +24,7 @@
       "minecraft:is_mountain"
     ],
     "spawnWeight": 4,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -69,10 +70,7 @@
       ]
     }
   ],
-  "elements": [
-    "earth",
-    "quake"
-  ],
+  "elements": ["earth", "quake"],
   "diets": [
     "carnivore",
     "piscivore",

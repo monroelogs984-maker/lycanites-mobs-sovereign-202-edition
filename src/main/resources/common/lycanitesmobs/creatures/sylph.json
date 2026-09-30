@@ -67,9 +67,9 @@
       ]
     }
   ],
-  "element": "aether",
+  "elements": ["aether"],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 4,

@@ -71,7 +71,7 @@
       ]
     }
   ],
-  "element": "quake",
+  "elements": ["quake"],
   "diets": [
     "exudativore"
   ],

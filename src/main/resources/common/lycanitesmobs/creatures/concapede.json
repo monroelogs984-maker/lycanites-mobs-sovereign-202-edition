@@ -24,6 +24,7 @@
       "minecraft:is_jungle"
     ],
     "spawnWeight": 1,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -69,13 +70,13 @@
       ]
     }
   ],
-  "element": "arbour",
+  "elements": ["earth"],
   "diets": [
     "frugivore"
   ],
   "peaceful": true,
   "farmable": true,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

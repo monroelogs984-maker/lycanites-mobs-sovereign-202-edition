@@ -21,6 +21,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 2,
         "spawnGroupMin": 1,
@@ -67,9 +68,7 @@
             ]
         }
     ],
-    "elements": [
-        "poison"
-    ],
+    "elements": ["poison"],
     "diets": [
         "carnivore",
         "piscivore",

@@ -1,6 +1,6 @@
 {
     "name": "wisp",
-    "creatureType": "elemental",
+    "creatureType": "angel",
     "groups": [
         "light"
     ],
@@ -20,6 +20,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 0,
         "spawnAreaLimit": 2,
         "spawnGroupMin": 1,
@@ -65,10 +66,10 @@
             ]
         }
     ],
-    "element": "light",
+    "elements": ["aether"],
     "peaceful": true,
     "summonable": false,
-    "tameable": false,
+    "tameable": true,
     "mountable": false,
     "summonCost": 4,
     "dungeonLevel": 1,

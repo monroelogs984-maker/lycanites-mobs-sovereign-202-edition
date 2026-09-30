@@ -67,7 +67,7 @@
       ]
     }
   ],
-  "element": "arbour",
+  "elements": ["earth"],
   "diets": [
     "frugivore"
   ],

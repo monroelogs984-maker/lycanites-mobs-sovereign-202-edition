@@ -1,6 +1,6 @@
 {
   "name": "cockatrice",
-  "creatureType": "dragon",
+  "creatureType": "avian",
   "groups": [
     "predator"
   ],
@@ -25,6 +25,7 @@
       "forge:is_mountain"
     ],
     "spawnWeight": 1,
+    "spawnRarity": "rare",
     "dungeonWeight": 0,
     "spawnAreaLimit": 1,
     "spawnGroupMin": 1,
@@ -71,10 +72,7 @@
       ]
     }
   ],
-  "elements": [
-    "arcane",
-    "lightning"
-  ],
+  "elements": ["arcane", "air"],
   "diets": [
     "carnivore",
     "piscivore",

@@ -24,6 +24,7 @@
       "minecraft:is_ocean"
     ],
     "spawnWeight": 16,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 2,
     "spawnGroupMin": 1,
@@ -70,7 +71,7 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "piscivore",

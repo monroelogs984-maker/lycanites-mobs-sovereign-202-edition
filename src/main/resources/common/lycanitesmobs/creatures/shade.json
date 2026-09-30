@@ -22,6 +22,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 2,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -68,7 +69,7 @@
             ]
         }
     ],
-    "element": "void",
+    "elements": ["shadow"],
     "diets": [
         "carnivore",
         "piscivore",

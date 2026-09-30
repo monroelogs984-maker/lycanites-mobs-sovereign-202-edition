@@ -6,7 +6,8 @@
 		"minecraft:jump_boost"
 	],
 	"debuffs": [
-		"minecraft:hunger"
+		"minecraft:hunger",
+		"lycanitesmobs:penetration"
 	],
 	"components": [
 		"earth",

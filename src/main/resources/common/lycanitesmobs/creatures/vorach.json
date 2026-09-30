@@ -25,6 +25,7 @@
             "minecraft:basalt_deltas"
         ],
         "spawnWeight": 2,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -70,17 +71,15 @@
             ]
         }
     ],
-    "elements": [
-        "fae"
-    ],
+    "elements": ["shadow"],
     "diets": [
         "carnivore",
         "piscivore",
         "insectivore"
     ],
     "peaceful": false,
-    "summonable": true,
-    "tameable": false,
+    "summonable": false,
+    "tameable": true,
     "mountable": false,
     "summonCost": 6,
     "dungeonLevel": 2,

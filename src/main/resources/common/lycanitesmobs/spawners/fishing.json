@@ -18,11 +18,21 @@
 	"locations": [
 		{
 			"type": "block",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [2, 2, 2],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				2,
+				2,
+				2
+			],
 			"sorting": "near",
 			"limit": 1,
-			"blocks": ["minecraft:water"],
+			"blocks": [
+				"minecraft:water"
+			],
 			"listType": "whitelist",
 			"solidGround": false
 		}
@@ -34,10 +44,6 @@
 		},
 		{
 			"mobId": "lycanitesmobs:abaia",
-			"weight": 8
-		},
-		{
-			"mobId": "lycanitesmobs:abtu",
 			"weight": 8
 		},
 		{

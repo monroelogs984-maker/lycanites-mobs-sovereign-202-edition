@@ -69,7 +69,7 @@
       ]
     }
   ],
-  "element": "order",
+  "elements": ["order"],
   "diets": [
     "herbivore"
   ],

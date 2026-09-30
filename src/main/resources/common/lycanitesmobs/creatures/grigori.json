@@ -25,6 +25,7 @@
             "minecraft:crimson_forest"
         ],
         "spawnWeight": 8,
+        "spawnRarity": "common",
         "dungeonWeight": 200,
         "spawnAreaLimit": 8,
         "spawnGroupMin": 3,
@@ -70,7 +71,7 @@
             ]
         }
     ],
-    "element": "fae",
+    "elements": ["chaos"],
     "diets": [
         "carnivore",
         "piscivore",

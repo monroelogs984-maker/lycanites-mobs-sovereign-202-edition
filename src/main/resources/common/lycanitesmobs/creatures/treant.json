@@ -24,6 +24,7 @@
       "minecraft:is_forest"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "rare",
     "dungeonWeight": 0,
     "spawnAreaLimit": 2,
     "spawnGroupMin": 1,
@@ -69,15 +70,13 @@
       ]
     }
   ],
-  "elements": [
-    "arbour"
-  ],
+  "elements": ["earth"],
   "diets": [
     "frugivore"
   ],
   "peaceful": false,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 6,
   "dungeonLevel": 3,

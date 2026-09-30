@@ -1,6 +1,6 @@
 {
   "name": "balayang",
-  "creatureType": "beast",
+  "creatureType": "avian",
   "groups": [
     "opportunist"
   ],
@@ -28,6 +28,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -73,10 +74,7 @@
       ]
     }
   ],
-  "elements": [
-    "shadow",
-    "fae"
-  ],
+  "elements": ["shadow"],
   "diets": [
     "carnivore",
     "insectivore",

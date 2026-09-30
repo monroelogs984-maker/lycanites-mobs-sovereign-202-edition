@@ -20,6 +20,7 @@
     "biomeTags": [
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 1,
     "spawnGroupMin": 1,
@@ -65,9 +66,9 @@
       ]
     }
   ],
-  "element": "lava",
+  "elements": ["lava"],
   "peaceful": false,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

@@ -22,6 +22,7 @@
         "ignoreBiome": true,
         "biomeTags": [],
         "spawnWeight": 8,
+        "spawnRarity": "rare",
         "dungeonWeight": 200,
         "spawnAreaLimit": 5,
         "spawnGroupMin": 1,
@@ -73,9 +74,9 @@
             ]
         }
     ],
-    "element": "shadow",
+    "elements": ["shadow"],
     "peaceful": false,
-    "summonable": false,
+    "summonable": true,
     "tameable": false,
     "mountable": false,
     "summonCost": 2,

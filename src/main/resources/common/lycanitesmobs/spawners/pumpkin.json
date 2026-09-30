@@ -27,9 +27,21 @@
 	"locations": [
 		{
 			"type": "block",
-			"rangeMin": [16, 0, 16],
-			"rangeMax": [32, 32, 32],
-			"offset": [0, 1, 0],
+			"rangeMin": [
+				16,
+				0,
+				16
+			],
+			"rangeMax": [
+				32,
+				32,
+				32
+			],
+			"offset": [
+				0,
+				1,
+				0
+			],
 			"surface": true,
 			"underground": true,
 			"sorting": "random",
@@ -42,9 +54,5 @@
 			"listType": "whitelist"
 		}
 	],
-	"mobSpawns": [
-		{
-			"mobId": "lycanitesmobs:tpumpkyn"
-		}
-	]
+	"mobSpawns": []
 }

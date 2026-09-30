@@ -29,6 +29,7 @@
             "-minecraft:is_end"
         ],
         "spawnWeight": 4,
+        "spawnRarity": "common",
         "dungeonWeight": 0,
         "spawnAreaLimit": 1,
         "spawnGroupMin": 1,
@@ -74,14 +75,14 @@
             ]
         }
     ],
-    "element": "frost",
+    "elements": ["frost"],
     "diets": [
         "carnivore",
         "detritivore"
     ],
     "peaceful": false,
     "summonable": false,
-    "tameable": false,
+    "tameable": true,
     "mountable": false,
     "summonCost": 6,
     "dungeonLevel": 2,

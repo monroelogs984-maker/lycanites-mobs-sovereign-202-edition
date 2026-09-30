@@ -67,7 +67,7 @@
       ]
     }
   ],
-  "element": "nether",
+  "elements": ["nether"],
   "diets": [
     "carnivore",
     "piscivore",

@@ -25,6 +25,7 @@
       "minecraft:is_beach"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 2,
     "spawnGroupMin": 1,
@@ -70,14 +71,14 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "herbivore",
     "frugivore"
   ],
   "peaceful": true,
   "farmable": true,
-  "summonable": false,
+  "summonable": true,
   "tameable": false,
   "mountable": false,
   "summonCost": 2,

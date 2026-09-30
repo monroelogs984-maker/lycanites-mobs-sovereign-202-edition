@@ -27,6 +27,7 @@
       "-forge:is_cold"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -73,10 +74,7 @@
       ]
     }
   ],
-  "elements": [
-    "poison",
-    "chaos"
-  ],
+  "elements": ["poison", "chaos"],
   "diets": [
     "carnivore",
     "piscivore",

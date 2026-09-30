@@ -26,6 +26,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 16,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -71,14 +72,14 @@
       ]
     }
   ],
-  "element": "order",
+  "elements": ["order"],
   "diets": [
     "herbivore"
   ],
   "peaceful": true,
   "farmable": true,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 0,

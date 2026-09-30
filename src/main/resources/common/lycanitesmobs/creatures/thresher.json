@@ -27,6 +27,7 @@
             "-forge:is_dense"
         ],
         "spawnWeight": 1,
+        "spawnRarity": "rare",
         "dungeonWeight": 0,
         "spawnAreaLimit": 1,
         "spawnGroupMin": 1,
@@ -74,7 +75,7 @@
             ]
         }
     ],
-    "element": "water",
+    "elements": ["water"],
     "diets": [
         "carnivore",
         "piscivore",

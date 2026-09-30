@@ -3,10 +3,12 @@
 	"loadDefault": true,
 	"canBurn": false,
 	"buffs": [
-		"minecraft:strength"
+		"minecraft:strength",
+		"lycanitesmobs:leech"
 	],
 	"debuffs": [
-		"minecraft:wither"
+		"minecraft:wither",
+		"lycanitesmobs:decay"
 	],
 	"components": [
 		"air",

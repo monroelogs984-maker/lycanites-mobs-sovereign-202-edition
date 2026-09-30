@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.data.info.creature;
 
+import com.lycanitesmobs.core.data.config.ConfigCreatureSpawning;
 import com.lycanitesmobs.core.entity.spawner.SpawnerMobRegistry;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.core.manager.CreatureManager;
@@ -92,6 +93,9 @@ public class CreatureSpawn {
      * The chance of this mob spawning over others.
      **/
     protected int spawnWeight = 8;
+
+    /** S202: "common" or "rare" uses the matching global weight from the spawning config instead of spawnWeight. **/
+    protected String spawnRarity = "";
 
     /**
      * The chance of dungeons using this mob over others.
@@ -199,6 +203,12 @@ public class CreatureSpawn {
     }
 
     public int getSpawnWeight() {
+        if (ConfigCreatureSpawning.INSTANCE != null) {
+            if ("common".equals(this.spawnRarity))
+                return ConfigCreatureSpawning.INSTANCE.spawnWeightCommon.get();
+            if ("rare".equals(this.spawnRarity))
+                return ConfigCreatureSpawning.INSTANCE.spawnWeightRare.get();
+        }
         return this.spawnWeight;
     }
 
@@ -321,6 +331,8 @@ public class CreatureSpawn {
 
         if (json.has("spawnWeight"))
             this.spawnWeight = json.get("spawnWeight").getAsInt();
+        if (json.has("spawnRarity"))
+            this.spawnRarity = json.get("spawnRarity").getAsString();
         if (json.has("dungeonWeight"))
             this.dungeonWeight = json.get("dungeonWeight").getAsInt();
 

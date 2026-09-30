@@ -27,6 +27,7 @@
       "-forge:is_mountain"
     ],
     "spawnWeight": 2,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -72,14 +73,14 @@
       ]
     }
   ],
-  "element": "arbour",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "insectivore"
   ],
   "peaceful": false,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 4,
   "dungeonLevel": 2,

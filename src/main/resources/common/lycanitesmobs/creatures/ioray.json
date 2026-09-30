@@ -25,6 +25,7 @@
       "minecraft:is_ocean"
     ],
     "spawnWeight": 6,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 3,
     "spawnGroupMin": 1,
@@ -71,10 +72,7 @@
       ]
     }
   ],
-  "elements": [
-    "arcane",
-    "water"
-  ],
+  "elements": ["arcane", "water"],
   "diets": [
     "piscivore"
   ],

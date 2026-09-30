@@ -28,6 +28,7 @@
       "-forge:is_snowy"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "common",
     "dungeonWeight": 0,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -73,10 +74,7 @@
       ]
     }
   ],
-  "elements": [
-    "arcane",
-    "quake"
-  ],
+  "elements": ["arcane", "quake"],
   "diets": [
     "carnivore",
     "piscivore",
@@ -87,7 +85,7 @@
   "peaceful": true,
   "farmable": true,
   "summonable": false,
-  "tameable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 1,

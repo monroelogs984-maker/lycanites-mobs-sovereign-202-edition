@@ -1,6 +1,6 @@
 {
   "name": "jabberwock",
-  "creatureType": "beast",
+  "creatureType": "anthronian",
   "groups": [
     "monster"
   ],
@@ -24,6 +24,7 @@
       "minecraft:is_mountain"
     ],
     "spawnWeight": 8,
+    "spawnRarity": "rare",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -69,14 +70,14 @@
       ]
     }
   ],
-  "element": "earth",
+  "elements": ["earth"],
   "diets": [
     "carnivore",
     "insectivore"
   ],
   "peaceful": false,
-  "summonable": true,
-  "tameable": false,
+  "summonable": false,
+  "tameable": true,
   "mountable": false,
   "summonCost": 2,
   "dungeonLevel": 0,

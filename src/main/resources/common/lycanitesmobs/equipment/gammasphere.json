@@ -6,9 +6,7 @@
   "dropChance": 0.2,
   "levelMin": 1,
   "levelMax": 3,
-  "elements": [
-    "light"
-  ],
+  "elements": ["aether"],
   "features": [
     {
       "featureType": "projectile",

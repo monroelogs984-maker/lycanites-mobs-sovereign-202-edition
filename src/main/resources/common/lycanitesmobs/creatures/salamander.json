@@ -21,6 +21,7 @@
     "biomeTags": [
     ],
     "spawnWeight": 6,
+    "spawnRarity": "common",
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,
@@ -67,7 +68,7 @@
       ]
     }
   ],
-  "element": "lava",
+  "elements": ["lava"],
   "diets": [
     "carnivore",
     "piscivore",
