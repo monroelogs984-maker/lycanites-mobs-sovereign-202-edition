@@ -14,6 +14,19 @@ spawner (bosses, parts, summon-only).
 Water creatures still need water, and sky/underground spawners keep their placement. Climate only replaces the biome
 filter. Count in this draft: anywhere 45, wet 24, hot 14, cold 8.
 
+**Gotcha: dimension-proxy biome tags must become real dimension conditions first.** Some creatures stay in their
+dimension only through a biome tag (`is_end`, `is_overworld`, `is_nether`), not a dimension condition. Dropping the
+biome list would let them spawn everywhere:
+- **Argus, Spectre:** dimension list is an empty blacklist (= any dimension); only `is_end` keeps them in the End.
+- **Epion, Geist:** `is_end` or spooky: the End *plus* spooky Overworld biomes.
+- **Astaroth, Trite, Kathoga:** whitelist Nether + End; `is_end` keeps them out of the Nether.
+- **Wraamon:** `is_overworld` + `is_end`, not the Nether.
+- **Wraith:** whitelist Nether only, but biomes are `is_overworld`/`is_end`/`is_forest`, which never match in the Nether;
+  it likely never spawns naturally (official data bug). Needs a decision on where Wraith should spawn.
+- The cold creatures (Arix, Bobeko, Frostweaver, Maug, Reiver, Serpix, Wendigo) exclude `-is_end`; harmless (the End is
+  already blacklisted by dimension).
+The apply pass converts these into dimension conditions, then applies the climate.
+
 | Creature | Old biome words | Climate |
 |---|---|---|
 | abaia | (none) | **anywhere** |
