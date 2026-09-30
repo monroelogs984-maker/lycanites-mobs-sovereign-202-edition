@@ -209,17 +209,7 @@ public class CreatureInventoryScreen extends BaseContainerScreen<CreatureContain
         this.drawHelper.draw(matrixStack, healthText, barCenter - ((float) this.drawHelper.getStringWidth(healthText) / 2), barY + 2, 0xFFFFFF);
         barY += barHeight + 1;
 
-        // XP Bar:
-        this.drawHelper.drawTexture(matrixStack, TextureManager.getTexture("GUIPetBarEmpty"), barX, barY, 0, 1, 1, barWidth, barHeight);
-        float experienceNormal = Math.min(1, (float) this.creature.getExperience() / this.creature.getExperienceForNextLevel());
-        this.drawHelper.drawTexture(matrixStack, TextureManager.getTexture("GUIBarExperience"), barX, barY, 0, experienceNormal, 1, barWidth * experienceNormal, barHeight);
-        String experienceText = Component.translatable("entity.experience").getString() + ": " + this.creature.getExperience() + "/" + this.creature.getExperienceForNextLevel();
-        this.drawHelper.draw(matrixStack, experienceText, barCenter - ((float) this.drawHelper.getStringWidth(experienceText) / 2), barY + 2, 0xFFFFFF);
-        barY += barHeight + 1;
-
-        // Level:
-        String levelText = Component.translatable("entity.level").getString() + ": " + this.creature.getMobLevel();
-        this.drawHelper.draw(matrixStack, levelText, barCenter - ((float) this.drawHelper.getStringWidth(levelText) / 2), barY + 2, 0xFFFFFF);
+        // S202: the level system is scrapped, so no experience bar or level text.
     }
 
     @Override

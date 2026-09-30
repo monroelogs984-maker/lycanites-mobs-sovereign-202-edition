@@ -1,6 +1,7 @@
 package com.lycanitesmobs.core.data.info.creature;
 
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
+import com.lycanitesmobs.core.manager.CreatureManager;
 import net.minecraft.nbt.CompoundTag;
 
 public class ExtraMobBehaviour {
@@ -46,6 +47,24 @@ public class ExtraMobBehaviour {
     // ==================================================
     //                     Constructor
     // ==================================================
+	/**
+	 * S202: the level system is scrapped. Converts an old level into the stat multipliers it used to give
+	 * (1 + (level - 1) * the configured level multiplier per stat), so dungeon bosses keep their strength.
+	 */
+	public void applyLegacyLevel(int level) {
+		double levels = Math.max(0, level - 1);
+		CreatureManager manager = CreatureManager.getInstance();
+		this.multiplierHealth *= 1 + levels * manager.getLevelMultiplier("HEALTH");
+		this.multiplierDefense *= 1 + levels * manager.getLevelMultiplier("DEFENSE");
+		this.multiplierArmor *= 1 + levels * manager.getLevelMultiplier("ARMOR");
+		this.multiplierSpeed *= 1 + levels * manager.getLevelMultiplier("SPEED");
+		this.multiplierDamage *= 1 + levels * manager.getLevelMultiplier("DAMAGE");
+		this.multiplierHaste *= 1 + levels * manager.getLevelMultiplier("ATTACKSPEED");
+		this.multiplierEffect *= 1 + levels * manager.getLevelMultiplier("EFFECT");
+		this.multiplierPierce *= 1 + levels * manager.getLevelMultiplier("PIERCE");
+		this.host.refreshAttributes();
+	}
+
 	public ExtraMobBehaviour(BaseCreatureEntity host) {
 		this.host = host;
 	}

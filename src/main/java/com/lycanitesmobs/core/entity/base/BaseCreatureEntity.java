@@ -1605,7 +1605,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         this.refreshAttributes();
     }
 
+    /** S202: the level system is scrapped, so every creature stays at level 1 (saved levels are ignored too). **/
     public void setLevel(int level) {
+        level = 1;
         this.mobLevel = level;
         this.getEntityData().set(LEVEL, level);
         this.clearCachedFullName();
@@ -1619,10 +1621,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (!this.getCommandSenderWorld().isClientSide) {
             this.getEntityData().set(EXPERIENCE, this.experience);
         }
-        if (this.getExperience() >= this.creatureStats.getExperienceForNextLevel()) {
-            this.setExperience(this.getExperience() - this.creatureStats.getExperienceForNextLevel());
-            this.addLevel(1);
-        }
+        // S202: no level ups, the level system is scrapped.
     }
 
     public int getExperience() {

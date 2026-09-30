@@ -107,7 +107,7 @@ public class CreatureInventory implements Container {
   	//                     Details
   	// ==================================================
     public String getName() {
-        return this.inventoryName + Component.translatable("entity.level").getString() + " " + this.creature.getMobLevel();
+        return this.inventoryName;
     }
 
 	public BaseCreatureEntity getCreature() {

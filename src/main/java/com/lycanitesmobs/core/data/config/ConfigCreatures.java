@@ -85,19 +85,19 @@ public class ConfigCreatures {
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.disableBlockParticles")
 				.define("disableBlockParticles", false);
 
-		startingLevelMin = builder.comment("The minimum base starting level of every mob. Cannot be less than 1.")
+		startingLevelMin = builder.comment("S202: unused, creature levels are scrapped. The minimum base starting level of every mob. Cannot be less than 1.")
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.startingLevelMin")
 				.define("startingLevelMin", 1);
-		startingLevelMax = builder.comment("The maximum base starting level of every mob. Ignored when not greater than the min level.")
+		startingLevelMax = builder.comment("S202: unused, creature levels are scrapped. The maximum base starting level of every mob. Ignored when not greater than the min level.")
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.startingLevelMax")
 				.define("startingLevelMax", 5);
-		levelPerDay = builder.comment("Increases the base start level by this amount of every world day that has gone by, use this to slowly level up mobs as the world gets older. Fractions can be used such as 0.05 levels per day. The levels are rounded down so +0.9 would be +0 levels.")
+		levelPerDay = builder.comment("S202: unused, creature levels are scrapped. Increases the base start level by this amount of every world day that has gone by, use this to slowly level up mobs as the world gets older. Fractions can be used such as 0.05 levels per day. The levels are rounded down so +0.9 would be +0 levels.")
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.levelPerDay")
 				.define("levelPerDay", 0D);
-		levelPerDayMax = builder.comment("The maximum level to be able gain from levels per day.")
+		levelPerDayMax = builder.comment("S202: unused, creature levels are scrapped. The maximum level to be able gain from levels per day.")
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.levelPerDayMax")
 				.define("levelPerDayMax", 100);
-		levelPerLocalDifficulty = builder.comment("How many levels a mob gains multiplied by the local area difficulty level. Staying in an area for a while slowly increases the difficulty of that area ranging from 0.00 to 6.75. So 1.5 means level 10 at full local area difficulty.")
+		levelPerLocalDifficulty = builder.comment("S202: unused, creature levels are scrapped. How many levels a mob gains multiplied by the local area difficulty level. Staying in an area for a while slowly increases the difficulty of that area ranging from 0.00 to 6.75. So 1.5 means level 10 at full local area difficulty.")
 				.translation(CoreConfig.CONFIG_PREFIX + "creatures.levelPerLocalDifficulty")
 				.define("levelPerLocalDifficulty", 1.5D);
 		bossDamageCap = builder.comment("Caps how much damage a boss can take per tick, this also affects Rare Variants and Dungeon Bosses. Set to 0 to disable the cap.")
@@ -253,7 +253,7 @@ public class ConfigCreatures {
 			if("sight".equalsIgnoreCase(statName))
 				levelValue = 0D;
 			this.levelMultipliers.put(statName, builder
-					.comment("Level multiplier for " + statName + ".")
+					.comment("S202: creature levels are scrapped; only used to convert a dungeon boss json mobLevel into stat multipliers. Multiplier per level for " + statName + ".")
 					.translation(CoreConfig.CONFIG_PREFIX + "level.multipliers." + statName)
 					.define("level.multipliers." + statName, levelValue));
 		}

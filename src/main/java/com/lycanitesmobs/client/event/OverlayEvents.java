@@ -178,7 +178,6 @@ public class OverlayEvents {
         event.getLeft().add("Distance To player: " + creature.distanceTo(player));
         event.getLeft().add("Subspecies: " + creature.getSubspeciesIndex());
         event.getLeft().add("Variant: " + creature.getVariantIndex());
-        event.getLeft().add("Level: " + creature.getMobLevel());
         event.getLeft().add("Size: " + creature.getSizeScale());
         event.getLeft().add("");
         event.getLeft().add("Health: " + creature.getHealth() + "/" + creature.getMaxHealth());

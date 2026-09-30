@@ -637,8 +637,9 @@ public class MobSpawn {
             if (this.home >= 0) {
                 entityCreature.restrictTo(entityCreature.blockPosition(), (int) this.home);
             }
-            if (this.mobLevel > 0) {
-                entityCreature.addLevel(this.mobLevel);
+            if (this.mobLevel > 1) {
+                // S202: levels are scrapped; a json mobLevel (dungeon bosses) becomes the stat multipliers that level gave.
+                entityCreature.getExtraMobBehaviour().applyLegacyLevel(this.mobLevel);
             }
             if (this.temporary > -1) {
                 entityCreature.setTemporary(this.temporary);
