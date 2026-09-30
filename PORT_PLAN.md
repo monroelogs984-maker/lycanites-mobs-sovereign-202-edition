@@ -379,7 +379,8 @@ for Phase 10; new systems = own phases (below).**
   Glenn. Sizes now (121): elemental 21, beast 16, insect 12, aquatic 10, aberration 9, demon 7, undead 7, dragon 6,
   reptile 5, imp 5, plant 5, avian 4, worm 4, amphibian 3, anthronian 3, arachnid 3, golem 1 (some counts include
   linked entries: concapedesegment, makaalpha, joustealpha, vespidqueen).
-- Creature levels (`levelPerDay`, level multipliers etc.) — Power Scale covers this in S202.
+- Creature levels (`levelPerDay`, level multipliers etc.) — Power Scale covers this in S202. **Still active in the
+  port (start level 1-5); scrap in the Phase 10 apply pass (Glenn 2026-09-30).**
 - Breeding (farming itself stays possible; food stays).
 - Boss-channel *random* events and all holiday events (halloween, rudolph, satanclaws, poopparty).
 - The 8 rare-variant altars (Royal Apollyon, Crimson Epion, Ebon Malwrath, Mottle Abaia, Phosphorescent
