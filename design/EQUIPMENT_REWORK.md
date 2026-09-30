@@ -42,7 +42,8 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
 - **Eligible items:** any item with an attack-damage attribute (swords, axes, tridents, maces, modded melee such as BMM
   weapons), plus a `lycanitesmobs:imprintable` item tag to add items (e.g. bows) or exclude them.
 - **Eligible = has both an attack-damage and an attack-speed attribute** (Glenn 2026-09-30), plus the tag for
-  exceptions. Note: vanilla pickaxes, shovels and hoes carry both, so they qualify unless excluded.
+  exceptions. **Tools included on purpose** (Glenn 2026-09-30): pickaxes, shovels and hoes qualify. A wide range is a
+  safety net so every weapon, vanilla or modded, can take a Lycanites imprint.
 - **No visual change to the weapon** (no glint, no model/texture change).
 - **Tooltip:** the expanded tooltip (hold Shift while hovering) shows the infused part, current / max mana, and
   the effect.
