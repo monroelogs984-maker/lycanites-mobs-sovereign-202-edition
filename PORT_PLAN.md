@@ -1771,8 +1771,11 @@ Everything in `design/` applied except the equipment rework. Commits 99837b4..21
   15 type moves, Glenn's 57 tame / 48 summon picks (Grell loses mounting), 10 cuts (JSONs, entity tags, spawner/event/
   dungeon lists, 3 equipment parts). Ashen Mausoleum's `modId` typo fixed (Cherufe now spawns there).
 - **Spawning:** `spawnRarity` common/rare -> config `spawnWeightCommon` 8 / `spawnWeightRare` 6. Variants 80% base, 2%
-  per rare, uncommons share the rest (`Subspecies.getRandomVariant`). Wild creatures always start at level 1
-  (`getStartingLevel`); dungeon boss `mobLevel`, pet XP and fusion levels still apply.
+  per rare, uncommons share the rest (`Subspecies.getRandomVariant`). **Levels fully scrapped** (db65704):
+  `setLevel` always stores 1 (spawns, saved entities, pets, fusion), pets no longer level up, level/XP UI removed.
+  A dungeon json `mobLevel` becomes the stat multipliers that level gave (`ExtraMobBehaviour.applyLegacyLevel`:
+  1 + (level-1) x the per-stat level multiplier config, e.g. level 100 = ~11x health, ~3x damage, ~2x speed/defense),
+  so dungeon bosses keep their strength. The starting-level/levelPerDay configs are marked unused.
 - **Climate:** `CreatureSpawn.isValidBiome` -> Overworld only, temperature/downfall range of the old biome list
   widened 0.4 / 0.15; Nether/End only use the dimension rule. Dimension-proxy tags converted (Argus, Spectre,
   Astaroth, Trite, Kathoga End-only; Epion, Geist, Wraamon Overworld + End). Wraith: Nether, `spawnMinY` 64. Side
