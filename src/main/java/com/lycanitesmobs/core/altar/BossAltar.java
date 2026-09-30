@@ -50,8 +50,8 @@ public class BossAltar {
     private static final int RETURN_DELAY_TICKS = 10 * 20;
     private static final List<BossAltar> ALTARS = new ArrayList<>();
 
-    public static final BossAltar RAHOVART = register(new BossAltar("rahovart", "RahovartAltar", "soulcubedemonic", "soulkey", Level.NETHER));
-    public static final BossAltar ASMODEUS = register(new BossAltar("asmodeus", "AsmodeusAltar", "soulcubeaberrant", "soulkeydiamond", Level.END));
+    public static final BossAltar RAHOVART = register(new BossAltar("rahovart", "RahovartAltar", "soulcubedemonic", "soulkeydiamond", Level.NETHER));
+    public static final BossAltar ASMODEUS = register(new BossAltar("asmodeus", "AsmodeusAltar", "soulcubeaberrant", "soulkey", Level.END));
     public static final BossAltar AMALGALICH = register(new BossAltar("amalgalich", "AmalgalichAltar", "soulcubeundead", "soulkeyemerald", null));
 
     /** Players who came through a pedestal, by player UUID. **/

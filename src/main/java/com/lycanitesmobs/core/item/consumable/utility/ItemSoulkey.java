@@ -13,7 +13,7 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 /**
- * A boss soulkey. S202 redesign: each soulkey belongs to one boss (soulkey = Rahovart, soulkeydiamond = Asmodeus,
+ * A boss soulkey. S202 redesign: each soulkey belongs to one boss (soulkey = Asmodeus, soulkeydiamond = Rahovart,
  * soulkeyemerald = Amalgalich - matched by colour to the boss pedestals). Used on that boss's pedestal, it takes the
  * player straight into the boss fight (see BossAltar). The official keys were tiers (variant 0/1/2) used on any altar
  * block formation; the variant field is kept for data compatibility but no longer used.

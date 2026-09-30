@@ -5,7 +5,6 @@ import com.lycanitesmobs.client.model.animation.AnimationPart;
 import com.lycanitesmobs.client.model.animation.Animator;
 import com.lycanitesmobs.client.obj.model.ObjModel;
 import com.lycanitesmobs.client.obj.geometry.ObjPart;
-import com.lycanitesmobs.client.gui.screen.creature.RecolorDebug;
 import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureBase;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.data.info.ModInfo;
@@ -185,10 +184,6 @@ public class CreatureObjModel extends CreatureModel {
         }
 
         this.currentModelState = this.getModelState(entity);
-
-        if (this.currentModelState != null) {
-            RecolorDebug.applyToState(this.currentModelState, entity);
-        }
 
         if (entity != null && entity.hasPerchTarget()) {
             distance = 0;
