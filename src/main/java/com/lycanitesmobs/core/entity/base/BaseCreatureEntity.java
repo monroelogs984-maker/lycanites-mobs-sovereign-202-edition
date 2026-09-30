@@ -1280,6 +1280,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * First stage checks for vanilla spawning, if this check fails the creature will not spawn.
      **/
     public boolean fixedSpawnCheck(Level world, BlockPos pos) {
+        if (pos.getY() < this.creatureInfo.getCreatureSpawn().getSpawnMinY()) {
+            return false;
+        }
         if (!this.checkSpawnLightLevel(world, pos)) {
             return false;
         }

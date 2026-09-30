@@ -97,6 +97,17 @@ public class CreatureSpawn {
     /** S202: "common" or "rare" uses the matching global weight from the spawning config instead of spawnWeight. **/
     protected String spawnRarity = "";
 
+    /** S202: the lowest y level this creature can spawn at naturally (Integer.MIN_VALUE for no limit). **/
+    protected int spawnMinY = Integer.MIN_VALUE;
+
+    /** S202 climate spawning: how far the temperature and downfall ranges are widened (about 15% of each scale). **/
+    public static final float CLIMATE_TEMPERATURE_MARGIN = 0.4F;
+    public static final float CLIMATE_DOWNFALL_MARGIN = 0.15F;
+
+    /** S202 climate range, computed on first use from the biome list. Null until computed. **/
+    protected float[] climateRange;
+    protected boolean climateUnrestricted = false;
+
     /**
      * The chance of dungeons using this mob over others.
      **/
@@ -200,6 +211,10 @@ public class CreatureSpawn {
 
     public boolean ignoresBiome() {
         return this.ignoreBiome;
+    }
+
+    public int getSpawnMinY() {
+        return this.spawnMinY;
     }
 
     public int getSpawnWeight() {
@@ -350,6 +365,10 @@ public class CreatureSpawn {
         if (json.has("worldDayMin"))
             this.worldDayMin = json.get("worldDayMin").getAsDouble();
 
+        if (json.has("spawnMinY"))
+            this.spawnMinY = json.get("spawnMinY").getAsInt();
+        this.climateRange = null;
+
         if (json.has("despawnNatural"))
             this.despawnNatural = json.get("despawnNatural").getAsBoolean();
         if (json.has("despawnForced"))
@@ -414,39 +433,89 @@ public class CreatureSpawn {
             return true;
         }
 
-        Object biomeRL = LMHelperClass.convertToResourceLocation(biome, level.registryAccess());
-        String biomeId = null;
-        if (biomeRL != null) {
-            biomeId = biomeRL.toString();
-        } else {
-            return false;
+        // S202: biome lists are loosened to climate. The Nether and End each have one climate, so outside the
+        // Overworld only the dimension condition applies.
+        if (level.dimension() != Level.OVERWORLD) {
+            return true;
         }
-
-        if (!this.biomeTagBlacklist.isEmpty()) {
-            if (this.biomesFromTagBlacklist == null) {
-                this.biomesFromTagBlacklist = new HashSet<>(JSONHelper.getBiomesFromTags(level, this.biomeTagBlacklist));
-            }
-            if (this.biomesFromTagBlacklist.contains(biomeId)) {
-                return false;
-            }
+        float[] range = this.getClimateRange(level);
+        if (this.climateUnrestricted || range == null) {
+            return true;
         }
+        float temperature = biome.getBaseTemperature();
+        float downfall = biome.getModifiedClimateSettings().downfall();
+        return temperature >= range[0] && temperature <= range[1] && downfall >= range[2] && downfall <= range[3];
+    }
 
+    /**
+     * S202: the climate this creature spawns in: {temperature min, temperature max, downfall min, downfall max}, from the
+     * Overworld biomes in its biome list, widened by the climate margins. Unrestricted when the list is empty or covers
+     * every Overworld biome.
+     */
+    public float[] getClimateRange(Level level) {
+        if (this.climateRange != null || this.climateUnrestricted) {
+            return this.climateRange;
+        }
+        Set<String> biomeIdSet = new HashSet<>();
         if (!this.biomeTags.isEmpty()) {
-            if (this.biomesFromTags == null) {
-                this.biomesFromTags = new HashSet<>(JSONHelper.getBiomesFromTags(level, this.biomeTags));
+            List<String> positiveTags = new ArrayList<>();
+            for (String tag : this.biomeTags) {
+                if (!tag.startsWith("-")) {
+                    positiveTags.add(tag);
+                }
             }
-            if (this.biomesFromTags.contains(biomeId)) {
-                return true;
+            biomeIdSet.addAll(JSONHelper.getBiomesFromTags(level, positiveTags));
+        }
+        biomeIdSet.addAll(this.biomeIds);
+
+        var biomeRegistry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME);
+        float[] range = null;
+        int overworldBiomes = 0;
+        int matchedOverworldBiomes = 0;
+        for (var entry : biomeRegistry.entrySet()) {
+            var holder = biomeRegistry.getHolderOrThrow(entry.getKey());
+            if (!holder.is(net.minecraft.tags.BiomeTags.IS_OVERWORLD)) {
+                continue;
+            }
+            overworldBiomes++;
+            if (!biomeIdSet.contains(entry.getKey().location().toString())) {
+                continue;
+            }
+            matchedOverworldBiomes++;
+            Biome biome = entry.getValue();
+            float temperature = biome.getBaseTemperature();
+            float downfall = biome.getModifiedClimateSettings().downfall();
+            if (range == null) {
+                range = new float[] {temperature, temperature, downfall, downfall};
+            } else {
+                range[0] = Math.min(range[0], temperature);
+                range[1] = Math.max(range[1], temperature);
+                range[2] = Math.min(range[2], downfall);
+                range[3] = Math.max(range[3], downfall);
             }
         }
-
-        if (!this.biomeIds.isEmpty()) {
-            if (this.biomeIds.contains(biomeId)) {
-                return true;
-            }
+        if (range == null || matchedOverworldBiomes >= overworldBiomes) {
+            this.climateUnrestricted = true;
+            return null;
         }
+        range[0] -= CLIMATE_TEMPERATURE_MARGIN;
+        range[1] += CLIMATE_TEMPERATURE_MARGIN;
+        range[2] -= CLIMATE_DOWNFALL_MARGIN;
+        range[3] += CLIMATE_DOWNFALL_MARGIN;
+        this.climateRange = range;
+        return range;
+    }
 
-        return false;
+    /** S202: a readable summary of this creature's spawn climate, for the dev dump command. **/
+    public String describeClimate(Level level) {
+        if (this.ignoreBiome) {
+            return "anywhere (no biome condition)";
+        }
+        float[] range = this.getClimateRange(level);
+        if (this.climateUnrestricted || range == null) {
+            return "anywhere";
+        }
+        return String.format("temperature %.2f to %.2f, downfall %.2f to %.2f", range[0], range[1], Math.max(0, range[2]), Math.min(1, range[3]));
     }
 
 }
