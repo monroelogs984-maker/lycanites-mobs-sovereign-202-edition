@@ -1738,7 +1738,7 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
 - ~~Djinn~~ **correction:** the 1.12.2 Djinn was not removed, it was **renamed Zephyr** in 1.16 (identical model,
   texture, stats and code - verified by file hashes), and the 1.12.2 Zephyr became **Raidra** (identical texture). So no
   creature is missing; the Djinn is in this port as the Zephyr. Glenn's "Orphani" angel plan (repurposed Djinn) therefore
-  means repurposing or cloning the Zephyr - decision pending.
+  meant repurposing or cloning the Zephyr - **the Orphani idea was scrapped (Glenn, 2026-09-30)**.
 - **Raidra** (lightning elemental, the 1.12.2 Zephyr) is in Incursion and this port and **does spawn naturally**: the
   `storm` spawner (world trigger), the `glowstone` spawner (2% when breaking glowstone) and the Bamstorm, Tsunami and
   Windstorm mob events (spawners list it as `lycanitesmobs:raidra`; an earlier bare-name search missed that). It can
