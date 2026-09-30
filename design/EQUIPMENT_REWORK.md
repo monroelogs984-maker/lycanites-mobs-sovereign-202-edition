@@ -41,11 +41,16 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
 
 - **Eligible items:** any item with an attack-damage attribute (swords, axes, tridents, maces, modded melee such as BMM
   weapons), plus a `lycanitesmobs:imprintable` item tag to add items (e.g. bows) or exclude them.
+- **Eligible = has both an attack-damage and an attack-speed attribute** (Glenn 2026-09-30), plus the tag for
+  exceptions. Note: vanilla pickaxes, shovels and hoes carry both, so they qualify unless excluded.
+- **No visual change to the weapon** (no glint, no model/texture change).
+- **Tooltip:** the expanded tooltip (hold Shift while hovering) shows the infused part, current / max mana, and
+  the effect.
 - **One imprint per tool.**
 - **Extract at the forge:** the part comes back out at its current level (and mana), so it can move to a new weapon.
 - **Passive or ability, per part:** some parts give a passive, others a right-click ability (draft table below).
 - **Mana:** the imprint has the official second durability, mana (max 1500; each projectile shot or on-hit trigger
-  costs 1). At 0 mana the imprint goes dormant until recharged; the tool itself keeps working. Official recharge
+  costs 1). At 0 mana the effect is simply inactive until recharged; the tool itself keeps working. Official recharge
   items: low 50 (redstone, glowstone dust, slime ball), medium 100 (lapis, blaze powder, gunpowder, phantom membrane,
   frostyfur, poisongland, geistliver), high 500 (experience bottle, magma cream, any Lycanites charge), max (nether star).
 
