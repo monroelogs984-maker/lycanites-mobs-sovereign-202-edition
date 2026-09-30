@@ -367,7 +367,9 @@ for Phase 10; new systems = own phases (below).**
 
 **Cut (don't port):**
 - ~20% of creatures. **Cut list so far (Glenn, 2026-09-30; not removed yet, cut later):** geken (reptile),
-  triffid (plant), eyewig (insect), malwrath (demon), feradon + brucha (beast), abtu (aquatic). Trite and grigori
+  triffid (plant), eyewig (insect), malwrath (demon), feradon + brucha (beast), abtu (aquatic), **cryptkeeper
+  (undead), tpumpkyn (plant), dawon (beast) - final list of 10 (Glenn, 2026-09-30: keeping most creatures suits S202's
+  "mystic creatures" identity)**. Trite and grigori
   were considered and **kept** (Asmodeus's fight summons them). Knock-ons to handle when cutting: dungeon mob lists
   (lushtomb: geken, eyewig; desertcrypts: triffid; demonictemple: malwrath; streamshrine: abtu), their mob event
   spawners, the fishing spawner (abtu), equipment parts (eyewig eye, malwrath eye, brucha quill; equipment is out of
