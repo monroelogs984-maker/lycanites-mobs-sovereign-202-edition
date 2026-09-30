@@ -70,6 +70,11 @@ public class ModelManager {
             model.reloadModel(resourceManager);
         }
 
+        for (com.lycanitesmobs.client.model.projectile.base.ProjectileModel model : this.projectileModels.values()) {
+            if (model instanceof com.lycanitesmobs.client.model.projectile.base.ProjectileObjModel obj) {
+                obj.reloadModel(resourceManager);
+            }
+        }
         LMHelperClass.logDebug("Resources", "ModelManager.reloadModels: end");
     }
 
@@ -78,6 +83,18 @@ public class ModelManager {
      * of aborting the whole load, since most creatures don't have a ported model class yet.
      */
     public void createModels() {
+        // Projectile Models:
+        for (com.lycanitesmobs.core.data.info.projectile.ProjectileInfo projectileInfo : com.lycanitesmobs.core.manager.ProjectileManager.getInstance().getProjectiles()) {
+            if (projectileInfo.getModelClassName() == null || this.projectileModels.containsKey(projectileInfo)) {
+                continue;
+            }
+            try {
+                this.projectileModels.put(projectileInfo, (com.lycanitesmobs.client.model.projectile.base.ProjectileModel) Class.forName(projectileInfo.getModelClassName()).getConstructor().newInstance());
+            } catch (Exception e) {
+                LMHelperClass.logWarningMessage("Unable to load Projectile model " + projectileInfo.getModelClassName() + " for " + projectileInfo.getName() + ", falling back to the sprite renderer.");
+            }
+        }
+
         for (CreatureInfo creatureInfo : CreatureManager.getInstance().getCreatures()) {
             if (creatureInfo.isDummy()) {
                 continue;
@@ -101,6 +118,16 @@ public class ModelManager {
                 }
             }
         }
+    }
+
+    public Map<com.lycanitesmobs.core.data.info.projectile.ProjectileInfo, com.lycanitesmobs.client.model.projectile.base.ProjectileModel> projectileModels = new HashMap<>();
+
+    /**
+     * Gets the model used by the provided Projectile, or null if it has none (it renders as a sprite).
+     */
+    @Nullable
+    public com.lycanitesmobs.client.model.projectile.base.ProjectileModel getProjectileModel(com.lycanitesmobs.core.data.info.projectile.ProjectileInfo projectileInfo) {
+        return this.projectileModels.get(projectileInfo);
     }
 
     /**

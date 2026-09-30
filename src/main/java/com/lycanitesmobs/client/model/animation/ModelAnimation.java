@@ -3,19 +3,22 @@ package com.lycanitesmobs.client.model.animation;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.client.renderer.entity.creature.CreatureRenderer;
+import com.lycanitesmobs.client.renderer.entity.projectile.ProjectileModelRenderer;
+import com.lycanitesmobs.client.renderer.layer.projectile.LayerProjectileBase;
 import com.lycanitesmobs.client.renderer.item.IItemModelRenderer;
 import com.lycanitesmobs.client.renderer.layer.creature.LayerCreatureBase;
 import com.lycanitesmobs.client.renderer.layer.item.LayerItem;
 
 import java.util.*;
 
-/** Port: projectile model layers (addProjectileLayers/getBaseProjectileLayer) dropped - projectile OBJ models aren't ported. **/
 public class ModelAnimation {
 
     /**
      * A list of model texture layer definitions.
      **/
     public Map<String, TextureLayerAnimation> textureLayers = new HashMap<>();
+
+    LayerProjectileBase baseProjectileLayer;
 
     /**
      * The base item layer to use.
@@ -84,6 +87,25 @@ public class ModelAnimation {
 
 
 
+
+    /**
+     * Adds projectile layers from this Animation to the provided renderer.
+     *
+     * @param renderer The renderer to add the layers to.
+     */
+    public void addProjectileLayers(ProjectileModelRenderer renderer) {
+        for (TextureLayerAnimation textureLayer : this.textureLayers.values()) {
+            if (textureLayer.name.equals("base")) {
+                this.baseProjectileLayer = textureLayer.createProjectileLayer(renderer);
+                continue;
+            }
+            renderer.addLayer(textureLayer.createProjectileLayer(renderer));
+        }
+    }
+
+    public LayerProjectileBase getBaseProjectileLayer() {
+        return this.baseProjectileLayer;
+    }
 
     /**
      * Adds item layers from this Animation to the provided renderer.

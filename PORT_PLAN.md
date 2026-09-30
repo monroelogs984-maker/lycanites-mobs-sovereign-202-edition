@@ -1664,3 +1664,21 @@ is commented out, so `FearMesh`/`FearMeshProfile`/`GhostTendrilMesh` are unused)
 0.6-6 blocks per 2 s, block dim ~0.99 / sky dim 0.6 with heartbeat flicker, muffle 1.0, heartbeat decoded (27.4 s
 envelope); when the effect ended the ghosts were discarded and light/audio returned to normal. Screenshots
 `run/client/screenshots/feartest_*.png`. **Gotcha:** the old test saves' player is in creative, which is immune.
+
+## Projectile OBJ models (2026-09-30)
+
+The 5 JSON projectiles with a `modelClass` (aetherwave, chaosorb, crystalshard, lightball, lobdarklings) now render
+their OBJ models instead of sprites: `ProjectileModel`/`ProjectileObjModel` + the 5 model classes, `ProjectileModelRenderer`,
+`LayerProjectileBase`/`LayerProjectileEffect`, `ModelAnimation.addProjectileLayers` +
+`TextureLayerAnimation.createProjectileLayer`, and projectile models in `ModelManager` (created with the creature
+models, reloaded by the same reload listener). Renderer picked per projectile in `ClientSetup`.
+
+**Port changes:** plain `ObjModel` + buffered render types from `CustomRenderStates.getObjRenderType` instead of the
+official `VBOObjModel`/`VBOBatcher`/Iris path (same approach as the creatures). The "old projectile" model constructor
+dropped (none registered upstream). **Fixes:** the official `render()` had the yaw and partial-tick parameters swapped
+(the animation loop used the yaw as the partial tick); projectiles created by the entity type's factory (`/summon`,
+dispensers) never got their `ProjectileInfo`, so they synced no name and the client had no texture - now resolved
+from the entity type id (this affected sprite projectiles too).
+
+**Verified** with a real client: all 5 summoned and rendered with their models and textures (screenshot
+`run/client/screenshots/projtest_1.png`).

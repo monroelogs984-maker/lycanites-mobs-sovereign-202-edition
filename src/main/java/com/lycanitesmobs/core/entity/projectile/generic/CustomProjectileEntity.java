@@ -95,6 +95,11 @@ public class CustomProjectileEntity extends BaseProjectileEntity {
     public CustomProjectileEntity(EntityType<? extends BaseProjectileEntity> entityType, Level world) {
         super(entityType, world);
         this.modInfo = LycanitesMobs.modInfo;
+        // Port: entities made by the entity type's factory (/summon, dispensers) never got their info, so they synced
+        // no name and the client had no texture or model state. Resolve it from the entity type's id instead.
+        if (!world.isClientSide) {
+            this.setProjectileInfo(ProjectileManager.getInstance().getProjectile(EntityType.getKey(entityType).getPath()));
+        }
     }
 
     public CustomProjectileEntity(EntityType<? extends BaseProjectileEntity> entityType, Level world, ProjectileInfo projectileInfo) {

@@ -132,6 +132,26 @@ public class TextureLayerAnimation {
 
 
     /**
+     * Creates a new Projectile Layer Renderer instance based on this Animation Layer.
+     *
+     * @param renderer The projectile renderer to use for the layer.
+     * @return A new Layer Renderer.
+     */
+    public com.lycanitesmobs.client.renderer.layer.projectile.LayerProjectileEffect createProjectileLayer(com.lycanitesmobs.client.renderer.entity.projectile.ProjectileModelRenderer renderer) {
+        int blendingId = CustomRenderStates.BLEND.NORMAL.id;
+        if ("add".equals(this.blending)) {
+            blendingId = CustomRenderStates.BLEND.ADD.id;
+        } else if ("sub".equals(this.blending)) {
+            blendingId = CustomRenderStates.BLEND.SUB.id;
+        }
+
+        com.lycanitesmobs.client.renderer.layer.projectile.LayerProjectileEffect renderLayer = new com.lycanitesmobs.client.renderer.layer.projectile.LayerProjectileEffect(renderer, this.textureSuffix, this.glow, blendingId, this.subspeciesTexture);
+        renderLayer.name = this.name;
+        renderLayer.scrollSpeed = this.scrollSpeed;
+        return renderLayer;
+    }
+
+    /**
      * Creates a new Item Layer Renderer instance based on this Animation Layer.
      *
      * @param renderer The item renderer to use for the layer.

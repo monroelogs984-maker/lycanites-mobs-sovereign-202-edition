@@ -154,11 +154,16 @@ public class ClientSetup {
             }
         }
 
-        // Projectiles (Phase 6a): every JSON projectile renders as a sprite (model projectiles too, for now).
+        // Projectiles: JSON projectiles with a model class use their OBJ model, the rest render as sprites.
         for (ProjectileInfo projectileInfo : ProjectileManager.getInstance().getProjectiles()) {
             EntityType<? extends BaseProjectileEntity> entityType =
                     (EntityType<? extends BaseProjectileEntity>) (EntityType<?>) ObjectManager.getEntityType(projectileInfo.getName());
-            if (entityType != null) {
+            if (entityType == null) {
+                continue;
+            }
+            if (ModelManager.getInstance().getProjectileModel(projectileInfo) != null) {
+                event.registerEntityRenderer(entityType, context -> new com.lycanitesmobs.client.renderer.entity.projectile.ProjectileModelRenderer(context, projectileInfo));
+            } else {
                 event.registerEntityRenderer(entityType, ProjectileSpriteRenderer::new);
             }
         }
