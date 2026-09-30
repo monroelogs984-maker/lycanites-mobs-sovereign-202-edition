@@ -197,3 +197,22 @@ Group sizes, now -> after moves and cuts:
 - worm: 4 -> 4
 - slime: 0 -> 3
 - golem: 1 -> 3
+
+## Final cut list (10, Glenn 2026-09-30; not removed yet)
+
+geken, triffid, eyewig, malwrath, feradon, brucha, abtu, cryptkeeper, tpumpkyn, dawon. 121 - 10 = **111 planned creatures**.
+Every type keeps 3+ members (verified by script).
+
+## Spawn rarity (Glenn 2026-09-30; not applied yet)
+
+Two global spawn rates (common, rare >= 65% of common). Not rated (no natural spawn): rahovart, asmodeus, amalgalich
+(altar bosses), concapedesegment, joustealpha, makaalpha (parts), sylph, aegis (summon/fusion only - open question
+whether Aegis gets a natural spawn now that it's an angel).
+
+**Rare (36 of 103 rated, 35%):** eechetik, grue, barghest, conba, wraamon, erepede, ostimien, astaroth, naxiris, shade,
+herma, ioray, stryder, cockatrice, apollyon, vorach, ignibus, morock, quetzodracl, zoataur, aglebemu, ningen, thresher,
+sutiramu, ettin, jabberwock, troll, wildkin, afrit, arix, raidra, serpix, umibas, grell, cherufe, treant.
+Everything else rated is **common**.
+
+Open flags (Glenn to confirm): Anthronian is 100% rare (maybe make Troll or Wildkin common); Undead has no rares
+(maybe Reaper or Wendigo rare).
