@@ -367,14 +367,16 @@ for Phase 10; new systems = own phases (below).**
 
 **Cut (don't port):**
 - ~20% of creatures. **Cut list so far (Glenn, 2026-09-30; not removed yet, cut later):** geken (reptile),
-  triffid (plant), eyewig (insect), malwrath (demon), feradon + brucha (beast), abtu (aquatic), trite + grigori
-  (aberration). 9 of ~24. Knock-ons to handle when cutting: **Asmodeus summons grigori + trite minions in its fight
-  and bursts trites on death, and Astaroth bursts trites on death** (needs replacement minions or a redesign);
-  dungeon mob lists (lushtomb: geken, eyewig; desertcrypts: triffid; demonictemple: malwrath; streamshrine: abtu;
-  aberrantstation: trite, grigori), 9 mob event spawners, the fishing spawner (abtu), equipment parts (eyewig eye,
-  malwrath eye, brucha quill; equipment is out of the first release anyway). Group sizes before -> after this batch:
-  elemental 21, beast 16->14, insect 12->11, aquatic 10->9, aberration 9->7, demon 7->6, undead 7, dragon 6,
-  reptile 5->4, imp 5, plant 5->4, avian 4, worm 4, amphibian 3, anthronian 3, arachnid 3, golem 1 (121 total).
+  triffid (plant), eyewig (insect), malwrath (demon), feradon + brucha (beast), abtu (aquatic). Trite and grigori
+  were considered and **kept** (Asmodeus's fight summons them). Knock-ons to handle when cutting: dungeon mob lists
+  (lushtomb: geken, eyewig; desertcrypts: triffid; demonictemple: malwrath; streamshrine: abtu), their mob event
+  spawners, the fishing spawner (abtu), equipment parts (eyewig eye, malwrath eye, brucha quill; equipment is out of
+  the first release anyway).
+- **Even out creature group sizes** mainly by *moving* creatures between types rather than cutting: some elementals
+  Glenn wants to keep move to other types (incl. the empty angel/slime), some beasts etc. too. Which ones: TBD by
+  Glenn. Sizes now (121): elemental 21, beast 16, insect 12, aquatic 10, aberration 9, demon 7, undead 7, dragon 6,
+  reptile 5, imp 5, plant 5, avian 4, worm 4, amphibian 3, anthronian 3, arachnid 3, golem 1 (some counts include
+  linked entries: concapedesegment, makaalpha, joustealpha, vespidqueen).
 - Creature levels (`levelPerDay`, level multipliers etc.) — Power Scale covers this in S202.
 - Breeding (farming itself stays possible; food stays).
 - Boss-channel *random* events and all holiday events (halloween, rudolph, satanclaws, poopparty).
