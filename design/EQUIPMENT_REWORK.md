@@ -53,7 +53,7 @@ malwratheye, naxiriseye, sprigganheart, stryderheart).
 
 Rule used: a part whose features are *only* projectiles -> right-click ability; otherwise a passive (on-hit
 effects, self buffs, bonus damage, summon chance, `hit` procs). The 6 parts marked _(drops right-click ...)_ have both:
-pick passive or ability. 17 abilities, 29 passives, 2 cut. Note: some "abilities" are official `primary` triggers
+pick passive or ability. 17 abilities, 31 passives, 2 cut. Note: some "abilities" are official `primary` triggers
 (fire on swing: behemophethand, belphegorarm, gammasphere, malwratheye, sprigganheart, stryderheart), which could
 instead be on-swing passive procs.
 
