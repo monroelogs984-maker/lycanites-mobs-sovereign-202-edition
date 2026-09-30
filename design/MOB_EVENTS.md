@@ -24,8 +24,8 @@ rudolph, saltytree, satanclaws). Seasonal events are open: keep them outside the
 
 - Cycle: an event roughly every **45-50 min** of gameplay -> `random.enabled = true`, `random.ticks.min = 54000`,
   `random.ticks.max = 60000` (S202 config). Each dimension has its own timer.
-- Event duration: official is 1 min (1200 ticks) for all of them; event mobs force-despawn after 10 min
-  (`Mob Events.duration = 12000`). **Open:** keep short bursts or lengthen (e.g. 5 min siege / ~10 min whole night).
+- Event duration: **keep the official 1 min (1200 ticks)** (Glenn 2026-09-30: events should interrupt only a small
+  minority of playtime). Event mobs still force-despawn after 10 min (`Mob Events.duration = 12000`).
 
 ## Fixes needed for the picks (proposed, awaiting Glenn)
 
