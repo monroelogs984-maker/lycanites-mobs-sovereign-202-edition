@@ -395,7 +395,9 @@ for Phase 10; new systems = own phases (below).**
   2 uncommon + 1 rare -> 80/9/9/2). 2-3 variants per mob. Open: astaroth/trite/kathoga have 2 subspecies
   (forms) x 2 colors — how to treat.
 - Creature types: keep all, rebalance counts; give the currently empty `angel` and `slime` types a few mobs.
-- Dungeons: rarer and smaller. Fluids: kept (key to spawning/attacks). Food: kept.
+- Dungeons: **official system kept as-is for the first version** (Glenn 2026-09-30), all 7 schematics in all their
+  dimensions incl. Nether and End. The earlier "rarer and smaller" and custom Nether/End dungeon plans are shelved.
+  Fluids: kept (key to spawning/attacks). Food: kept.
 - Beastiary: rewritten to match, credit to Lycanite kept.
 
 **New systems (new phases):**
@@ -1634,7 +1636,7 @@ section y 112-127); a waterlogged Stream Shrine (water inside). **Gotchas:** a d
 comes within `minDistanceFromSpawn` (500) of spawn is registered as a structure (and shows in `locate`) but skipped at
 build time - that's the official runtime check - so test 1000+ blocks out. `/forceload add` caps at 256 chunks.
 **Not verified:** a player actually walking/fighting through one, End placement (aberrantstation), the midnight
-dimension. **Tuning pending (Glenn: "rarer and smaller"):** a dungeon currently spans y 0-255 with up to 10 levels,
+dimension. **Tuning shelved (Glenn 2026-09-30: official dungeons are fine for the first version):** a dungeon currently spans y 0-255 with up to 10 levels,
 spacing 32-38 chunks.
 
 **Fluid pools.** Copied the official acid/moglava/ooze/poison lake + spring configured/placed features, biome tags and
