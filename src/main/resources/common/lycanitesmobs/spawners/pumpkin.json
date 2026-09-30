@@ -1,7 +1,7 @@
 {
 	"name": "pumpkin",
 	"type": "spawner",
-	"enabled": true,
+	"enabled": false,
 	"loadDefault": true,
 	"mobCountMin": 3,
 	"ignoreBiomes": true,

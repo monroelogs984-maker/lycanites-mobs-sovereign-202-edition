@@ -12,7 +12,7 @@
 	"triggers": [
 		{
 			"type": "explosion",
-			"chance": 0.05,
+			"chance": 0.04,
 			"entityTypesListType": "blacklist",
 			"entityIds": [
 				"lycanitesmobs:tremor"
@@ -22,7 +22,7 @@
 		},
 		{
 			"type": "explosion",
-			"chance": 0.2,
+			"chance": 0.06,
 			"playerOnly": true,
 			"cooldown": 1200
 		}
@@ -30,8 +30,16 @@
 	"locations": [
 		{
 			"type": "base",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [0, 0, 0],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				0,
+				0,
+				0
+			],
 			"sorting": "random"
 		}
 	],

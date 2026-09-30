@@ -14,14 +14,22 @@
 	"triggers": [
 		{
 			"type": "crop",
-			"chance": 0.005
+			"chance": 0.02
 		}
 	],
 	"locations": [
 		{
 			"type": "base",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [0, 0, 0],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				0,
+				0,
+				0
+			],
 			"sorting": "random"
 		}
 	],

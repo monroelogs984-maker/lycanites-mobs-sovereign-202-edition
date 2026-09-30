@@ -15,14 +15,22 @@
 	"triggers": [
 		{
 			"type": "mix",
-			"chance": 0.01
+			"chance": 0.0025
 		}
 	],
 	"locations": [
 		{
 			"type": "base",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [0, 0, 0],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				0,
+				0,
+				0
+			],
 			"sorting": "random"
 		}
 	],

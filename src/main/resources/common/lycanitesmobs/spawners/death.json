@@ -17,16 +17,27 @@
 	"triggers": [
 		{
 			"type": "kill",
-			"chance": 0.02,
-			"entityTypes": ["undead"],
-			"entityTypesListType": "blacklist"
+			"chance": 0.005,
+			"entityTypes": [
+				"undead"
+			],
+			"entityTypesListType": "blacklist",
+			"hostileOnly": true
 		}
 	],
 	"locations": [
 		{
 			"type": "base",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [0, 0, 0],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				0,
+				0,
+				0
+			],
 			"sorting": "random"
 		}
 	],

@@ -3,6 +3,7 @@ package com.lycanitesmobs.core.entity.spawner.trigger;
 import com.google.gson.JsonObject;
 import com.lycanitesmobs.core.entity.spawner.Spawner;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -37,6 +38,12 @@ public class MixBlockSpawnTrigger extends BlockSpawnTrigger {
 			return;
 		}
 
-		this.trigger(world, null, mixPos.above(), this.getBlockLevel(blockState, world, mixPos), 0);
+		// S202: only with a player nearby, so unattended cobblestone generators never spawn anything.
+		Player player = world.getNearestPlayer(mixPos.getX() + 0.5D, mixPos.getY() + 0.5D, mixPos.getZ() + 0.5D, 32D, false);
+		if (player == null) {
+			return;
+		}
+
+		this.trigger(world, player, mixPos.above(), this.getBlockLevel(blockState, world, mixPos), 0);
 	}
 }

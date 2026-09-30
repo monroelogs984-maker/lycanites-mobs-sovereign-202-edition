@@ -16,7 +16,7 @@
 	"triggers": [
 		{
 			"type": "kill",
-			"chance": 0.03,
+			"chance": 0.02,
 			"entityTypes": [
 				"undead"
 			],
@@ -30,8 +30,16 @@
 	"locations": [
 		{
 			"type": "base",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [0, 0, 0],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				0,
+				0,
+				0
+			],
 			"sorting": "random"
 		}
 	],

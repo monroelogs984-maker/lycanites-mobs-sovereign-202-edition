@@ -3,10 +3,12 @@ package com.lycanitesmobs.core.entity.spawner.trigger;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.entity.spawner.Spawner;
 import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -26,6 +28,9 @@ public abstract class EntitySpawnTrigger extends SpawnTrigger {
 
 	/** Determines if the entity types list is a blacklist or whitelist. **/
 	protected String entityTypesListType = "whitelist";
+
+	/** S202: if true, only hostile entities (monsters, or untamed non-peaceful Lycanites creatures) match. **/
+	protected boolean hostileOnly = false;
 
 	/** A list of entity ids that match this trigger. **/
 	protected List<String> entityIds = new ArrayList<>();
@@ -70,6 +75,9 @@ public abstract class EntitySpawnTrigger extends SpawnTrigger {
 		if(json.has("entityIdsListType"))
 			this.entityIdsListType = json.get("entityIdsListType").getAsString();
 
+		if(json.has("hostileOnly"))
+			this.hostileOnly = json.get("hostileOnly").getAsBoolean();
+
 		super.loadFromJSON(json);
 	}
 
@@ -84,8 +92,21 @@ public abstract class EntitySpawnTrigger extends SpawnTrigger {
 		return "undefined";
 	}
 
+	/** S202: monsters, plus untamed Lycanites creatures that aren't peaceful. **/
+	public static boolean isHostile(LivingEntity entity) {
+		if (entity instanceof BaseCreatureEntity creature) {
+			return !creature.isTamed() && !creature.isMinion() && !creature.getCreatureInfo().isPeaceful();
+		}
+		return entity instanceof Enemy;
+	}
+
 	/** Returns true if the provided entity should trigger this Spawn Trigger. **/
 	public boolean isMatchingEntity(LivingEntity killedEntity) {
+
+		// Check Hostility:
+		if (this.hostileOnly && !isHostile(killedEntity)) {
+			return false;
+		}
 
 		// Check Entity Type:
 		if(!this.creatureAttributes.isEmpty()) {

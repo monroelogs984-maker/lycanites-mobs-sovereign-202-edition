@@ -27,7 +27,7 @@
 			"type": "player",
 			"count": 1,
 			"chance": 0.5,
-			"tickRate": 100,
+			"tickRate": 150,
 			"conditions": [
 				{
 					"type": "player",
@@ -39,7 +39,7 @@
 			"type": "player",
 			"count": 0,
 			"chance": 1,
-			"tickRate": 100,
+			"tickRate": 150,
 			"conditions": [
 				{
 					"type": "player",
@@ -51,11 +51,24 @@
 	"locations": [
 		{
 			"type": "random",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [2, 2, 2],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				2,
+				2,
+				2
+			],
 			"sorting": "random",
 			"limit": 1,
-			"blocks": ["minecraft:air", "minecraft:cave_air", "minecraft:tall_grass", "minecraft:water"],
+			"blocks": [
+				"minecraft:air",
+				"minecraft:cave_air",
+				"minecraft:tall_grass",
+				"minecraft:water"
+			],
 			"listType": "whitelist",
 			"solidGround": false
 		}

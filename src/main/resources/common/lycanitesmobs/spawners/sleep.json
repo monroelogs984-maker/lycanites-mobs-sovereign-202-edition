@@ -14,15 +14,23 @@
 	"triggers": [
 		{
 			"type": "sleep",
-			"chance": 0.1,
+			"chance": 0.02,
 			"cooldown": 1200
 		}
 	],
 	"locations": [
 		{
 			"type": "random",
-			"rangeMin": [0, 0, 0],
-			"rangeMax": [2, 2, 2],
+			"rangeMin": [
+				0,
+				0,
+				0
+			],
+			"rangeMax": [
+				2,
+				2,
+				2
+			],
 			"sorting": "random",
 			"limit": 1,
 			"blocks": [],
