@@ -1725,3 +1725,25 @@ went through every remaining unported file and `TODO(port)`:
   (overrides nothing), the navigator's fluid element check (only gated vanilla water/lava), Kobold's
   `onRemovedFromWorld` bag drop (fired on chunk unload - the port drops on discard only).
 - Still open, minor: the boss ARENA sync slot, the Soulgazer interact-command priority, pet GUI refresh scheduling.
+
+## Hellforged vs Incursion (design input, 2026-09-30)
+
+Compared the latest Hellforged sources (official GitLab: `Minecraft-1.12.2` = 2.0.8.10, last commit 2025-09-23;
+`community-minecraft-1.16.5` = 2.3.3.8, 2025-12-05) against Incursion (`1.20.1-dev`, this port's reference): creature,
+projectile, event, equipment, item, element, spawner and dungeon JSON sets, lang keys, config keys, and per-class methods.
+Incursion carries essentially all Hellforged content (same 122 creatures, 73 events, 59 equipment parts, 40 items, all
+101 config options); 1.12.2 used older names (pinky = kathoga, cacodemon = malwrath, archvile = apollyon, behemoth =
+behemophet, belph = belphegor, beholder = naxiris, lobber = cherufe, gorger = umibas, dweller = ningen, lurker = ostimien,
+quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **Not in Incursion:**
+- **Djinn** (1.12.2 only): air elemental, summonable (cost 2), ribbon-armed model, 10 HP. 1.16.5 replaced it with Raidra
+  (lightning, not summonable, different model); Incursion inherited Raidra. Assets + `EntityDjinn`/`ModelDjinn` are in
+  the 1.12.2 branch if S202 wants it back.
+- **True sight** (1.12.2 only, added 2022-12): 17 creatures (triffid, serpix, reaper, rahovart, krake, jouste,
+  joustealpha, grell, ostimien, grigori, umibas, epion, naxiris, crusk, asmodeus, banshee, amalgalich) ignore
+  invisibility and the sneaking range reduction when targeting (`TargetingGoal`).
+- **Random-placed dungeon variants** (1.12.2): `aberrantstation_random` / `shadowlabyrinth_random` placed at random
+  y 64-80 in the Nether/End via a random placer, plus a per-schematic `canGenerateAsTower` toggle.
+- **Smitefire fireball** projectile (1.12.2; Incursion keeps only an unused charge item model).
+- 1.16.5: five elements (bose, coda, glasma, mote, murati) that Incursion replaced with chrono, fate, flux, gravity,
+  nova, vortex (+ xeno); temple/village spawners became Incursion's structure spawns (`structurespawns/`).
+- Incursion-new, not in Hellforged: Stream Shrine dungeon, the stick recolor (`CreatureRecolorScreen`, unported here).
