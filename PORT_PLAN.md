@@ -1739,6 +1739,10 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
   texture, stats and code - verified by file hashes), and the 1.12.2 Zephyr became **Raidra** (identical texture). So no
   creature is missing; the Djinn is in this port as the Zephyr. Glenn's "Orphani" angel plan (repurposed Djinn) therefore
   means repurposing or cloning the Zephyr - decision pending.
+- **Raidra (lightning elemental, the 1.12.2 Zephyr) is in Incursion and this port but never appears naturally**: no
+  spawners or mob events list it (the 1.12.2 version had none either). Its only source is fusing a Zephyr with a Cinder
+  (pets/minions). In 1.12.2 a wild Djinn struck by lightning, or after absorbing 10 fire damage, transformed into it;
+  1.16.5 broke that (after the rename the Zephyr "transforms" into `zephyr`, itself) and Incursion removed it.
 - **True sight** (1.12.2 only, added 2022-12): 17 creatures (triffid, serpix, reaper, rahovart, krake, jouste,
   joustealpha, grell, ostimien, grigori, umibas, epion, naxiris, crusk, asmodeus, banshee, amalgalich) ignore
   invisibility and the sneaking range reduction when targeting (`TargetingGoal`).
