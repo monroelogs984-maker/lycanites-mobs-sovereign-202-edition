@@ -8,15 +8,18 @@
 	"conditions": [
 		{
 			"type": "world",
-			"dimensionIds": ["minecraft:the_nether", "minecraft:the_end"],
-			"dimensionListType": "blacklist"
+			"dimensionIds": [
+				"minecraft:overworld"
+			],
+			"dimensionListType": "whitelist"
 		}
 	],
 	"triggers": [
 		{
 			"type": "random",
 			"weight": 8,
-			"priority": 1
+			"priority": 1,
+			"rotationOrder": 2
 		}
 	],
 	"effects": [

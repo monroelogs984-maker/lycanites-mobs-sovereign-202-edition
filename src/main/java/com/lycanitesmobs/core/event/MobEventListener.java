@@ -171,6 +171,10 @@ public class MobEventListener {
      * Triggers a Random Mob Event Trigger if one is available.
      **/
     public void triggerRandomMobEvent(Level world, ExtendedWorld worldExt, int level) {
+        // S202: nobody in this dimension, skip this turn without advancing the rotation.
+        if (world.players().isEmpty()) {
+            return;
+        }
         List<RandomMobEventTrigger> validTriggers = new ArrayList<>();
         int totalWeights = 0;
         int highestPriority = 0;
@@ -186,6 +190,28 @@ public class MobEventListener {
             }
         }
         if (totalWeights <= 0) {
+            return;
+        }
+
+        // S202: a dimension whose valid events have a rotation order runs them in that fixed order, looping.
+        List<RandomMobEventTrigger> rotation = new ArrayList<>();
+        for (RandomMobEventTrigger mobEventTrigger : validTriggers) {
+            if (mobEventTrigger.getRotationOrder() >= 0) {
+                rotation.add(mobEventTrigger);
+            }
+        }
+        if (!rotation.isEmpty()) {
+            rotation.sort(java.util.Comparator.comparingInt(RandomMobEventTrigger::getRotationOrder));
+            int lastIndex = -1;
+            for (int i = 0; i < rotation.size(); i++) {
+                if (rotation.get(i).getMobEvent().getName().equals(worldExt.getRotationLastEventName())) {
+                    lastIndex = i;
+                    break;
+                }
+            }
+            RandomMobEventTrigger next = rotation.get((lastIndex + 1) % rotation.size());
+            worldExt.setRotationLastEventName(next.getMobEvent().getName());
+            next.trigger(world, null, new BlockPos(0, 0, 0), level, -1);
             return;
         }
 

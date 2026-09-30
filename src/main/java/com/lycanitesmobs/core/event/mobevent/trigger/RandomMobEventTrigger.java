@@ -10,12 +10,19 @@ public class RandomMobEventTrigger extends MobEventTrigger {
 	/** The priority of this Trigger. This is usually 1 but if a higher priority Trigger has its conditions met, it will be picked first regardless of its weight. Seasonal mob events use this to override standard events. **/
 	protected int priority = 1;
 
+	/** S202: position in its dimension's fixed event rotation, -1 when not part of a rotation. **/
+	protected int rotationOrder = -1;
+
 	public int getWeight() {
 		return this.weight;
 	}
 
 	public int getPriority() {
 		return this.priority;
+	}
+
+	public int getRotationOrder() {
+		return this.rotationOrder;
 	}
 
 
@@ -32,6 +39,9 @@ public class RandomMobEventTrigger extends MobEventTrigger {
 
 		if(json.has("priority"))
 			this.priority = json.get("priority").getAsInt();
+
+		if(json.has("rotationOrder"))
+			this.rotationOrder = json.get("rotationOrder").getAsInt();
 
 		super.loadFromJSON(json);
 	}

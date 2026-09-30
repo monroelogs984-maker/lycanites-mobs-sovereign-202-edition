@@ -43,14 +43,14 @@ public class MobEventManager extends JSONLoader {
 
     // Properties:
     private boolean mobEventsEnabled = true;
-    private boolean mobEventsRandom = false;
+    private boolean mobEventsRandom = true;
     /**
      * The default temporary time applied to mobs spawned from events, where it will forcefully despawn after the specified time (in ticks). MobSpawns can override this.
      **/
     private int defaultMobDuration = 12000;
     private int minEventsRandomDay = 0;
-    private int minTicksUntilEvent = 60 * 60 * 20;
-    private int maxTicksUntilEvent = 120 * 60 * 20;
+    private int minTicksUntilEvent = 45 * 60 * 20;
+    private int maxTicksUntilEvent = 50 * 60 * 20;
 
 
     /**

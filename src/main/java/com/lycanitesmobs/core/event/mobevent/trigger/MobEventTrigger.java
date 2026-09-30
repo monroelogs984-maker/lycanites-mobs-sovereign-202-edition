@@ -63,6 +63,10 @@ public abstract class MobEventTrigger {
     /**
      * Constructor
      **/
+    public MobEvent getMobEvent() {
+        return this.mobEvent;
+    }
+
     public MobEventTrigger(MobEvent mobEvent) {
         this.mobEvent = mobEvent;
     }

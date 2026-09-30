@@ -41,6 +41,14 @@
 		{
 			"mobId": "lycanitesmobs:shambler",
 			"weight": 8
+		},
+		{
+			"mobId": "lycanitesmobs:ent",
+			"weight": 8
+		},
+		{
+			"mobId": "lycanitesmobs:treant",
+			"weight": 4
 		}
 	]
 }

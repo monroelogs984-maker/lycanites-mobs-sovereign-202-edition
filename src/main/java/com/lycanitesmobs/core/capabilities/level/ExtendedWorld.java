@@ -54,6 +54,8 @@ public class ExtendedWorld extends SavedData {
     long worldEventStartTargetTime = 0;
     long worldEventLastStartedTime = 0;
     String worldEventName = "";
+    /** S202: the last event started by this dimension's fixed rotation. **/
+    String rotationLastEventName = "";
     int worldEventCount = -1;
 
     // Entities:
@@ -265,6 +267,17 @@ public class ExtendedWorld extends SavedData {
         this.worldEventName = setString;
     }
 
+    public String getRotationLastEventName() {
+        return this.rotationLastEventName;
+    }
+
+    public void setRotationLastEventName(String eventName) {
+        if (!this.rotationLastEventName.equals(eventName)) {
+            this.setDirty();
+        }
+        this.rotationLastEventName = eventName;
+    }
+
     public void increaseMobEventCount() {
         this.worldEventCount++;
         this.setDirty();
@@ -472,6 +485,9 @@ public class ExtendedWorld extends SavedData {
         if (nbtTagCompound.contains("WorldEventCount")) {
             this.worldEventCount = nbtTagCompound.getInt("WorldEventCount");
         }
+        if (nbtTagCompound.contains("RotationLastEvent")) {
+            this.rotationLastEventName = nbtTagCompound.getString("RotationLastEvent");
+        }
     }
 
 
@@ -484,6 +500,7 @@ public class ExtendedWorld extends SavedData {
         nbtTagCompound.putLong("WorldEventLastStartedTime", this.worldEventLastStartedTime);
         nbtTagCompound.putString("WorldEventName", this.worldEventName);
         nbtTagCompound.putInt("WorldEventCount", this.worldEventCount);
+        nbtTagCompound.putString("RotationLastEvent", this.rotationLastEventName);
         return nbtTagCompound;
     }
 

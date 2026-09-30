@@ -27,7 +27,7 @@ public class ConfigMobEvent {
 		this.mobEventsRandom = builder
 				.comment("Set to false to disable random mob events for every world.")
 				.translation(CoreConfig.CONFIG_PREFIX + "mobevents.enabled")
-				.define("random.enabled", false);
+				.define("random.enabled", true);
 
 		this.defaultMobDuration = builder
 				.comment("The default temporary time applied to mobs spawned from events, where it will forcefully despawn after the specified time (in ticks). MobSpawns can override this.")
@@ -42,12 +42,12 @@ public class ConfigMobEvent {
 		this.minTicksUntilEvent = builder
 				.comment("Minimum time in ticks until a random event can occur. 20 Ticks = 1 Second.")
 				.translation(CoreConfig.CONFIG_PREFIX + "mobevents.enabled")
-				.define("random.ticks.min", 60 * 60 * 20);
+				.define("random.ticks.min", 45 * 60 * 20);
 
 		this.maxTicksUntilEvent = builder
 				.comment("Maximum time in ticks until a random event can occur. 20 Ticks = 1 Second.")
 				.translation(CoreConfig.CONFIG_PREFIX + "mobevents.enabled")
-				.define("random.ticks.max", 120 * 60 * 20);
+				.define("random.ticks.max", 50 * 60 * 20);
 
 		this.altarsEnabled = builder
 				.comment("Set to false to disable altars, Soulkeys can still be crafted but wont work on Altars.")

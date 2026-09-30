@@ -1,7 +1,7 @@
 {
 	"name": "roasting",
 	"type": "event",
-	"enabled": true,
+	"enabled": false,
 	"loadDefault": true,
 	"channel": "world",
 	"duration": 1200,

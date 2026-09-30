@@ -5,12 +5,21 @@
 	"loadDefault": true,
 	"channel": "world",
 	"duration": 1200,
-	"conditions": [],
+	"conditions": [
+		{
+			"type": "world",
+			"dimensionIds": [
+				"minecraft:overworld"
+			],
+			"dimensionListType": "whitelist"
+		}
+	],
 	"triggers": [
 		{
 			"type": "random",
 			"weight": 8,
-			"priority": 1
+			"priority": 1,
+			"rotationOrder": 0
 		}
 	],
 	"effects": [
