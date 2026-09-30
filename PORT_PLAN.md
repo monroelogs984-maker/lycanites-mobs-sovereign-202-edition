@@ -1735,9 +1735,10 @@ Incursion carries essentially all Hellforged content (same 122 creatures, 73 eve
 101 config options); 1.12.2 used older names (pinky = kathoga, cacodemon = malwrath, archvile = apollyon, behemoth =
 behemophet, belph = belphegor, beholder = naxiris, lobber = cherufe, gorger = umibas, dweller = ningen, lurker = ostimien,
 quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **Not in Incursion:**
-- **Djinn** (1.12.2 only): air elemental, summonable (cost 2), ribbon-armed model, 10 HP. 1.16.5 replaced it with Raidra
-  (lightning, not summonable, different model); Incursion inherited Raidra. Assets + `EntityDjinn`/`ModelDjinn` are in
-  the 1.12.2 branch if S202 wants it back.
+- ~~Djinn~~ **correction:** the 1.12.2 Djinn was not removed, it was **renamed Zephyr** in 1.16 (identical model,
+  texture, stats and code - verified by file hashes), and the 1.12.2 Zephyr became **Raidra** (identical texture). So no
+  creature is missing; the Djinn is in this port as the Zephyr. Glenn's "Orphani" angel plan (repurposed Djinn) therefore
+  means repurposing or cloning the Zephyr - decision pending.
 - **True sight** (1.12.2 only, added 2022-12): 17 creatures (triffid, serpix, reaper, rahovart, krake, jouste,
   joustealpha, grell, ostimien, grigori, umibas, epion, naxiris, crusk, asmodeus, banshee, amalgalich) ignore
   invisibility and the sneaking range reduction when targeting (`TargetingGoal`).
