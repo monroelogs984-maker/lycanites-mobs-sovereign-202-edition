@@ -32,10 +32,11 @@ fractional percentages like 0.25% work as-is.
 - **Full moon: correction.** Neither spawner is actually full-moon conditional. The full-moon condition sits on a
   count-*reset* trigger (`count: 0`, `useWorldTime`, fires at dayTime 1) whose condition requires dayTime >= 10000, so
   it can never fire. Result: the count never resets, and the 3 strikes accumulate over the whole playthrough.
-  **Open:** make the reset work (e.g. each dawn), so ignoring the warning means "kept going today"?
+  **Decided (Glenn 2026-09-30): reset the count each dawn**, so a warning means "back off for today".
 - **Death** fires on *any* non-undead kill, including animals (cows, chickens). At 0.5%, that's about 1 Reaper per 200
-  kills. **Open:** restrict to hostile mobs?
+  kills. **Decided (Glenn 2026-09-30): hostile mob kills only.**
 - **Mix** has no player (`trigger(world, null, ...)`), so cooldowns (per-player) can't apply, and it fires with no one
   nearby: an unattended loaded cobble generator still spawns Xaphans. At 0.25% that's about 1 per 400 blocks formed.
+  **Decided (Glenn 2026-09-30): only fire with a player nearby** (needs code: find the nearest player in range).
 - Creature IDs in the Chaos elemental list: moved creatures (Wisp/Aegis/Banshee/Raidra -> angel, Vapula -> golem,
   Xaphan -> slime) are listed by ID, so they still count as "elementals" there. Decide with the type rework.
