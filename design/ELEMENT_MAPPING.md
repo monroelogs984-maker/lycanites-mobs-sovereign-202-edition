@@ -1,6 +1,6 @@
 # Element rework: mapping draft
 
-Draft for Glenn to edit (2026-09-30). Nothing in the mod has changed yet. When this is final I apply it to the element and creature JSONs.
+**Approved by Glenn (2026-09-30)** - not applied to the mod yet. When this is final I apply it to the element and creature JSONs.
 
 **Target: 14 elements** = 6 base (Fire, Water, Earth, Air, Order, Chaos) + Shadow, Lava, Aether, Frost, Quake, Poison, Nether, Arcane.
 **Dropped (7 used):** Arbour, Fae, Lightning, Phase, Void, Acid, Light. **Deleted (7 empty placeholders):** Chrono, Fate, Flux, Gravity, Nova, Vortex, Xeno.

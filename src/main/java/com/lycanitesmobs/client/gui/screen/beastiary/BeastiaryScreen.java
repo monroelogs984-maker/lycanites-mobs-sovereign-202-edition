@@ -98,7 +98,31 @@ public abstract class BeastiaryScreen extends BaseScreen {
 			this.mc.mainWindow.calculateScale(this.mc.gameSettings.guiScale, this.mc.getForceUnicodeFont());
 		}
 		GUI_ACTIVE = false;*/
+        this.restoreGuiScale();
         super.removed();
+    }
+
+    /**
+     * The Beastiary is laid out for GUI scale 2. Port: restores 1.12.2 Hellforged behaviour (commented out in 1.16.5,
+     * missing in Incursion) - while a Beastiary page is open the GUI scale is forced to 2, so at the usual 3/Auto it no
+     * longer draws oversized. The player's setting itself is never changed; removed() puts the window scale back.
+     */
+    public static final int BEASTIARY_GUI_SCALE = 2;
+
+    protected void applyBeastiaryGuiScale() {
+        com.mojang.blaze3d.platform.Window window = this.mc.getWindow();
+        int scale = window.calculateScale(BEASTIARY_GUI_SCALE, this.mc.isEnforceUnicode());
+        if (window.getGuiScale() != scale) {
+            window.setGuiScale(scale);
+        }
+        this.width = window.getGuiScaledWidth();
+        this.height = window.getGuiScaledHeight();
+    }
+
+    protected void restoreGuiScale() {
+        // Not Minecraft.resizeDisplay(): that would re-init this closing screen and force the scale again.
+        com.mojang.blaze3d.platform.Window window = this.mc.getWindow();
+        window.setGuiScale(window.calculateScale(this.mc.options.guiScale().get(), this.mc.isEnforceUnicode()));
     }
 
     @Override
@@ -108,6 +132,7 @@ public abstract class BeastiaryScreen extends BaseScreen {
 
     @Override
     public void init() {
+        this.applyBeastiaryGuiScale();
         // 1) Make sure scaledResolution is set
         if (this.scaledResolution == null) {
             this.scaledResolution = this.mc.getWindow();
