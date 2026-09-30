@@ -1,4 +1,4 @@
-# Element rework: mapping draft
+# Creature rework: elements + types
 
 **Approved by Glenn (2026-09-30)** - not applied to the mod yet. When this is final I apply it to the element and creature JSONs.
 
@@ -155,3 +155,45 @@ Format: `creature (type): old -> new`. **Bold** = changes; edit the part after t
 - zoataur (dragon): earth -> earth
 
 Fusion is defined by creature pairs, not elements, so it keeps working. But 7 elementals lose their namesake element (Banshee = Phase, Nymph = Fae, Raidra = Lightning, Spectre = Void, Spriggan = Arbour, Wisp = Light, Xaphan = Acid), so their Beastiary text needs updating.
+
+## Creature type moves (approved by Glenn, 2026-09-30; not applied yet)
+
+Goal: even out the groups, every type at least 3 members. Types don't affect fusion. Beastiary text for the moved "X Elementals" gets rewritten with the element rework. Taming/summoning is being reworked separately, so tameability is ignored here.
+
+- lacedon: aquatic -> **amphibian**
+- jabberwock: beast -> **anthronian**
+- balayang: beast -> **avian**
+- cockatrice: dragon -> **avian**
+- clink: imp -> **golem**
+- vapula: elemental -> **golem**
+- eyewig: insect -> **arachnid** (on the cut list)
+- darkling: insect -> **arachnid**
+- grell: aberration -> **slime**
+- abaia: aquatic -> **slime**
+- xaphan: elemental -> **slime**
+- wisp: elemental -> **angel**
+- aegis: elemental -> **angel**
+- banshee: elemental -> **angel**
+- raidra: elemental -> **angel**
+
+Group sizes, now -> after moves and cuts:
+
+- elemental: 21 -> 15
+- beast: 16 -> 12
+- insect: 12 -> 10
+- aberration: 9 -> 8
+- aquatic: 10 -> 7
+- undead: 7 -> 7
+- avian: 4 -> 6
+- demon: 7 -> 6
+- dragon: 6 -> 5
+- amphibian: 3 -> 4
+- reptile: 5 -> 4
+- arachnid: 3 -> 4
+- anthronian: 3 -> 4
+- imp: 5 -> 4
+- angel: 0 -> 4
+- plant: 5 -> 4
+- worm: 4 -> 4
+- slime: 0 -> 3
+- golem: 1 -> 3
