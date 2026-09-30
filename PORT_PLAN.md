@@ -1751,7 +1751,7 @@ quillbeast = brucha, strider = stryder, tarantula = lycosa, joust = jouste). **N
   invisibility and the sneaking range reduction when targeting (`TargetingGoal`).
 - **Random-placed dungeon variants** (1.12.2): `aberrantstation_random` / `shadowlabyrinth_random` placed at random
   y 64-80 in the Nether/End via a random placer, plus a per-schematic `canGenerateAsTower` toggle.
-- **Smitefire fireball** projectile (1.12.2; Incursion keeps only an unused charge item model).
+- **Smitefire fireball** projectile (1.12.2; Incursion keeps only an unused charge item model). **Dropped (Glenn 2026-09-30): not needed for now, so it will not be ported.**
 - 1.16.5: five elements (bose, coda, glasma, mote, murati) that Incursion replaced with chrono, fate, flux, gravity,
   nova, vortex (+ xeno); temple/village spawners became Incursion's structure spawns (`structurespawns/`).
 - Incursion-new, not in Hellforged: Stream Shrine dungeon, the stick recolor (`CreatureRecolorScreen`, unported here).
