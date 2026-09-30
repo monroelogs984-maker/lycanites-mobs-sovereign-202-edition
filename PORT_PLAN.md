@@ -366,7 +366,15 @@ port-facing digest. Overall target: cut ~1/3 of the mod. **Cuts = skip while por
 for Phase 10; new systems = own phases (below).**
 
 **Cut (don't port):**
-- ~20% of creatures (list TBD — decide before the next Phase 5 batch; 50 of 122 already ported).
+- ~20% of creatures. **Cut list so far (Glenn, 2026-09-30; not removed yet, cut later):** geken (reptile),
+  triffid (plant), eyewig (insect), malwrath (demon), feradon + brucha (beast), abtu (aquatic), trite + grigori
+  (aberration). 9 of ~24. Knock-ons to handle when cutting: **Asmodeus summons grigori + trite minions in its fight
+  and bursts trites on death, and Astaroth bursts trites on death** (needs replacement minions or a redesign);
+  dungeon mob lists (lushtomb: geken, eyewig; desertcrypts: triffid; demonictemple: malwrath; streamshrine: abtu;
+  aberrantstation: trite, grigori), 9 mob event spawners, the fishing spawner (abtu), equipment parts (eyewig eye,
+  malwrath eye, brucha quill; equipment is out of the first release anyway). Group sizes before -> after this batch:
+  elemental 21, beast 16->14, insect 12->11, aquatic 10->9, aberration 9->7, demon 7->6, undead 7, dragon 6,
+  reptile 5->4, imp 5, plant 5->4, avian 4, worm 4, amphibian 3, anthronian 3, arachnid 3, golem 1 (121 total).
 - Creature levels (`levelPerDay`, level multipliers etc.) — Power Scale covers this in S202.
 - Breeding (farming itself stays possible; food stays).
 - Boss-channel *random* events and all holiday events (halloween, rudolph, satanclaws, poopparty).
