@@ -1,6 +1,6 @@
 # Taming and summoning
 
-**FINAL: hand-picked by Glenn (2026-09-30).** 57 tame / 48 summon (incl. Ventoraptor, see table). Goal (decided): **every creature is either tameable or summonable**,
+**FINAL: hand-picked by Glenn (2026-09-30).** 57 tame / 48 summon. Ventoraptor tame (confirmed); Grell losing riding is fine. Goal (decided): **every creature is either tameable or summonable**,
 never neither. Bosses and part-entities are excluded. The `fear` dummy is excluded.
 
 Officially: tameable = give its treat, with rank-2 Beastiary knowledge; summonable = summoning staff + soulstone
@@ -103,7 +103,7 @@ column freely.** Type = after the approved type moves.
 | umibas | worm | tame | **tame** |
 | uvaraptor | avian | tame | **tame** |
 | vapula | golem | — | **summon** |
-| ventoraptor | avian | tame | **tame** (not in Glenn's list; assumed tame like Uvaraptor, confirm) |
+| ventoraptor | avian | tame | **tame** |
 | vespid | insect | — | **summon** |
 | vespidqueen | insect | — | **tame** |
 | volcan | elemental | — | **summon** |
@@ -124,6 +124,6 @@ column freely.** Type = after the approved type moves.
 - 11 creatures flip from official: now tame: Aglebemu, Apollyon, Behemophet, Jabberwock, Pixen, Remobra, Vorach,
   Wraamon; now summon: Ettin, Grell, Serpix.
 - **Grell was mountable** and is now summon-only. Riding needs a tamed creature (`canBeMounted` checks `isTamed`), so
-  Grell can no longer be ridden.
+  Grell can no longer be ridden (accepted by Glenn).
 - Every type already has a treat item (`treat_<type>`, all 19 incl. angel/golem/slime), so the new tameables need
   no new items. Rare variants still can't be tamed (official).

@@ -1,6 +1,6 @@
 # Spawn climate (biome loosening)
 
-**DRAFT for Glenn (2026-09-30).** Decided: biome conditions become **climate only**. Dimension conditions stay as they
+**Method decided by Glenn (2026-09-30); supersedes the keyword draft below.** Biome conditions become **climate only**. Dimension conditions stay as they
 are. Each creature's biome list is replaced by one climate group:
 
 - **hot:** hot/sandy/savanna/badlands/dry biome tags
@@ -26,6 +26,29 @@ biome list would let them spawn everywhere:
 - The cold creatures (Arix, Bobeko, Frostweaver, Maug, Reiver, Serpix, Wendigo) exclude `-is_end`; harmless (the End is
   already blacklisted by dimension).
 The apply pass converts these into dimension conditions, then applies the climate.
+
+## Method (Glenn 2026-09-30)
+
+Use the real climate of each creature's current biomes, not keywords:
+1. Resolve the creature's biome tags/ids to the actual biomes (whatever the pack has: vanilla, BOP, Jagged...).
+2. Read each biome's **temperature** and **downfall** (humidity) and take the min/max of both over that set.
+3. **Loosen by about 15%:** widen each range by 15% of the full scale on both sides. Vanilla temperature runs about
+   -0.7 to 2.0 (so +/-0.4); downfall 0 to 1 (so +/-0.15).
+4. The spawn check becomes "biome temperature and downfall inside those ranges", so any biome with a matching climate
+   qualifies, including modded biomes that were never tagged.
+- Creatures with no biome condition stay "anywhere". Dimension conditions are unchanged. Dimension-proxy tags are
+  converted first (below).
+- Needs code: a climate condition on `CreatureSpawn` (temperature/downfall min/max), computed at load from the old
+  biome lists, plus a dev dump command to review the resulting ranges per creature.
+
+## Wraith (Glenn 2026-09-30)
+
+Spawns in **any Nether biome, upper half of the Nether** (y >= 64 of 0-128; the Nether roof is at 128). This replaces
+its broken biome list (see below). Needs a creature-level `minY` spawn field (not supported yet), or a dedicated
+spawner with a y range.
+
+
+## Superseded keyword draft (kept for reference)
 
 | Creature | Old biome words | Climate |
 |---|---|---|
