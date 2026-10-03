@@ -1814,6 +1814,8 @@ Design and layout decisions in `design/EQUIPMENT_REWORK.md` (Glenn picked the re
   right-click projectile is no longer listed; summaries come from `Imprints.getFeatureSummaries`, shared with the
   Shift tooltip.
 - Equipment parts lost their "not functional yet" right-click placeholder (the official part had no use action).
+- The 9 structural parts (wooden/iron rod, guard, paxel, axe head, pike joint, gold scepter head) are removed: part
+  JSONs, recipes and names (47 parts remain). Their renderer transform cases are left in, harmless.
 
 **Bugs found on the way:**
 - **The part-1 imprint component was a raw `ItemStack`.** NeoForge rejects that in dev ("Data components must
