@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Pose;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.Level;
  * DeferredLevelActionManager), block-griefing on attack (destroyAreaBlock), and bag-size
  * equipment overrides are dropped - see PORT_PLAN.md Phase 5/6.
  */
-public class EntityCalpod extends BaseCreatureEntity implements Enemy {
+public class EntityCalpod extends TameableCreatureEntity implements Enemy {
     // Fields restored from official (2026-09-28 method audit):
     private int swarmLimit = 5;
     private boolean griefing = true;
@@ -54,12 +55,12 @@ public class EntityCalpod extends BaseCreatureEntity implements Enemy {
 	// ========== Living Update ==========
 	@Override
     public void aiStep() {
-		if(!this.getCommandSenderWorld().isClientSide && this.hasAttackTarget() && this.getTarget() instanceof Player && this.updateTick % 60 == 0) {
+		if(!this.getCommandSenderWorld().isClientSide && !this.isTamed() && this.hasAttackTarget() && this.getTarget() instanceof Player && this.updateTick % 60 == 0) {
 			this.allyUpdate();
 		}
 
 		// Destroy Blocks:
-		if(!this.getCommandSenderWorld().isClientSide)
+		if(!this.getCommandSenderWorld().isClientSide && !this.isTamed()) // S202: pets don't grief
 			if(this.getTarget() != null && this.getCommandSenderWorld().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING) && this.griefing) {
 				float distance = this.getTarget().distanceTo(this);
 				if(distance <= this.getDimensions(Pose.STANDING).width() + 1.0F)

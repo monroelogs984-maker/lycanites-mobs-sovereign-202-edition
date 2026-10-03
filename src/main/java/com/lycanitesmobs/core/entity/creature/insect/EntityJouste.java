@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.CopyMasterAttackTargetGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
@@ -30,7 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * canBeLeashed (also master-system). canBeLeashed fixed to 1.21.1's no-arg signature. The
  * random-chance-to-become-a-JousteAlpha mechanic is kept verbatim since it's self-contained.
  */
-public class EntityJouste extends AgeableCreatureEntity {
+public class EntityJouste extends TameableCreatureEntity {
     public EntityJouste(EntityType<? extends EntityJouste> entityType, Level world) {
         super(entityType, world);
         this.hasAttackSound = true;
@@ -55,7 +56,7 @@ public class EntityJouste extends AgeableCreatureEntity {
     @Override
     public void onFirstSpawn() {
         CreatureInfo alphaInfo = CreatureManager.getInstance().getCreature("joustealpha");
-        if (alphaInfo != null) {
+        if (alphaInfo != null && !this.isMinion() && !this.isTamed()) { // S202: never swap a summon/pet for a wild alpha
             float alphaChance = (float) alphaInfo.getCreatureSpawn().getSpawnWeight() / Math.max(this.creatureInfo.getCreatureSpawn().getSpawnWeight(), 1);
             if (this.getRandom().nextFloat() <= alphaChance) {
                 EntityJousteAlpha alpha = (EntityJousteAlpha) CreatureManager.getInstance().getCreature("joustealpha").createEntity(this.getCommandSenderWorld());

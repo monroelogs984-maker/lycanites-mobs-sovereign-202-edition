@@ -1829,3 +1829,29 @@ states, level caps, items returned on close, infuser leveling + wrong element, s
 decode, save round trip) plus screenshots of all three screens. Deployed to Lycannots 2026-10-03.
 **Not verified by hand in-game yet:** clicking through the screens as a player, shift-click, and the passive/ability
 effects in combat (part 1).
+
+## Tame/summon reallocation, implemented (2026-10-03)
+
+Glenn's 57 tame / 48 summon picks (`design/TAMING_SUMMONING.md`) were applied to the JSONs on 2026-09-30 but never
+worked for 19 creatures: `CreatureInfo.isTameable()`/`isSummonable()` also require the entity class to extend
+`TameableCreatureEntity`, and these 19 were "neither" officially, so their classes extended `AgeableCreatureEntity` or
+`BaseCreatureEntity`. All 19 now extend `TameableCreatureEntity` (8 tame: arisaur, bobeko, calpod, gorgomite, krake,
+maka, treant, wendigo; 11 summon: aspid, cephignis, cherufe, concapede, geist, ghoul, ika, jouste, silex, vespid, yale).
+Owner safety, stance and passive come from the base class, as for the official tameables.
+
+Wild-only behaviour switched off for pets/minions:
+- Calpod/Gorgomite no longer call in wild allies when fighting a player while tamed; tamed Calpods don't chew wood.
+- Concapede: tamed/summoned heads spawn no body segments (orphaned segments turn into wild heads), and its daytime
+  aggression rule no longer overrides the stance command.
+- Maka/Jouste: a summon or pet is never swapped for a wild alpha on first spawn (natural spawns still can be).
+- Kept as official: block trails (Wendigo frostfire, Bobeko frost cloud, Aspid poison cloud) also run for pets, the
+  same as official tamed Behemophet (hellfire) and Lycosa (webs).
+
+Sounds: 72 missing `tame`/`beg`/`eat`/`mount` sound events (the 19 plus older gaps, e.g. Shade/Stryder had no mount
+sound) are filled from each creature's own `say` sound; `eat` uses vanilla `entity.generic.eat`. No new audio files.
+
+**Verified** with a temporary dev-client harness (removed): roster 57 tame / 48 summon / 0 both, every tameable tamed
+by feeding its type's treat with rank-2 knowledge, every summonable spawned as an owned minion (15 Jouste summons, no
+alpha swaps; no Concapede segments). Harness gotchas: `/lm beastiary complete` needs a rank argument and op
+permission; the test saves are floating platforms, so creatures spawned past the edge fall to their death.
+**Not verified by hand:** pets' behaviour in real play (following, fighting at the owner's side), perching.

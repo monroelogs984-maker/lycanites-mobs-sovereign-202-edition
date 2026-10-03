@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.golem;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -27,7 +28,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Vector3d;
 
-public class EntityCherufe extends BaseCreatureEntity implements Enemy {
+public class EntityCherufe extends TameableCreatureEntity implements Enemy {
 
     private int blockMeltingRadius = 2;
 

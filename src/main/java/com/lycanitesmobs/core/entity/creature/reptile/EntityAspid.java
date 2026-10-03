@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
@@ -16,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * Trimmed - dropped TemptGoal (not ported) and the hasMaster() check in canBeLeashed (tame
  * system not ported). Kept the poison-cloud trail (BlockPoisonCloud is already ported).
  */
-public class EntityAspid extends AgeableCreatureEntity {
+public class EntityAspid extends TameableCreatureEntity {
 
     public EntityAspid(EntityType<? extends EntityAspid> entityType, Level world) {
         super(entityType, world);

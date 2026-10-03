@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import net.minecraft.world.entity.player.Player;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
@@ -25,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * spawning logic (the actual "centipede body" mechanic) is kept close to the original since
  * that's the point of this creature.
  */
-public class EntityConcapedeHead extends AgeableCreatureEntity {
+public class EntityConcapedeHead extends TameableCreatureEntity {
 
     protected static int CONCAPEDE_SIZE_MAX = 10;
     private BaseCreatureEntity backSegment;
@@ -53,7 +54,8 @@ public class EntityConcapedeHead extends AgeableCreatureEntity {
 
     @Override
     public void onFirstSpawn() {
-        if (!this.getCommandSenderWorld().isClientSide && this.backSegment == null) {
+        // S202: summoned/tamed heads get no segments (orphaned segments become wild Concapede heads).
+        if (!this.getCommandSenderWorld().isClientSide && this.backSegment == null && !this.isMinion() && !this.isTamed()) {
             this.setGrowingAge(-this.growthTime / 4);
             int segmentCount = this.getRandom().nextInt(CONCAPEDE_SIZE_MAX);
             AgeableCreatureEntity parentSegment = this;
@@ -156,6 +158,8 @@ public class EntityConcapedeHead extends AgeableCreatureEntity {
 
     @Override
     public boolean isAggressive() {
+        if (this.isTamed())
+            return super.isAggressive(); // S202: pets/minions follow their stance command
         if (this.isInLove())
             return false;
         if (this.isDaytime())

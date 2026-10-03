@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -15,7 +16,7 @@ import net.minecraft.world.level.block.Blocks;
  * Trimmed - TemptGoal dropped (tame/diet-tempt system not ported), bag-size overrides dropped,
  * MobType.UNDEFINED attribute assignment dropped (no such field on BaseCreatureEntity here).
  */
-public class EntitySilex extends AgeableCreatureEntity {
+public class EntitySilex extends TameableCreatureEntity {
 
     public EntitySilex(EntityType<? extends EntitySilex> entityType, Level world) {
         super(entityType, world);

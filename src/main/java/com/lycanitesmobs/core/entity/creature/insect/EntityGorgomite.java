@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.creature.beast.EntityBalayang;
 import com.lycanitesmobs.core.entity.goals.targeting.FindAvoidTargetGoal;
 import net.minecraft.world.entity.player.Player;
@@ -21,7 +22,7 @@ import net.minecraft.world.level.Level;
  * self-contained (just spawns more gorgomites via CreatureManager, same pattern as
  * EntityConcapedeHead's segment spawning).
  */
-public class EntityGorgomite extends BaseCreatureEntity implements Enemy {
+public class EntityGorgomite extends TameableCreatureEntity implements Enemy {
     private int swarmLimit = 5;
 
     public EntityGorgomite(EntityType<? extends EntityGorgomite> entityType, Level world) {
@@ -44,7 +45,7 @@ public class EntityGorgomite extends BaseCreatureEntity implements Enemy {
 
     @Override
     public void aiStep() {
-        if (!this.getCommandSenderWorld().isClientSide && this.hasAttackTarget() && this.getTarget() instanceof net.minecraft.world.entity.player.Player && this.updateTick % 60 == 0) {
+        if (!this.getCommandSenderWorld().isClientSide && !this.isTamed() && this.hasAttackTarget() && this.getTarget() instanceof net.minecraft.world.entity.player.Player && this.updateTick % 60 == 0) {
             this.allyUpdate();
         }
         super.aiStep();

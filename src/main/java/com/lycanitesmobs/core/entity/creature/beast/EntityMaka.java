@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * ported), and the MobType.UNDEFINED attribute assignment. canBeLeashed() is the 1.21.1 no-arg
  * signature (was canBeLeashed(Player)).
  */
-public class EntityMaka extends AgeableCreatureEntity {
+public class EntityMaka extends TameableCreatureEntity {
 
     public EntityMaka(EntityType<? extends EntityMaka> entityType, Level world) {
         super(entityType, world);
@@ -50,7 +51,7 @@ public class EntityMaka extends AgeableCreatureEntity {
     public void onFirstSpawn() {
         // Random Alpha:
         CreatureInfo alphaInfo = CreatureManager.getInstance().getCreature("makaalpha");
-        if (alphaInfo != null) {
+        if (alphaInfo != null && !this.isMinion() && !this.isTamed()) { // S202: never swap a summon/pet for a wild alpha
             float alphaChance = (float) alphaInfo.getCreatureSpawn().getSpawnWeight() / Math.max(this.creatureInfo.getCreatureSpawn().getSpawnWeight(), 1);
             if (this.getRandom().nextFloat() <= alphaChance) {
                 EntityMakaAlpha alpha = (EntityMakaAlpha) CreatureManager.getInstance().getCreature("makaalpha").createEntity(this.getCommandSenderWorld());

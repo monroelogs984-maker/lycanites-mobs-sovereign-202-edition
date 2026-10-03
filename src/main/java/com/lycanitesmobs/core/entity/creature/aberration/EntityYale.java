@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import java.util.List;
 import net.minecraft.world.item.crafting.CraftingInput;
 import com.google.common.collect.Maps;
@@ -39,7 +40,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class EntityYale extends AgeableCreatureEntity implements IShearable {
+public class EntityYale extends TameableCreatureEntity implements IShearable {
 
 	protected static final EntityDataAccessor<Byte> FUR = SynchedEntityData.defineId(EntityYale.class, EntityDataSerializers.BYTE);
 

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.beast;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import java.util.HashMap;
 import net.minecraft.world.InteractionHand;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * AgeableCreatureEntity's class doc, that system isn't ported at all). canBeLeashed() fixed to
  * the no-arg 1.21.1 Leashable signature (was canBeLeashed(Player) in 1.20.1).
  */
-public class EntityBobeko extends AgeableCreatureEntity {
+public class EntityBobeko extends TameableCreatureEntity {
 
     public EntityBobeko(EntityType<? extends EntityBobeko> entityType, Level world) {
         super(entityType, world);

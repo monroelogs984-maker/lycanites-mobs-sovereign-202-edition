@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.undead;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.BreakDoorGoal;
 import com.lycanitesmobs.core.entity.goals.actions.MoveVillageGoal;
 import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.block.Blocks;
  * (spawn-event/minion system not ported). die()'s shadowfire-spread-on-death effect kept -
  * self-contained, uses the already-ported BlockShadowfire/BlockFireBase.PERMANENT.
  */
-public class EntityGeist extends AgeableCreatureEntity implements Enemy {
+public class EntityGeist extends TameableCreatureEntity implements Enemy {
 
     protected boolean shadowfireDeath = true;
 

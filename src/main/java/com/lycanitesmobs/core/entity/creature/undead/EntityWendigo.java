@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.undead;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.data.tag.LycanitesBlockTags;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -17,7 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3d;
 
-public class EntityWendigo extends BaseCreatureEntity implements Enemy {
+public class EntityWendigo extends TameableCreatureEntity implements Enemy {
 
     WanderGoal wanderAI;
 

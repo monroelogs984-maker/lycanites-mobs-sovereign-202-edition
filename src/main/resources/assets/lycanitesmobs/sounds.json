@@ -8343,5 +8343,653 @@
         "stream": true
       }
     ]
+  },
+  "entity.aglebemu.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.apollyon.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.arisaur.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/arisaur/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.arisaur.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/arisaur/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.arisaur.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.aspid.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/aspid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.aspid.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/aspid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.astaroth.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/astaroth/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.balayang.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.behemophet.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.bobeko.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/bobeko/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.bobeko.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/bobeko/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.bobeko.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.calpod.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/calpod/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.calpod.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/calpod/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.calpod.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.cephignis.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/cephignis/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.cephignis.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/cephignis/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.cherufe.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/cherufe/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.cherufe.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/cherufe/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.conba.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/conba/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.conba.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/conba/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.conba.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.concapede.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/concapede/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.concapede.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/concapede/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.ettin.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ettin/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.ettin.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ettin/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.geist.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/geist/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.geist.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/geist/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.ghoul.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ghoul/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.ghoul.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ghoul/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.gorgomite.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/gorgomite/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.gorgomite.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/gorgomite/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.gorgomite.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.ika.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ika/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.ika.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/ika/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.jabberwock.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.jouste.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/jouste/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.jouste.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/jouste/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.krake.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/krake/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.krake.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/krake/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.krake.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.lycosa.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.maka.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/maka/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.maka.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/maka/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.maka.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.nymph.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.remobra.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.shade.mount": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/shade/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.silex.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/silex/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.silex.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/silex/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.spriggan.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.stryder.mount": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/stryder/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.treant.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.trite.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/trite/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.trite.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/trite/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.vespid.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/vespid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.vespid.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/vespid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.vespidqueen.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/vespid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.vespidqueen.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/vespid/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.vespidqueen.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.vorach.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.wendigo.tame": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/wendigo/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.wendigo.beg": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/wendigo/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.wendigo.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.wisp.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.wraamon.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.xaphan.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.yale.tame": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/yale/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.yale.beg": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/yale/say",
+        "stream": false
+      }
+    ]
+  },
+  "entity.zoataur.eat": {
+    "category": "neutral",
+    "sounds": [
+      {
+        "name": "entity.generic.eat",
+        "type": "event"
+      }
+    ]
+  },
+  "entity.zoataur.mount": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "lycanitesmobs:entity/zoataur/say",
+        "stream": false
+      }
+    ]
   }
 }

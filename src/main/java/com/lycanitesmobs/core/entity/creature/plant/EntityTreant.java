@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.plant;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
@@ -23,7 +24,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
-public class EntityTreant extends BaseCreatureEntity implements Enemy, IGroupHeavy {
+public class EntityTreant extends TameableCreatureEntity implements Enemy, IGroupHeavy {
 
     // ==================================================
     //                    Constructor

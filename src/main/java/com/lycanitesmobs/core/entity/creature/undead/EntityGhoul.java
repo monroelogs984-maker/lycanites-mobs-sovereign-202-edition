@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.undead;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.BreakDoorGoal;
 import com.lycanitesmobs.core.entity.goals.actions.MoveVillageGoal;
 import com.lycanitesmobs.core.manager.DeferredLevelActionManager;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.Level;
  * Trimmed - same pattern as EntityCryptkeeper/EntityGeist: MoveVillageGoal/BreakDoorGoal/
  * onKillEntity villager-conversion and daylightBurns() dropped.
  */
-public class EntityGhoul extends AgeableCreatureEntity implements Enemy {
+public class EntityGhoul extends TameableCreatureEntity implements Enemy {
 
     public EntityGhoul(EntityType<? extends EntityGhoul> entityType, Level world) {
         super(entityType, world);

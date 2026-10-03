@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.reptile;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.IGroupHeavy;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * fleeHealthPercent/spawnsOnLand-style config fields that were dropped in the Phase 5 base trim.
  * canBeLeashed() uses the 1.21.1 no-arg Leashable signature (was canBeLeashed(Player)).
  */
-public class EntityArisaur extends AgeableCreatureEntity implements IGroupHeavy {
+public class EntityArisaur extends TameableCreatureEntity implements IGroupHeavy {
 
     public EntityArisaur(EntityType<? extends EntityArisaur> entityType, Level world) {
         super(entityType, world);

@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aberration;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
@@ -18,7 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * 1.21.1's no-arg canBeLeashed(). MobType.UNDEFINED attribute assignment dropped (no such field
  * here). getAISpeedModifier()/waterContact() are already restored on BaseCreatureEntity.
  */
-public class EntityKrake extends AgeableCreatureEntity implements Enemy {
+public class EntityKrake extends TameableCreatureEntity implements Enemy {
 
     public EntityKrake(EntityType<? extends EntityKrake> entityType, Level world) {
         super(entityType, world);

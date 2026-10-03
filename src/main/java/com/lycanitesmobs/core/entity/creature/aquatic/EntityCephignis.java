@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.aquatic;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
 import com.lycanitesmobs.core.entity.goals.actions.WanderGoal;
 import com.lycanitesmobs.core.manager.ObjectManager;
@@ -26,7 +27,7 @@ import net.minecraft.world.level.pathfinder.PathType;
  * getDamageModifier() restored 2026-09-29 (called from BaseCreatureEntity.hurt()). applyDropEffects()/CustomItemEntity dropped too - that custom item-
  * entity drop system isn't ported at all (core/entity/item/ doesn't exist in this port yet).
  */
-public class EntityCephignis extends AgeableCreatureEntity {
+public class EntityCephignis extends TameableCreatureEntity {
 
     public EntityCephignis(EntityType<? extends EntityCephignis> entityType, Level world) {
         super(entityType, world);

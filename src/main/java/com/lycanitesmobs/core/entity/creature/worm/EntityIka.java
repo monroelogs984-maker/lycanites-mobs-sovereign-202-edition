@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.worm;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.base.AgeableCreatureEntity;
 import com.lycanitesmobs.core.entity.goals.actions.AttackMeleeGoal;
 import com.lycanitesmobs.core.entity.goals.actions.TemptGoal;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class EntityIka extends AgeableCreatureEntity {
+public class EntityIka extends TameableCreatureEntity {
 
     WanderGoal wanderAI;
 

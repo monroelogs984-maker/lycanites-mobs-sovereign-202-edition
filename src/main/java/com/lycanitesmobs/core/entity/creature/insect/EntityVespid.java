@@ -1,5 +1,6 @@
 package com.lycanitesmobs.core.entity.creature.insect;
 
+import com.lycanitesmobs.core.entity.base.TameableCreatureEntity;
 import com.lycanitesmobs.core.entity.creature.beast.EntityConba;
 import com.lycanitesmobs.core.entity.goals.actions.abilities.PlaceBlockGoal;
 import com.lycanitesmobs.core.entity.goals.targeting.FindMasterGoal;
@@ -29,7 +30,7 @@ import net.minecraft.world.level.Level;
  * still flies, still stings, just doesn't build anything or answer to a queen. See
  * EntityVespidQueen.java for the same trim on the queen side.
  */
-public class EntityVespid extends AgeableCreatureEntity implements Enemy {
+public class EntityVespid extends TameableCreatureEntity implements Enemy {
     // Fields restored from official (2026-09-28 method audit):
     protected PlaceBlockGoal aiPlaceBlock;
     protected ContextUtils.CreatureBuildTask creatureBuildTask;

@@ -127,3 +127,10 @@ column freely.** Type = after the approved type moves.
   Grell can no longer be ridden (accepted by Glenn).
 - Every type already has a treat item (`treat_<type>`, all 19 incl. angel/golem/slime), so the new tameables need
   no new items. Rare variants still can't be tamed (official).
+
+- **Implemented in-game 2026-10-03.** The 2026-09-30 apply pass only set the JSON flags. 19 creatures had classes that
+  didn't extend `TameableCreatureEntity`, and `isTameable()`/`isSummonable()` require that, so they silently stayed
+  wild-only. Now fixed: arisaur, bobeko, calpod, gorgomite, krake, maka, treant, wendigo (tame); aspid, cephignis,
+  cherufe, concapede, geist, ghoul, ika, jouste, silex, vespid, yale (summon). Verified with a dev-client harness: all
+  57 tameables tamed with their type's treat (3-9 treats typically; Ignibus ~40 for its official 3000 reputation), all
+  48 summonables summoned as owned minions.
