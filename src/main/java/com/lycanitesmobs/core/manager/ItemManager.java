@@ -217,13 +217,13 @@ public class ItemManager extends JSONLoader {
         ObjectManager.addBlock("soulcubeundead", () -> new BlockBase(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE).strength(2F, 1200.0F), "soulcubeundead"), false);
         ObjectManager.addBlock("soulcubeaberrant", () -> new BlockBase(Block.Properties.of().mapColor(MapColor.STONE).sound(SoundType.STONE).strength(2F, 1200.0F), "soulcubeaberrant"), false);
 
-        // Utilities: (placeholders - see PlaceholderFacingBlock / BlockSummoningPedestal)
+        // Utilities: (equipment workstations - see EquipmentWorkstationBlock / BlockSummoningPedestal)
         ObjectManager.addBlock("summoningpedestal", () -> new com.lycanitesmobs.core.block.special.BlockSummoningPedestal(Block.Properties.of().sound(SoundType.METAL).strength(5, 10)), false);
-        ObjectManager.addBlock("equipmentforge_lesser", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.WOOD).strength(5, 10), "equipmentforge_lesser", PortPlaceholder.EQUIPMENT), false);
-        ObjectManager.addBlock("equipmentforge_greater", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.STONE).strength(5, 20), "equipmentforge_greater", PortPlaceholder.EQUIPMENT), false);
-        ObjectManager.addBlock("equipmentforge_master", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipmentforge_master", PortPlaceholder.EQUIPMENT), false);
-        ObjectManager.addBlock("equipment_infuser", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_infuser", PortPlaceholder.EQUIPMENT), false);
-        ObjectManager.addBlock("equipment_station", () -> new com.lycanitesmobs.core.block.special.PlaceholderFacingBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_station", PortPlaceholder.EQUIPMENT), false);
+        ObjectManager.addBlock("equipmentforge_lesser", () -> new com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock(Block.Properties.of().sound(SoundType.WOOD).strength(5, 10), "equipmentforge_lesser", com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock.Kind.FORGE, 1), false);
+        ObjectManager.addBlock("equipmentforge_greater", () -> new com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock(Block.Properties.of().sound(SoundType.STONE).strength(5, 20), "equipmentforge_greater", com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock.Kind.FORGE, 2), false);
+        ObjectManager.addBlock("equipmentforge_master", () -> new com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipmentforge_master", com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock.Kind.FORGE, 3), false);
+        ObjectManager.addBlock("equipment_infuser", () -> new com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_infuser", com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock.Kind.INFUSER, 0), false);
+        ObjectManager.addBlock("equipment_station", () -> new com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock(Block.Properties.of().sound(SoundType.METAL).strength(5, 1000), "equipment_station", com.lycanitesmobs.core.block.special.EquipmentWorkstationBlock.Kind.STATION, 0), false);
         ObjectManager.addBlock("propolis", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.CLAY).sound(SoundType.WET_GRASS).strength(0.6F).randomTicks(), "propolis"), false);
         ObjectManager.addBlock("veswax", () -> new HiveBlock(Block.Properties.of().mapColor(MapColor.WOOD).sound(SoundType.WOOD).strength(0.6F).randomTicks(), "veswax"), false);
 
@@ -270,6 +270,6 @@ public class ItemManager extends JSONLoader {
         // CreatureManager, fluids + buckets by FluidManager.
     }
 
-    // TODO Phase 4b: getEquipmentSharpnessRepair/getEquipmentManaRepair were dropped here -
-    // both depend on ItemEquipment, which isn't ported yet.
+    // getEquipmentSharpnessRepair/getEquipmentManaRepair were dropped here: sharpness is gone with the S202 equipment
+    // rework and mana recharge lives in Imprints.getManaRecharge.
 }

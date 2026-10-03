@@ -93,6 +93,9 @@ public class LycanitesMobs {
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedEntity.register(modEventBus);
         com.lycanitesmobs.core.container.block.SummoningPedestalContainer.init(); // adds its menu to CreatureContainer.MENUS
+        com.lycanitesmobs.core.container.block.EquipmentForgeContainer.init();
+        com.lycanitesmobs.core.container.block.EquipmentInfuserContainer.init();
+        com.lycanitesmobs.core.container.block.EquipmentStationContainer.init();
         com.lycanitesmobs.core.container.creature.CreatureContainer.MENUS.register(modEventBus);
         com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal.register(modEventBus);
         modEventBus.addListener(com.lycanitesmobs.core.network.PacketManager::registerPayloads);
@@ -229,6 +232,7 @@ public class LycanitesMobs {
         LMHelperClass.fixMaxHealth();
         Material.init();
         CreatureManager.getInstance().loadConfig();
+        ItemManager.getInstance().loadConfig(); // item config (seasonal drops, equipment mana items...) was never loaded before
         CreatureManager.getInstance().bindRegisteredValues();
         ProjectileManager.getInstance().bindRegisteredTypes();
         // Spawners resolve blocks/items/materials from the registries and creature ids from CreatureManager, so they

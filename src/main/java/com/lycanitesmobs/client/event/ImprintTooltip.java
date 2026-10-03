@@ -2,7 +2,6 @@ package com.lycanitesmobs.client.event;
 
 import com.lycanitesmobs.core.item.equipment.ItemEquipment;
 import com.lycanitesmobs.core.item.equipment.ItemEquipmentPart;
-import com.lycanitesmobs.core.item.equipment.features.EquipmentFeature;
 import com.lycanitesmobs.core.item.equipment.imprint.Imprints;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
@@ -18,8 +17,6 @@ import java.util.List;
  * and what it does. Without Shift the item's tooltip is unchanged.
  */
 public class ImprintTooltip {
-    private static final List<String> SHOWN_FEATURES = List.of("effect", "damage", "summon", "projectile");
-
     public static void onTooltip(ItemTooltipEvent event) {
         ItemStack host = event.getItemStack();
         if (!Imprints.hasImprint(host) || !Screen.hasShiftDown()) {
@@ -40,13 +37,8 @@ public class ImprintTooltip {
                 .withStyle(mana > 0 ? ChatFormatting.BLUE : ChatFormatting.DARK_GRAY));
         tooltip.add(Component.translatable(partItem.isImprintAbility() ? "imprint.lycanitesmobs.ability" : "imprint.lycanitesmobs.passive")
                 .withStyle(ChatFormatting.GRAY));
-        for (String featureType : SHOWN_FEATURES) {
-            for (EquipmentFeature feature : partItem.getActiveFeaturesByType(part, featureType)) {
-                MutableComponent summary = feature.getSummary(part, level);
-                if (summary != null) {
-                    tooltip.add(Component.literal("  ").append(summary).withStyle(mana > 0 ? ChatFormatting.DARK_AQUA : ChatFormatting.DARK_GRAY));
-                }
-            }
+        for (MutableComponent summary : Imprints.getFeatureSummaries(part)) {
+            tooltip.add(Component.literal("  ").append(summary).withStyle(mana > 0 ? ChatFormatting.DARK_AQUA : ChatFormatting.DARK_GRAY));
         }
         if (mana <= 0) {
             tooltip.add(Component.translatable("imprint.lycanitesmobs.inactive").withStyle(ChatFormatting.RED));

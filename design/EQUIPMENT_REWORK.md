@@ -130,7 +130,14 @@ The block screens need a significant redesign so they explain the new system.
   (not eligible, already imprinted, level too high for this forge).
 - **Infuser / Station:** officially they take a part or an assembled Lycanites weapon. They now also need to accept
   an **imprinted weapon** (leveling or recharging the part inside it), and show part, level/XP and mana the same way.
-- Layout to be designed with Glenn before implementing.
+- **Layout DECIDED (Glenn 2026-10-03):**
+  - **Forge:** weapon slot + part slot, one context button (Imprint when a part is in, Extract when the weapon holds
+    an imprint and the part slot is empty), info panel on the right with the result or the reason it's blocked.
+  - **Infuser / Station:** official 2-slot auto-consume behaviour (item + charge / mana item, consumed instantly),
+    now also accepting imprinted weapons, plus an info panel (part, level/XP bar, mana bar). Infuser charges must
+    share an element with the part, as officially.
+- **The 6 mixed parts are all passive (Glenn 2026-10-03):** argustail, astarothclaw, cinderblade, clinkscythe,
+  reiverhorns, remobrawing keep on-hit effects/summon/damage; their right-click projectile is dropped.
 
 ## Implementation status
 
@@ -148,5 +155,8 @@ The block screens need a significant redesign so they explain the new system.
   (projectile-only = ability). Add `imprintMode` to a part json to override.
 - Tooltip (Shift only): part + level, mana x/1500, passive/ability, feature summaries; "inactive" at 0 mana.
 - `/lm imprint set <part> [level]`, `/lm imprint extract`, `/lm imprint mana <n>` on the held item (dev/admin).
-- **Not verified in-game yet.** Still to build: Forge (imprint/extract), Infuser (level with charges), Station
-  (recharge mana), with the GUI redesign.
+- **Not verified in-game yet.**
+
+**Part 2 done (2026-10-03, deployed to Lycannots):** Forge (imprint/extract, tier caps part level), Infuser (charges
+level a part or an imprinted weapon), Station (mana items recharge either), with the new screens. The imprint
+component is now `ItemContainerContents` (part-1 data still loads). Details are in PORT_PLAN "Equipment rework part 2".

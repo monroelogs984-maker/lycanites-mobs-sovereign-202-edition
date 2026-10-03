@@ -56,6 +56,9 @@ public class ClientSetup {
     public static void registerMenuScreens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(com.lycanitesmobs.core.container.creature.CreatureContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.creature.CreatureInventoryScreen::new);
         event.register(com.lycanitesmobs.core.container.block.SummoningPedestalContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.block.SummoningPedestalScreen::new);
+        event.register(com.lycanitesmobs.core.container.block.EquipmentForgeContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.block.EquipmentForgeScreen::new);
+        event.register(com.lycanitesmobs.core.container.block.EquipmentInfuserContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.block.EquipmentInfuserScreen::new);
+        event.register(com.lycanitesmobs.core.container.block.EquipmentStationContainer.TYPE.get(), com.lycanitesmobs.client.gui.screen.block.EquipmentStationScreen::new);
     }
 
     public static void setClientPlayerSupplier() {

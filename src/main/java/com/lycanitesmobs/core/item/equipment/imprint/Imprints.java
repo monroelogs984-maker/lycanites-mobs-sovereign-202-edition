@@ -2,6 +2,8 @@ package com.lycanitesmobs.core.item.equipment.imprint;
 
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.capabilities.entity.ExtendedEntity;
+import com.lycanitesmobs.core.data.info.item.ItemConfig;
+import com.lycanitesmobs.core.item.consumable.entity.ChargeItem;
 import com.lycanitesmobs.core.item.equipment.ItemEquipment;
 import com.lycanitesmobs.core.item.equipment.ItemEquipmentPart;
 import com.lycanitesmobs.core.item.equipment.features.DamageEquipmentFeature;
@@ -9,8 +11,11 @@ import com.lycanitesmobs.core.item.equipment.features.EffectEquipmentFeature;
 import com.lycanitesmobs.core.item.equipment.features.EquipmentFeature;
 import com.lycanitesmobs.core.item.equipment.features.ProjectileEquipmentFeature;
 import com.lycanitesmobs.core.item.equipment.features.SummonEquipmentFeature;
+import com.mojang.serialization.Codec;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionResult;
@@ -22,6 +27,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
@@ -30,6 +36,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,9 +48,15 @@ import java.util.List;
 public class Imprints {
     public static final DeferredRegister<DataComponentType<?>> COMPONENTS = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, LycanitesMobs.MODID);
 
-    /** The imprinted part (a copy of the part ItemStack, with its level/experience/mana). **/
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemStack>> IMPRINT = COMPONENTS.register("imprint",
-            () -> DataComponentType.<ItemStack>builder().persistent(ItemStack.CODEC).networkSynchronized(ItemStack.STREAM_CODEC).build());
+    /**
+     * The imprinted part (the part ItemStack, with its level/experience/mana), held in vanilla's immutable
+     * ItemContainerContents since a component can't be a mutable ItemStack. The fallback reads imprints saved by the
+     * first version, which stored the bare ItemStack.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> IMPRINT = COMPONENTS.register("imprint",
+            () -> DataComponentType.<ItemContainerContents>builder()
+                    .persistent(Codec.withAlternative(ItemContainerContents.CODEC, ItemStack.CODEC.xmap(stack -> ItemContainerContents.fromItems(List.of(stack)), contents -> contents.copyOne())))
+                    .networkSynchronized(ItemContainerContents.STREAM_CODEC).build());
 
     /** Items that can always take an imprint, or never can. **/
     public static final TagKey<Item> IMPRINTABLE = TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(LycanitesMobs.MODID, "imprintable"));
@@ -93,7 +106,7 @@ public class Imprints {
         if (!hasImprint(host)) {
             return ItemStack.EMPTY;
         }
-        return host.get(IMPRINT.get()).copy();
+        return host.get(IMPRINT.get()).copyOne();
     }
 
     public static void setPart(ItemStack host, ItemStack part) {
@@ -103,7 +116,7 @@ public class Imprints {
         }
         ItemStack stored = part.copy();
         stored.setCount(1);
-        host.set(IMPRINT.get(), stored);
+        host.set(IMPRINT.get(), ItemContainerContents.fromItems(List.of(stored)));
     }
 
     /** Removes the imprint and returns the part, or an empty stack. **/
@@ -137,6 +150,83 @@ public class Imprints {
             partItem.setMana(part, partItem.getMana(part) + amount);
             setPart(host, part);
         }
+    }
+
+    /** True if the part has anything an imprint can use (structural parts like the wooden rod only had slots/harvest). **/
+    public static boolean isImprintablePart(ItemStack part) {
+        if (!(part.getItem() instanceof ItemEquipmentPart partItem)) {
+            return false;
+        }
+        for (String featureType : SHOWN_FEATURES) {
+            if (!partItem.getActiveFeaturesByType(part, featureType).isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final List<String> SHOWN_FEATURES = List.of("effect", "damage", "summon", "projectile");
+
+    /**
+     * What the part does as an imprint at its current level, one line per feature. A passive part skips its right-click
+     * projectiles (dropped by the rework) and an ability part skips hit-procs, matching what the event handlers run.
+     */
+    public static List<MutableComponent> getFeatureSummaries(ItemStack part) {
+        List<MutableComponent> summaries = new ArrayList<>();
+        if (!(part.getItem() instanceof ItemEquipmentPart partItem)) {
+            return summaries;
+        }
+        int level = partItem.getPartLevel(part);
+        boolean ability = partItem.isImprintAbility();
+        for (String featureType : SHOWN_FEATURES) {
+            for (EquipmentFeature feature : partItem.getActiveFeaturesByType(part, featureType)) {
+                if (feature instanceof ProjectileEquipmentFeature projectile && ability == "hit".equalsIgnoreCase(projectile.getProjectileTrigger())) {
+                    continue;
+                }
+                MutableComponent summary = feature.getSummary(part, level);
+                if (summary != null) {
+                    summaries.add(summary);
+                }
+            }
+        }
+        return summaries;
+    }
+
+    /** The part held by a workstation slot: the stack itself if it's a part, or the imprint of an imprinted item. **/
+    public static ItemStack getPartOf(ItemStack stack) {
+        if (stack.getItem() instanceof ItemEquipmentPart) {
+            return stack;
+        }
+        return getPart(stack);
+    }
+
+    /** Writes a changed part back into the slot stack it came from (getPartOf), returning the stack to put back. **/
+    public static ItemStack setPartOf(ItemStack stack, ItemStack part) {
+        if (stack.getItem() instanceof ItemEquipmentPart) {
+            return part;
+        }
+        setPart(stack, part);
+        return stack;
+    }
+
+    /** How much mana an item restores at the Equipment Station (official tiers, from the item config), 0 if none. **/
+    public static int getManaRecharge(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return 0;
+        }
+        if (stack.getItem() instanceof ChargeItem) {
+            return ItemConfig.getHighEquipmentRepairAmount();
+        }
+        String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        if (contains(ItemConfig.getMaxEquipmentManaItems(), id)) return ItemEquipment.MANA_MAX;
+        if (contains(ItemConfig.getHighEquipmentManaItems(), id)) return ItemConfig.getHighEquipmentRepairAmount();
+        if (contains(ItemConfig.getMediumEquipmentManaItems(), id)) return ItemConfig.getMediumEquipmentRepairAmount();
+        if (contains(ItemConfig.getLowEquipmentManaItems(), id)) return ItemConfig.getLowEquipmentRepairAmount();
+        return 0;
+    }
+
+    private static boolean contains(List<? extends String> ids, String id) {
+        return ids != null && ids.contains(id);
     }
 
     /** The imprinted part item if the host has one with mana left, else null. **/

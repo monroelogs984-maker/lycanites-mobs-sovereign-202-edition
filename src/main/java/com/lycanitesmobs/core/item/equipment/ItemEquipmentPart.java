@@ -3,7 +3,6 @@ package com.lycanitesmobs.core.item.equipment;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.InteractionHand;
-import com.lycanitesmobs.core.util.PortPlaceholder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -355,12 +354,6 @@ public class ItemEquipmentPart extends BaseItem {
     @Override
     public Component getDescription() {
         return Component.translatable("item.lycanitesmobs.equipmentpart.description").withStyle(ChatFormatting.DARK_GREEN);
-    }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
-        PortPlaceholder.notifyNotFunctional(player, player.getItemInHand(hand).getHoverName(), PortPlaceholder.EQUIPMENT);
-        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), world.isClientSide);
     }
 
     public static final Component SEPARATOR = Component.literal("[[SEP]]");

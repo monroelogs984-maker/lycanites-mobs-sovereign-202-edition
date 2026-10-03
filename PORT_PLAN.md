@@ -1793,3 +1793,37 @@ Everything in `design/` applied except the equipment rework. Commits 99837b4..21
   every existing instance brought the cut creatures back as "custom" JSON.
 - **Verified headless:** clean load (no Lycanites warnings), cut creatures unregistered, Wraith registered, climate
   dump. **Not verified:** event rotation (needs a player), trigger spawners, taming new tameables, Beastiary text.
+
+## Equipment rework part 2: Forge / Infuser / Station (2026-10-03)
+
+Design and layout decisions in `design/EQUIPMENT_REWORK.md` (Glenn picked the recommended options on 2026-10-03).
+- `EquipmentWorkstationBlock` replaces `PlaceholderFacingBlock` for all 5 blocks (same names, FACING, models). Vanilla
+  workstation style: **no block entity**. Items stay in the open menu and go back to the player on close, so nothing is
+  lost when the block breaks. The official tile entities are not ported.
+- Menus (`core/container/block/Equipment*Container`) share `EquipmentWorkstationContainer`: 2 work slots + player
+  inventory, server-side `onWorkSlotsChanged`, shift-click into whichever work slot accepts the item.
+  - **Forge:** weapon + part, one button (vanilla `clickMenuButton`, no custom packet): Imprint when a part is in,
+    Extract when the weapon is imprinted and the part slot is empty. Forge level (1/2/3) caps the part level both
+    ways. Structural parts (wooden rod...) are refused (`Imprints.isImprintablePart`).
+  - **Infuser:** part or imprinted weapon + charges; matching-element charges are consumed until max level. Official
+    dye/water recolouring and the charge -> XP bottle trick are dropped.
+  - **Station:** part or imprinted weapon + mana items (official tiers from the item config); consumed until full.
+- Screens (`client/gui/screen/block/Equipment*Screen`) draw a vanilla-style panel in code (no texture) with a dark
+  info panel: status / reason blocked, part, passive or ability, feature summaries, mana and XP bars.
+- Mixed parts (argustail, astarothclaw, cinderblade, clinkscythe, reiverhorns, remobrawing) are passive and their
+  right-click projectile is no longer listed; summaries come from `Imprints.getFeatureSummaries`, shared with the
+  Shift tooltip.
+- Equipment parts lost their "not functional yet" right-click placeholder (the official part had no use action).
+
+**Bugs found on the way:**
+- **The part-1 imprint component was a raw `ItemStack`.** NeoForge rejects that in dev ("Data components must
+  implement equals and hashCode"), and a mutable component is unsafe in general. It's now vanilla
+  `ItemContainerContents`, with a fallback decoder so part-1 imprints (bare ItemStack) still load.
+- **`ItemManager.loadConfig()` was never called**, so the whole item config (seasonal drop chance, equipment mana
+  items...) sat at hardcoded defaults with null lists. It's now loaded in `commonSetup`.
+
+**Verified** with a temporary dev-client harness (since removed): 25/25 logic checks (forge imprint/extract/blocked
+states, level caps, items returned on close, infuser leveling + wrong element, station mana tiers, legacy imprint
+decode, save round trip) plus screenshots of all three screens. Deployed to Lycannots 2026-10-03.
+**Not verified by hand in-game yet:** clicking through the screens as a player, shift-click, and the passive/ability
+effects in combat (part 1).
