@@ -1890,3 +1890,10 @@ playing as "Dev" (puppet jar in `run/client/mods`; bridge `run/client/claudepupp
   cooldowns start at 0 play time (a new character's first minute can't trigger them; official).
 - **Not verified:** dungeon walkthrough, Beastiary/Bond bar screenshots, mount riding (Glenn's riding check
   unconfirmed).
+
+## Spawn budget built (2026-10-03)
+Built and tuned per `design/SPAWN_BUDGET.md` (see its "Built" section): shared weighted pick, creature group sizes,
+surface 6-10 + caves/water 3-5 pools, equal climate bands with the plains line, water creature climate centres,
+excluded biome tags honoured, 2400-tick idle despawn for natural spawns, block-scan cache, chunk pre-spawns near
+players only. Also fixed: bosses ignored `/kill`. Glenn played it in the dev client via Claude Puppet. Release jar
+copied to `~/Public` (Glenn's request). Not committed yet.

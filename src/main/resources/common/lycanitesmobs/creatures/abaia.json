@@ -24,6 +24,7 @@
     ],
     "spawnWeight": 6,
     "spawnRarity": "common",
+    "climateCenter": [0.8, 0.9],
     "dungeonWeight": 200,
     "spawnAreaLimit": 5,
     "spawnGroupMin": 1,

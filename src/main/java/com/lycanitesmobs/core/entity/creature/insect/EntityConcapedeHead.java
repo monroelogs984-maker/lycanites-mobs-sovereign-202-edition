@@ -66,6 +66,7 @@ public class EntityConcapedeHead extends TameableCreatureEntity {
                 segmentEntity.applyVariant(this.getVariantIndex());
                 segmentEntity.setSizeScale(this.sizeScale);
                 segmentEntity.inheritSpawnEventFrom(this);
+                segmentEntity.setNaturalSpawn(this.isNaturalSpawn()); // S202: a natural head's body despawns with it
                 segmentEntity.markNotFirstSpawn();
                 DeferredLevelActionManager.spawnEntity(parentSegment.getCommandSenderWorld(), segmentEntity.blockPosition(), null, segmentEntity);
                 parentSegment = segmentEntity;

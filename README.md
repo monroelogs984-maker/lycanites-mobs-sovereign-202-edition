@@ -6,6 +6,8 @@ the core creature mod for Sovereign 202.
 
 Repo: https://github.com/monroelogs984-maker/lycanites-mobs-sovereign-202-edition
 
+**What's different from the original:** see [CHANGES.md](CHANGES.md).
+
 See [PORT_PLAN.md](PORT_PLAN.md) for scope, phase breakdown, and current status.
 
 License: see [LICENSE](LICENSE) — inherited from the original mod (Lycanite Mob Public

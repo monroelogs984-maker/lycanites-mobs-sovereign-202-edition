@@ -216,6 +216,8 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     protected boolean solidCollision = false;
     /** Damage taken during the current second, used by some creatures' abilities. */
     public float damageTakenThisSec = 0;
+    /** S202: set when /kill or the void hurts this creature, so the damage limit doesn't undo it this tick. **/
+    protected boolean limitBypassed = false;
     protected boolean stealthPrev = false;
     protected int currentBlockingTime = 0;
     protected int blockingTime = 60;
@@ -515,6 +517,38 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return this.forceNoDespawn;
     }
 
+    /** S202 spawn budget: true for creatures from natural spawning (the budget and chunk pre-spawns); they count toward
+     * the budget and always despawn naturally, even creatures whose json says they don't. **/
+    protected boolean naturalSpawn = false;
+
+    public boolean isNaturalSpawn() {
+        return this.naturalSpawn;
+    }
+
+    public void setNaturalSpawn(boolean naturalSpawn) {
+        this.naturalSpawn = naturalSpawn;
+    }
+
+    /** S202 spawn budget: idle ticks before a natural spawn can random-despawn (vanilla 600, which made budget creatures
+     * vanish within ~20 s, before the player got near). Light pressure (applyLightSpawnPressure) still triples the rate. **/
+    public static final int NATURAL_IDLE_DESPAWN_TICKS = 2400;
+
+    @Override
+    public void checkDespawn() {
+        if (!this.naturalSpawn || this.noActionTime > NATURAL_IDLE_DESPAWN_TICKS) {
+            super.checkDespawn();
+            return;
+        }
+        // Vanilla only random-despawns past 600 idle ticks: hold it under that until the longer limit, keeping vanilla's
+        // other rules (instant despawn past 128 blocks, idle reset near a player).
+        int idle = this.noActionTime;
+        this.noActionTime = Math.min(idle, 600);
+        super.checkDespawn();
+        if (this.noActionTime != 0) {
+            this.noActionTime = idle;
+        }
+    }
+
     @Override
     public void setPersistenceRequired() {
         super.setPersistenceRequired();
@@ -536,7 +570,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (this.creatureInfo.getCreatureSpawn().forcesDespawn()) {
             return true;
         }
-        if (!this.creatureInfo.getCreatureSpawn().despawnsNaturally()) {
+        if (!this.creatureInfo.getCreatureSpawn().despawnsNaturally() && !this.naturalSpawn) {
             return false;
         }
         if (this.creatureInfo.isBoss() || (this.isRareVariant() && !Variant.isRareDespawning())) {
@@ -1897,8 +1931,23 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * Trimmed (Phase 5e): the official hurt() also clears dropsRequirePlayerDamage, calls onDamage() and tracks
      * boss player damage - none of those exist in this port yet. Only the relationship reputation hit is kept.
      **/
+    /** S202: /kill always works, even on a blocking boss or one at its damage limit (both used to swallow it). **/
+    @Override
+    public void kill() {
+        this.limitBypassed = true;
+        super.kill();
+        if (!this.level().isClientSide && this.isAlive() && !this.isRemoved()) {
+            DamageSource source = this.damageSources().genericKill();
+            this.setHealth(0);
+            this.die(source);
+        }
+    }
+
     @Override
     public boolean hurt(DamageSource damageSrc, float damageAmount) {
+        if (damageSrc.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            this.limitBypassed = true;
+        }
         damageAmount *= this.getDamageModifier(damageSrc);
         if (super.hurt(damageSrc, damageAmount)) {
             if (this.dropsRequirePlayerDamage && damageSrc.getEntity() instanceof Player) {
@@ -1924,6 +1973,9 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
     @Override
     protected float getDamageAfterArmorAbsorb(DamageSource damageSrc, float damageAmount) {
         damageAmount = super.getDamageAfterArmorAbsorb(damageSrc, damageAmount);
+        if (damageSrc.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return damageAmount; // S202: /kill and the void aren't reduced or capped (the cap made bosses unkillable by /kill).
+        }
         damageAmount = this.getDamageAfterDefense(damageAmount);
         if ((this.isBoss() || this.isRareVariant()) && !(damageSrc.getEntity() instanceof Player)) {
             damageAmount *= 0.25F;
@@ -3318,6 +3370,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (this.damageLimit <= 0) {
             return;
         }
+        // S202: never clamp a creature that is dying (it brought bosses back mid-death with health restored) or one just
+        // hit by /kill or the void.
+        if (this.isDeadOrDying() || this.limitBypassed) {
+            this.limitBypassed = false;
+            this.healthLastTick = this.getHealth();
+            return;
+        }
         if (this.healthLastTick < 0) {
             this.healthLastTick = this.getHealth();
         }
@@ -3332,7 +3391,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     @Override
     public boolean isInvulnerableTo(DamageSource source) {
-        if (this.damageLimit > 0 && this.damageTakenThisSec >= this.damageLimit) {
+        if (this.damageLimit > 0 && this.damageTakenThisSec >= this.damageLimit && !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return true;
         }
         return super.isInvulnerableTo(source);
@@ -4833,6 +4892,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      */
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
+        this.naturalSpawn = nbt.getBoolean("NaturalSpawn");
         if (nbt.contains("Bond")) this.bond = Math.max(1, nbt.getInt("Bond"));
         super.readAdditionalSaveData(nbt);
         if (this.creatureInfo.isDummy()) {
@@ -4923,6 +4983,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
+        nbt.putBoolean("NaturalSpawn", this.naturalSpawn);
         nbt.putInt("Bond", this.bond);
         super.addAdditionalSaveData(nbt);
         if (this.creatureInfo.isDummy()) {

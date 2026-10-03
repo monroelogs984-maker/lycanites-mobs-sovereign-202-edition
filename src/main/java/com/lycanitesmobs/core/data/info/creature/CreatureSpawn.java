@@ -100,12 +100,14 @@ public class CreatureSpawn {
     /** S202: the lowest y level this creature can spawn at naturally (Integer.MIN_VALUE for no limit). **/
     protected int spawnMinY = Integer.MIN_VALUE;
 
-    /** S202 climate spawning: how far the temperature and downfall ranges are widened (about 15% of each scale). **/
-    public static final float CLIMATE_TEMPERATURE_MARGIN = 0.4F;
-    public static final float CLIMATE_DOWNFALL_MARGIN = 0.15F;
+    /** S202: plains' temperature, the line cold-only and hot-only creatures never cross (see getClimateRange). **/
+    public static final float CLIMATE_TEMPERATURE_LINE = 0.8F;
 
     /** S202 climate range, computed on first use from the biome list. Null until computed. **/
     protected float[] climateRange;
+    /** S202: optional {temperature, downfall} centre from the json ("climateCenter"), for creatures with no biome list
+     * (e.g. water creatures) or to override the centre taken from the biome list. **/
+    protected float[] climateCenter;
     protected boolean climateUnrestricted = false;
 
     /**
@@ -346,6 +348,10 @@ public class CreatureSpawn {
 
         if (json.has("spawnWeight"))
             this.spawnWeight = json.get("spawnWeight").getAsInt();
+        if (json.has("climateCenter")) {
+            var center = json.get("climateCenter").getAsJsonArray();
+            this.climateCenter = new float[] {center.get(0).getAsFloat(), center.get(1).getAsFloat()};
+        }
         if (json.has("spawnRarity"))
             this.spawnRarity = json.get("spawnRarity").getAsString();
         if (json.has("dungeonWeight"))
@@ -368,6 +374,7 @@ public class CreatureSpawn {
         if (json.has("spawnMinY"))
             this.spawnMinY = json.get("spawnMinY").getAsInt();
         this.climateRange = null;
+        this.excludedBiomes = null;
 
         if (json.has("despawnNatural"))
             this.despawnNatural = json.get("despawnNatural").getAsBoolean();
@@ -439,12 +446,33 @@ public class CreatureSpawn {
             return true;
         }
         float[] range = this.getClimateRange(level);
-        if (this.climateUnrestricted || range == null) {
-            return true;
+        if (!this.climateUnrestricted && range != null) {
+            float temperature = biome.getBaseTemperature();
+            float downfall = biome.getModifiedClimateSettings().downfall();
+            if (temperature < range[0] || temperature > range[1] || downfall < range[2] || downfall > range[3]) {
+                return false;
+            }
         }
-        float temperature = biome.getBaseTemperature();
-        float downfall = biome.getModifiedClimateSettings().downfall();
-        return temperature >= range[0] && temperature <= range[1] && downfall >= range[2] && downfall <= range[3];
+        // Glenn 2026-10-03: the json's excluded tags ("-minecraft:is_ocean"...) still apply, e.g. Silex and Stryder
+        // stay freshwater. (The climate conversion only used the positive tags.)
+        var biomeId = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME).getKey(biome);
+        return biomeId == null || !this.getExcludedBiomes(level).contains(biomeId.toString());
+    }
+
+    /** S202: biome ids from this creature's excluded ("-") biome tags, computed on first use. **/
+    protected Set<String> excludedBiomes;
+
+    private Set<String> getExcludedBiomes(Level level) {
+        if (this.excludedBiomes == null) {
+            List<String> excludedTags = new ArrayList<>();
+            for (String tag : this.biomeTags) {
+                if (tag.startsWith("-") && !tag.equalsIgnoreCase("-minecraft:is_end") && !tag.equalsIgnoreCase("-minecraft:is_nether")) {
+                    excludedTags.add(tag.substring(1));
+                }
+            }
+            this.excludedBiomes = excludedTags.isEmpty() ? Set.of() : new HashSet<>(JSONHelper.getBiomesFromTags(level, excludedTags));
+        }
+        return this.excludedBiomes;
     }
 
     /**
@@ -470,6 +498,7 @@ public class CreatureSpawn {
 
         var biomeRegistry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BIOME);
         float[] range = null;
+        float[] world = null;
         int overworldBiomes = 0;
         int matchedOverworldBiomes = 0;
         for (var entry : biomeRegistry.entrySet()) {
@@ -478,32 +507,81 @@ public class CreatureSpawn {
                 continue;
             }
             overworldBiomes++;
+            Biome biome = entry.getValue();
+            float temperature = biome.getBaseTemperature();
+            float downfall = biome.getModifiedClimateSettings().downfall();
+            world = this.extendClimate(world, temperature, downfall);
             if (!biomeIdSet.contains(entry.getKey().location().toString())) {
                 continue;
             }
             matchedOverworldBiomes++;
-            Biome biome = entry.getValue();
-            float temperature = biome.getBaseTemperature();
-            float downfall = biome.getModifiedClimateSettings().downfall();
-            if (range == null) {
-                range = new float[] {temperature, temperature, downfall, downfall};
-            } else {
-                range[0] = Math.min(range[0], temperature);
-                range[1] = Math.max(range[1], temperature);
-                range[2] = Math.min(range[2], downfall);
-                range[3] = Math.max(range[3], downfall);
-            }
+            range = this.extendClimate(range, temperature, downfall);
         }
-        if (range == null || matchedOverworldBiomes >= overworldBiomes) {
+        if (world == null) {
             this.climateUnrestricted = true;
             return null;
         }
-        range[0] -= CLIMATE_TEMPERATURE_MARGIN;
-        range[1] += CLIMATE_TEMPERATURE_MARGIN;
-        range[2] -= CLIMATE_DOWNFALL_MARGIN;
-        range[3] += CLIMATE_DOWNFALL_MARGIN;
+
+        // S202 equal bands (design/SPAWN_BUDGET.md): every restricted creature gets the same band size, centred on its
+        // original habitat, so no creature is far more widespread than another. Creatures with no biome list (or one
+        // covering every biome) stay unrestricted unless the json gives a climateCenter.
+        float centerTemperature;
+        float centerDownfall;
+        if (this.climateCenter != null) {
+            centerTemperature = this.climateCenter[0];
+            centerDownfall = this.climateCenter[1];
+        } else if (range == null || matchedOverworldBiomes >= overworldBiomes) {
+            this.climateUnrestricted = true;
+            return null;
+        } else {
+            centerTemperature = (range[0] + range[1]) / 2;
+            centerDownfall = (range[2] + range[3]) / 2;
+        }
+        float temperatureWidth = ConfigCreatureSpawning.INSTANCE.climateTemperatureWidth.get().floatValue();
+        float downfallWidth = ConfigCreatureSpawning.INSTANCE.climateDownfallWidth.get().floatValue();
+        // Glenn 2026-10-03: plains temperature is a hard line. A creature whose original habitat was all colder than plains
+        // (snow creatures) never reaches plains or warmer, and one whose habitat was all warmer (desert creatures, beaches
+        // aside) never reaches plains or colder. The band keeps its width where the world allows, then is cut at the line.
+        float temperatureMin = world[0];
+        float temperatureMax = world[1];
+        if (this.climateCenter == null && range != null) {
+            if (range[1] < CLIMATE_TEMPERATURE_LINE) {
+                temperatureMax = Math.min(temperatureMax, CLIMATE_TEMPERATURE_LINE - 0.01F);
+            } else if (range[0] >= CLIMATE_TEMPERATURE_LINE) {
+                temperatureMin = Math.max(temperatureMin, CLIMATE_TEMPERATURE_LINE + 0.01F);
+            }
+        }
+        float[] temperatureBand = fitBand(centerTemperature, temperatureWidth, temperatureMin, temperatureMax);
+        float[] downfallBand = fitBand(centerDownfall, downfallWidth, world[2], world[3]);
+        range = new float[] {temperatureBand[0], temperatureBand[1], downfallBand[0], downfallBand[1]};
         this.climateRange = range;
         return range;
+    }
+
+    private float[] extendClimate(float[] climate, float temperature, float downfall) {
+        if (climate == null) {
+            return new float[] {temperature, temperature, downfall, downfall};
+        }
+        climate[0] = Math.min(climate[0], temperature);
+        climate[1] = Math.max(climate[1], temperature);
+        climate[2] = Math.min(climate[2], downfall);
+        climate[3] = Math.max(climate[3], downfall);
+        return climate;
+    }
+
+    /** A band of the given width around the centre, shifted to stay inside the world's range (clamped if wider). **/
+    private static float[] fitBand(float center, float width, float worldMin, float worldMax) {
+        float min = center - width / 2;
+        float max = center + width / 2;
+        if (min < worldMin) {
+            max += worldMin - min;
+            min = worldMin;
+        }
+        if (max > worldMax) {
+            min -= max - worldMax;
+            max = worldMax;
+        }
+        return new float[] {Math.max(min, worldMin), max};
     }
 
     /** S202: a readable summary of this creature's spawn climate, for the dev dump command. **/

@@ -1,6 +1,6 @@
 # Spawn budget ("Mythic Beasts" density)
 
-**DECIDED (Glenn 2026-10-03), not built yet.** Covers both density (how many) and fairness (which ones). LYCANITES-REVIEW asked for Lycanites to feel like a "Mythic Beasts mod
+**DECIDED (Glenn 2026-10-03), BUILT 2026-10-03** (see "Built" at the end). Covers both density (how many) and fairness (which ones). LYCANITES-REVIEW asked for Lycanites to feel like a "Mythic Beasts mod
 where you see a few of everything". The 2026-09-30 work only changed *which* creature spawns (climate ranges,
 common/rare weights); the *volume* stayed official, which Glenn found "a moderate change from vanilla".
 
@@ -59,3 +59,44 @@ Jabberwock, Naxiris.
   budget. Proposed: yes, it's natural spawning.
 - Several players close together: count the budget per player over the union area, so two players don't double it.
 - Tamed pets, minions and the player's own summons never count.
+
+## Built (2026-10-03)
+
+- `SpawnBudget` replaces the world spawners' own timers (config `spawnBudgetEnabled`, `spawnBudgetMin` 6,
+  `spawnBudgetMax` 10, `spawnBudgetRange` 96, `spawnBudgetInterval` 60 ticks). Each check under budget runs one shared
+  weighted pick over every creature any world spawner can place there, then spawns one group (the creature's own
+  group size, cut to the room left). Chunk pre-spawns only run under budget and count toward it.
+- Natural spawns are tagged (`NaturalSpawn` NBT) and always despawn; pets/minions/body segments don't count.
+- **Interval 200 -> 60 ticks** (measured): at 200 the area sat at 2-4 because groups average ~1.3 and creatures
+  despawned fast. At 60 it held 5-7 in plains by day.
+- **Idle despawn for natural spawns: 2400 ticks** (vanilla 600). At 600, budget creatures vanished 10-40 s after
+  spawning, 60-128 blocks out, before the player got near. Official light pressure (x3 idle in disliked light) and
+  the vanilla 128-block instant despawn still apply.
+- **Block-scan cache:** the 13 block-location world spawners (lava, fire, acid, ooze, portal, flower...) each read
+  a 65-block cube; run every check it cost ~60 ms per check. Their positions are cached per area for 30-45 s
+  (the official rate) and reused within 16 blocks.
+- **Water creature climate centres** (`climateCenter` in the json; Glenn may retune): Abaia 0.8/0.9 (swamps,
+  jungle water), Jengu 0.9/0.6 (warm water; `ignoreBiome` now false), Silex 0.5/0.5, Stryder 0.3/0.6,
+  Thresher 0.2/0.4 (cold seas). Note: negative biome tags (`-minecraft:is_ocean`) are ignored by the climate
+  conversion, so Silex/Stryder/Thresher used to be "anywhere".
+- **Plains line (Glenn 2026-10-03):** "things that are clearly snowy (Bobeko, Reiver...) shouldn't spawn in plains
+  or warmer, and vice versa for desert mobs." A creature whose original biome list was entirely colder than plains
+  (0.8) has its band cut below 0.8; one entirely at/above 0.8 (desert set; beaches sit at 0.8) is cut above 0.8.
+- Fairness measured (150 picks per biome): 35-40 species each in plains, jungle, snowy taiga, desert, beach, dark
+  forest; no creature above ~9%. Concapede now appears outside jungles.
+- Tools: `/lm spawning stats` (count vs budget, species, placement failures, last checks with ms), `/lm spawning tick`.
+- **Two pools (Glenn 2026-10-03, "yes"):** caves and water were filling half the budget, so the surface felt thin.
+  Surface (open sky, no fluid) keeps `spawnBudgetMin`/`Max` 6-10; caves and water get their own
+  `spawnBudgetBelowMin`/`Max` 3-5. Each check fills the surface first, then caves/water.
+- **Excluded biome tags apply again (Glenn: Silex/Stryder freshwater-only, "yes"):** `isValidBiome` now honours the
+  json's `-` tags on top of the climate band, for every creature (e.g. Thresher stays out of swamps/jungles).
+- **Chunk pre-spawns** only run within budget range of a player (they used to spawn at view distance and despawn
+  instantly).
+- **Block scans per check capped at 2**; expired scans are reused and unscanned spawners sit a check out. Checks
+  measured 8-16 ms while travelling (were 60-70 ms).
+
+## Related fix: /kill on bosses (2026-10-03)
+Boss damage limits made `/kill` and the void do nothing (damage cap, per-second limit, and the health clamp
+reviving a dying boss mid-animation; Amalgalich is also invulnerable while blocking). `/kill` and the void now
+bypass the limits, a dying creature is never clamped, and `kill()` always kills. Verified on a dev server:
+Amalgalich and Rahovart die to `/kill`.

@@ -24,6 +24,7 @@ public class CommandManager {
                         .then(MobEventCommand.register())
                         .then(DungeonsCommand.register())
                         .then(ImprintCommand.register())
+                        .then(SpawningCommand.register())
         );
     }
 }

@@ -268,6 +268,11 @@ public class MobSpawn {
         this.entityType = entityType;
     }
 
+    /** The mob id from the json (creature or other mod's entity). **/
+    public String getMobId() {
+        return this.mobId;
+    }
+
     public CreatureInfo getCreatureInfo() {
         return this.creatureInfo;
     }
@@ -612,7 +617,9 @@ public class MobSpawn {
         if (!"".equals(this.mobNameTag)) {
             entityLiving.setCustomName(Component.literal(this.mobNameTag));
         }
-        if (!this.getNaturalDespawn() && entityLiving instanceof Mob) {
+        // S202 spawn budget: naturally spawned creatures always despawn, whatever the json says.
+        boolean naturalSpawn = entityLiving instanceof BaseCreatureEntity creature && creature.isNaturalSpawn();
+        if (!this.getNaturalDespawn() && !naturalSpawn && entityLiving instanceof Mob) {
             ((Mob) entityLiving).setPersistenceRequired();
         }
 

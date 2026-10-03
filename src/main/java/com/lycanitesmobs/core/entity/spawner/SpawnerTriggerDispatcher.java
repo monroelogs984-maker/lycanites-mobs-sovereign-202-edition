@@ -166,9 +166,14 @@ public class SpawnerTriggerDispatcher {
                 }
             }
 
-            for (BlockPos triggerPosition : triggerPositions) {
-                for (WorldSpawnTrigger spawnTrigger : this.worldSpawnTriggers) {
-                    spawnTrigger.onTick(world, triggerPosition, spawnerTick);
+            // S202 spawn budget: the world spawners' own timers are replaced by one budget check per group of players.
+            if (SpawnBudget.isEnabled()) {
+                SpawnBudget.tick(world, triggerPositions, spawnerTick);
+            } else {
+                for (BlockPos triggerPosition : triggerPositions) {
+                    for (WorldSpawnTrigger spawnTrigger : this.worldSpawnTriggers) {
+                        spawnTrigger.onTick(world, triggerPosition, spawnerTick);
+                    }
                 }
             }
         }

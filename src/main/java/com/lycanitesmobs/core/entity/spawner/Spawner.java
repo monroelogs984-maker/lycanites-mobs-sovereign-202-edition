@@ -566,7 +566,79 @@ public class Spawner {
         if (!this.shouldExecuteSpawn(player, countAmount)) {
             return false;
         }
+        // S202 spawn budget: chunk pre-spawns only happen within budget range of a player (new chunks usually generate
+        // further out, where natural spawns despawn at once) and while that area is under budget (they count toward it).
+        if (spawnTrigger instanceof ChunkSpawnTrigger && SpawnBudget.isEnabled()
+                && (!world.hasNearbyAlivePlayer(triggerPos.getX() + 0.5D, triggerPos.getY(), triggerPos.getZ() + 0.5D, SpawnBudget.getRange()) || !SpawnBudget.hasRoom(world, triggerPos))) {
+            return false;
+        }
         return this.doSpawn(world, player, spawnTrigger, triggerPos, level, chain);
+    }
+
+    // ==================================================
+    //                S202 Spawn Budget API
+    // ==================================================
+    /** True if this spawner has a world (timer) trigger, which makes it part of the natural spawn budget. **/
+    public boolean isWorldSpawner() {
+        if (this.hasEventName()) {
+            return false;
+        }
+        for (SpawnTrigger trigger : this.triggers) {
+            if (trigger instanceof com.lycanitesmobs.core.entity.spawner.trigger.WorldSpawnTrigger) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if any of this spawner's locations scans a block volume (expensive), so its positions are worth caching. **/
+    public boolean scansBlocks() {
+        for (SpawnLocation location : this.locations) {
+            if (location instanceof com.lycanitesmobs.core.entity.spawner.location.BlockSpawnLocation) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The positions this spawner's location rules give around the provided position. **/
+    public List<BlockPos> getSpawnPositions(Level world, @Nullable Player player, BlockPos center) {
+        return this.getSpawnPos(world, player, center);
+    }
+
+    /** The mobs this spawner could place in the biome (null when it ignores biomes), with their own conditions checked. **/
+    public List<MobSpawn> getViableMobSpawns(Level world, @Nullable Player player, int blockCount, @Nullable Biome biome) {
+        return this.getBiomeSpawns(world, player, blockCount, this.ignoreBiomes ? null : biome);
+    }
+
+    /**
+     * Spawns one mob at the position with this spawner's placement checks (collision, light, limits, other mods' veto).
+     * Natural spawns are tagged for the budget and always despawn. Returns true if the spawn went ahead.
+     */
+    public boolean spawnMob(Level world, MobSpawn mobSpawn, BlockPos spawnPos, @Nullable Player player, boolean natural) {
+        LivingEntity entityLiving = mobSpawn.createEntity(world);
+        if (entityLiving == null) {
+            SpawnBudget.noteFailure("no entity");
+            return false;
+        }
+        entityLiving.moveTo((double) spawnPos.getX() + 0.5D, (double) spawnPos.getY(), (double) spawnPos.getZ() + 0.5D, world.random.nextFloat() * 360.0F, 0.0F);
+        MobSpawnEvent.SpawnPlacementCheck.Result canSpawn = this.checkForgeSpawnPlacement(world, entityLiving, spawnPos);
+        if (canSpawn == MobSpawnEvent.SpawnPlacementCheck.Result.FAIL && !this.ignoreForgeCanSpawnEvent && !mobSpawn.ignoresForgeCanSpawnEvent()) {
+            SpawnBudget.noteFailure("placement event");
+            return false;
+        }
+        if (!this.mobInstanceSpawnCheck(entityLiving, mobSpawn, world, player, spawnPos, 0, canSpawn == MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED)) {
+            if (entityLiving instanceof BaseCreatureEntity creature) {
+                if (!this.ignoreCollision && !creature.checkSpawnCollision(world, spawnPos)) SpawnBudget.noteFailure("collision");
+                else if (!this.ignoreLightLevel && !mobSpawn.ignoresLightLevel() && !creature.checkSpawnLightLevel(world, spawnPos)) SpawnBudget.noteFailure("light");
+                else SpawnBudget.noteFailure("nearby limits");
+            } else {
+                SpawnBudget.noteFailure("vanilla spawn rules");
+            }
+            return false;
+        }
+        this.spawnEntity(world, ExtendedWorld.getForWorld(world), entityLiving, spawnPos, 0, mobSpawn, player, 0, natural);
+        return true;
     }
 
     private boolean shouldExecuteSpawn(Player player, int countAmount) {
@@ -686,7 +758,7 @@ public class Spawner {
                 continue;
             }
 
-            this.spawnEntity(world, worldExt, entityLiving, spawnPos, level, mobSpawn, player, chain);
+            this.spawnEntity(world, worldExt, entityLiving, spawnPos, level, mobSpawn, player, chain, spawnTrigger instanceof ChunkSpawnTrigger && SpawnBudget.isEnabled());
             mobsSpawned++;
 
             if (mobSpawn.hasCreatureInfo()) {
@@ -933,11 +1005,16 @@ public class Spawner {
      * @param world        The world to spawn in.
      * @param entityLiving The entity to spawn.
      */
-    private void spawnEntity(Level world, ExtendedWorld worldExt, LivingEntity entityLiving, BlockPos spawnPos, int level, MobSpawn mobSpawn, Player player, int chain) {
+    private void spawnEntity(Level world, ExtendedWorld worldExt, LivingEntity entityLiving, BlockPos spawnPos, int level, MobSpawn mobSpawn, Player player, int chain, boolean natural) {
         entityLiving.setPortalCooldown();
 
         if (entityLiving instanceof BaseCreatureEntity entityCreature) {
-            entityCreature.applySpawnerSpawnState(this.forceNoDespawn, level > 0);
+            // S202 spawn budget: natural spawns always despawn (so the area keeps rotating) and count toward the budget.
+            entityCreature.applySpawnerSpawnState(this.forceNoDespawn && !natural, level > 0);
+            entityCreature.setNaturalSpawn(natural);
+            if (natural) {
+                SpawnBudget.addPending(world, entityCreature.getUUID(), spawnPos);
+            }
             if (this.blockBreakRadius > -1 && chain == 0) {
                 BlockPos creaturePos = entityLiving.blockPosition();
                 entityCreature.destroyArea(creaturePos.getX(), creaturePos.getY() - 1, creaturePos.getZ(), 100, true, this.blockBreakRadius, this.chainSpawning ? player : null, chain + 1);
