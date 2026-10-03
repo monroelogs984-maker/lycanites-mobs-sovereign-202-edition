@@ -88,6 +88,7 @@ public class LycanitesMobs {
         ENTITY_TYPES.register(modEventBus);
         ModAttributes.ATTRIBUTES.register(modEventBus);
         com.lycanitesmobs.core.item.equipment.imprint.Imprints.register(modEventBus);
+        com.lycanitesmobs.core.entity.pets.PetBond.register();
         ItemManager.register(modEventBus);
         FluidManager.register(modEventBus);
         com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer.register(modEventBus);

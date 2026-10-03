@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.special;
 
+import com.lycanitesmobs.core.data.info.creature.CreatureKnowledge;
+import com.lycanitesmobs.core.entity.pets.PetBond;
 import com.lycanitesmobs.core.block.blockentity.TileEntitySummoningPedestal;
 import com.lycanitesmobs.LycanitesMobs;
 import com.lycanitesmobs.core.capabilities.entity.ExtendedPlayer;
@@ -298,8 +300,18 @@ public class PortalEntity extends BaseProjectileEntity {
                 }
 
 
-                if (this.summonDuration > 0)
-                    entityCreature.setTemporary(this.summonDuration);
+                // S202 summoning mastery (Beastiary knowledge rank 3): Bond 2 stats and a longer summon.
+                int duration = this.summonDuration;
+                if (this.shootingEntity != null && this.summoningPedestal == null) {
+                    ExtendedPlayer ownerExt = ExtendedPlayer.getForPlayer(this.shootingEntity);
+                    CreatureKnowledge knowledge = ownerExt == null ? null : ownerExt.getBeastiary().getCreatureKnowledge(entityCreature.getCreatureInfo().getName());
+                    if (knowledge != null && knowledge.getRank() >= 3) {
+                        entityCreature.setBond(PetBond.MASTERY_BOND);
+                        duration = Math.round(duration * PetBond.MASTERY_DURATION_SCALE);
+                    }
+                }
+                if (duration > 0)
+                    entityCreature.setTemporary(duration);
 
                 if (this.shootingEntity != null) {
                     //this.shootingEntity.addStat(ObjectManager.getStat(entityCreature.creatureInfo.getName() + ".summon"), 1); TODO Player Stats

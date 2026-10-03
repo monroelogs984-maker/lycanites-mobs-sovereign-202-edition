@@ -1,5 +1,6 @@
 package com.lycanitesmobs.client.gui.screen.beastiary;
 
+import com.lycanitesmobs.core.entity.pets.PetBond;
 import com.lycanitesmobs.core.manager.ObjectManager;
 import com.lycanitesmobs.client.manager.TextureManager;
 import com.lycanitesmobs.client.gui.screen.beastiary.lists.CreatureFilterList;
@@ -257,7 +258,7 @@ public class PetsBeastiaryScreen extends BeastiaryScreen {
 
             // Experience:
             nextY += 4 + this.drawHelper.getWordWrappedHeight(text, colRightWidth);
-            text = "\u00A7l" + Component.translatable("creature.stat.experience").getString() + ": ";
+            text = "\u00A7l" + Component.translatable("creature.stat.bond", selectedPet.getBond()).getString() + ": ";
             this.drawHelper.drawString(matrixStack, text, nextX, nextY, 0xFFFFFF);
 
             barY = nextY - 1;
@@ -266,9 +267,10 @@ public class PetsBeastiaryScreen extends BeastiaryScreen {
             barX = nextX + this.drawHelper.getStringWidth(text);
             barCenter = barX + (barWidth / 2);
             this.drawHelper.drawTexture(matrixStack, TextureManager.getTexture("GUIPetBarEmpty"), barX, barY, 0, 1, 1, barWidth, barHeight);
-            float experienceNormal = (float) selectedPet.getExperience() / selectedPet.getMaxExperience();
+            int bondStepMax = PetBond.getBondStepMax(selectedPet.getBond());
+            float experienceNormal = bondStepMax <= 0 ? 1 : (float) PetBond.getBondStepProgress(selectedPet.getBondExperience()) / bondStepMax;
             this.drawHelper.drawTexture(matrixStack, TextureManager.getTexture("GUIBarExperience"), barX, barY, 0, experienceNormal, 1, barWidth * experienceNormal, barHeight);
-            String experienceText = selectedPet.getExperience() + "/" + selectedPet.getMaxExperience();
+            String experienceText = bondStepMax <= 0 ? Component.translatable("creature.stat.bond.max").getString() : PetBond.getBondStepProgress(selectedPet.getBondExperience()) + "/" + bondStepMax;
             this.drawHelper.draw(matrixStack, experienceText, barCenter - (this.drawHelper.getStringWidth(experienceText) / 2), barY + 2, 0xFFFFFF);
         }
 

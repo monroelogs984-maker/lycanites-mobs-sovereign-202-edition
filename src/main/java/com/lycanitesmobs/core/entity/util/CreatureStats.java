@@ -1,5 +1,7 @@
 package com.lycanitesmobs.core.entity.util;
 
+import com.lycanitesmobs.core.entity.pets.PetBond;
+
 import com.lycanitesmobs.core.entity.base.BaseCreatureEntity;
 import com.lycanitesmobs.core.manager.CreatureManager;
 import com.lycanitesmobs.core.data.info.Variant;
@@ -47,6 +49,7 @@ public class CreatureStats {
 		}
 
 		statValue *= this.getLevelMultiplier(statName);
+		statValue *= PetBond.getMultiplier(this.entity.getBond(), statName);
 		return Math.max(0, statValue);
 	}
 
@@ -67,6 +70,7 @@ public class CreatureStats {
 		}
 
 		statValue *= this.getLevelMultiplier(statName);
+		statValue *= PetBond.getMultiplier(this.entity.getBond(), statName);
 		return statValue;
 	}
 
@@ -127,6 +131,7 @@ public class CreatureStats {
 		}
 
 		statValue *= this.getLevelMultiplier(statName);
+		statValue *= PetBond.getMultiplier(this.entity.getBond(), statName);
 		return statValue;
 	}
 

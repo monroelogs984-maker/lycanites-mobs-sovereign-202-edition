@@ -76,7 +76,11 @@ public class CreatureKnowledge {
 		if (this.rank == 1) {
 			return 1000;
 		}
-		if (this.rank >= 2) {
+		// S202: rank 3 (summoning mastery, see PetBond) takes another 2000 knowledge.
+		if (this.rank == 2) {
+			return 2000;
+		}
+		if (this.rank >= 3) {
 			return 0;
 		}
 		return 1;

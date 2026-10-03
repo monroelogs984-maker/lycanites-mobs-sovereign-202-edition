@@ -1592,6 +1592,25 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         return (float) this.sizeScale * (float) this.creatureInfo.getSizeScale();
     }
 
+    /** S202 pets rework: Bond 1-3 (bound pets from their PetEntry, minions of a mastered creature get 2), see PetBond. **/
+    protected int bond = 1;
+
+    public int getBond() {
+        return this.bond;
+    }
+
+    /** Sets the Bond and re-applies stats if it changed (which also heals, like the old level ups). **/
+    public void setBond(int bond) {
+        bond = Math.max(1, Math.min(com.lycanitesmobs.core.entity.pets.PetBond.MAX_BOND, bond));
+        if (this.bond == bond) {
+            return;
+        }
+        this.bond = bond;
+        if (!this.getCommandSenderWorld().isClientSide) {
+            this.refreshAttributes();
+        }
+    }
+
     public int getMobLevel() {
         if (this.getCommandSenderWorld().isClientSide) {
             return this.getIntFromDataManager(LEVEL);
@@ -4807,6 +4826,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      */
     @Override
     public void readAdditionalSaveData(CompoundTag nbt) {
+        if (nbt.contains("Bond")) this.bond = Math.max(1, nbt.getInt("Bond"));
         super.readAdditionalSaveData(nbt);
         if (this.creatureInfo.isDummy()) {
             return;
@@ -4896,6 +4916,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
 
     @Override
     public void addAdditionalSaveData(CompoundTag nbt) {
+        nbt.putInt("Bond", this.bond);
         super.addAdditionalSaveData(nbt);
         if (this.creatureInfo.isDummy()) {
             return;

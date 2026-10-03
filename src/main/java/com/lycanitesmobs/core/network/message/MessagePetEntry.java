@@ -38,8 +38,8 @@ public class MessagePetEntry implements CustomPacketPayload {
     public String petEntryEntityName;
     public int respawnTime;
     public int respawnTimeMax;
-    public int entityLevel;
-    public int entityExperience;
+    /** S202: the pet's Bond experience (this slot carried the scrapped level + experience). **/
+    public int bondExperience;
     public boolean isRespawning;
 
     public MessagePetEntry() {
@@ -59,8 +59,7 @@ public class MessagePetEntry implements CustomPacketPayload {
         this.petEntryEntityName = petEntry.getEntityName();
         this.respawnTime = petEntry.getRespawnTime();
         this.respawnTimeMax = petEntry.getRespawnTimeMax();
-        this.entityLevel = petEntry.getLevel();
-        this.entityExperience = petEntry.getExperience();
+        this.bondExperience = petEntry.getBondExperience();
         this.isRespawning = petEntry.isRespawning();
     }
 
@@ -100,7 +99,7 @@ public class MessagePetEntry implements CustomPacketPayload {
         petEntry.setEntityVariant(message.variant);
         petEntry.getSummonSet().readFromPacket(message.summonType, message.subspecies, message.variant, message.behaviour);
         Entity entity = message.petEntryEntityID != -1 ? player.level().getEntity(message.petEntryEntityID) : null;
-        petEntry.applyClientSync(entity, message.petEntryEntityName, message.respawnTime, message.respawnTimeMax, message.entityLevel, message.entityExperience, message.isRespawning);
+        petEntry.applyClientSync(entity, message.petEntryEntityName, message.respawnTime, message.respawnTimeMax, message.bondExperience, message.isRespawning);
     }
 
     public static MessagePetEntry decode(RegistryFriendlyByteBuf packet) {
@@ -117,8 +116,7 @@ public class MessagePetEntry implements CustomPacketPayload {
         message.petEntryEntityName = packet.readUtf(1024);
         message.respawnTime = packet.readInt();
         message.respawnTimeMax = packet.readInt();
-        message.entityLevel = packet.readInt();
-        message.entityExperience = packet.readInt();
+        message.bondExperience = packet.readInt();
         message.isRespawning = packet.readBoolean();
         return message;
     }
@@ -136,8 +134,7 @@ public class MessagePetEntry implements CustomPacketPayload {
         packet.writeUtf(message.petEntryEntityName == null ? "" : message.petEntryEntityName);
         packet.writeInt(message.respawnTime);
         packet.writeInt(message.respawnTimeMax);
-        packet.writeInt(message.entityLevel);
-        packet.writeInt(message.entityExperience);
+        packet.writeInt(message.bondExperience);
         packet.writeBoolean(message.isRespawning);
     }
 }

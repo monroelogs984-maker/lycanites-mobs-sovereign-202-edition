@@ -1855,3 +1855,12 @@ by feeding its type's treat with rank-2 knowledge, every summonable spawned as a
 alpha swaps; no Concapede segments). Harness gotchas: `/lm beastiary complete` needs a rank argument and op
 permission; the test saves are floating platforms, so creatures spawned past the edge fall to their death.
 **Not verified by hand:** pets' behaviour in real play (following, fighting at the owner's side), perching.
+
+## Pets rework: Bond + summoning mastery (2026-10-03)
+
+Built from `design/PETS_REWORK.md` (its "Implementation" section has the numbers). `PetBond` (thresholds, multipliers,
+kill listener), Bond on `PetEntry` (time accrual in `onUpdate`, NBT, sync) and on `BaseCreatureEntity` (applied in
+`CreatureStats` health/defense/damage beside the level multiplier), `CreatureKnowledge` rank 3, `PortalEntity`
+mastery bonus, Beastiary Pets page Bond bar, chat messages. Harness-verified. **Harness gotcha:** a command run from
+inside another command (`performPrefixedCommand` in a command handler) is queued until the outer one finishes, so
+grant knowledge in an earlier stage than the code that reads it.

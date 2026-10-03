@@ -2,7 +2,7 @@
 
 **DECIDED (Glenn 2026-10-03):** Bond 1-3 grows from **time out + kills together** (not Charges); new knowledge
 rank 3 = summon mastery; official 3-minute respawn; perching stays (it was already ported, see below) and the official
-spirit costs/cap stay. Bond and mastery are not implemented yet. The tame/summon reallocation (`TAMING_SUMMONING.md`)
+spirit costs/cap stay. **Bond and mastery implemented 2026-10-03** (see "Implementation" at the end). The tame/summon reallocation (`TAMING_SUMMONING.md`)
 was made to work in-game on 2026-10-03 (PORT_PLAN "Tame/summon reallocation, implemented").
 
 **Drafted 2026-10-03.** LYCANITES-REVIEW said pets and summoning stay untouched for the first version. On 2026-09-30
@@ -79,3 +79,22 @@ in the creature JSONs, not code.
 ### Unchanged (proposed)
 Taming flow (rank-2 knowledge + treats), rare variants untameable, soulstone binding, 5 summon sets, staffs, the
 Summoning Pedestal, pet commands, diets, mount controls, Soul Contract transfers, element fusion.
+
+## Implementation (2026-10-03)
+
+`core/entity/pets/PetBond` holds every number (tune there):
+- **Bond experience:** Bond 2 at 500, Bond 3 at 1125 (the equipment-part steps). +1 per minute a bound pet/mount is
+  out and alive; +5 per kill made together: the pet's own kill, or the owner's kill while the pet is within 16
+  blocks. Kills count for hostile mobs, wild Lycanites creatures and players, never the owner's own pets. At roughly
+  60 kills an hour that's Bond 2 in ~1.5 h and Bond 3 in ~3 h of play together.
+- **Multipliers** (stack with everything else, applied where the scrapped level multiplier was): Bond 2 health x1.25,
+  damage x1.15; Bond 3 health x1.5, damage x1.3, defense x1.1. A Bond-up re-applies stats and fully heals the pet.
+- Stored on the PetEntry (`BondExperience`, survives death/respawn), synced in the pet entry message (the dead
+  level/experience slot), shown in the Beastiary Pets page instead of the old Experience bar. Chat message on
+  Bond-up. Only bound pets and mounts have Bond; tamed-but-unbound creatures stay at Bond 1.
+- **Mastery:** knowledge rank 3 needs another 2000 knowledge after rank 2 (same sources as before). Staff summons of a
+  mastered creature get Bond 2 and 1.5x duration. The Summoning Pedestal's minions are unaffected.
+
+Verified with a dev-client harness (removed): tame + soulstone bind, kill credits, Bond 2/3 stat changes (Warg
+20 -> 25 -> 30 health, 3.0 -> 3.45 damage), cap, NBT save, kept through death and respawn, time accrual, mastered vs
+unmastered staff summons. Not checked by eye: the Beastiary Pets page Bond bar.

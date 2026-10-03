@@ -162,6 +162,11 @@ public class Beastiary {
             this.extendedPlayer.getPlayer().displayClientMessage(summonMessage, false);
         }
 
+        if (creatureInfo.isSummonable() && creatureKnowledge.getRank() == 3) {
+            this.extendedPlayer.getPlayer().displayClientMessage(Component.translatable("message.beastiary.mastered", creatureInfo.getTitle())
+                    .withStyle(net.minecraft.ChatFormatting.LIGHT_PURPLE), false);
+        }
+
         if (creatureInfo.isTameable() && creatureKnowledge.getRank() == 2) {
             MutableComponent tameMessage = Component.translatable("message.beastiary.tameable.prefix")
                     .append(" ")

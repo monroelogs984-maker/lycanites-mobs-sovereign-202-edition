@@ -16,6 +16,7 @@ import com.lycanitesmobs.core.util.helpers.LMHelperClass;
 import net.minecraft.ReportedException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -119,6 +120,10 @@ public class PetEntry {
      * Entity Max Experience
      **/
     protected int entityMaxExperience = CreatureStats.BASE_LEVELUP_EXPERIENCE;
+    /** S202: Bond experience (see PetBond), kept through death and respawn. **/
+    protected int bondExperience = 0;
+    /** Ticks this pet has been out since its last time-based bond point. **/
+    protected int bondTicks = 0;
 
     /**
      * The name to use for the entity. Leave empty/null "" for no name.
@@ -298,13 +303,12 @@ public class PetEntry {
         this.releaseEntity = releaseEntity;
     }
 
-    public void applyClientSync(Entity entity, String entityName, int respawnTime, int respawnTimeMax, int entityLevel, int entityExperience, boolean isRespawning) {
+    public void applyClientSync(Entity entity, String entityName, int respawnTime, int respawnTimeMax, int bondExperience, boolean isRespawning) {
         this.entity = entity;
         this.entityName = entityName;
         this.respawnTime = respawnTime;
         this.respawnTimeMax = respawnTimeMax;
-        this.entityLevel = entityLevel;
-        this.entityExperience = entityExperience;
+        this.bondExperience = bondExperience;
         this.isRespawning = isRespawning;
     }
 
@@ -331,6 +335,36 @@ public class PetEntry {
         }
         this.spawningActive = spawningActive;
         return this;
+    }
+
+    // ========== Bond (S202) ==========
+    public int getBond() {
+        return PetBond.getBond(this.bondExperience);
+    }
+
+    public int getBondExperience() {
+        return this.bondExperience;
+    }
+
+    /** Adds bond experience (server side), raising the pet's Bond and telling the owner when it reaches a new one. **/
+    public void addBondExperience(int amount) {
+        if (amount <= 0 || this.getBond() >= PetBond.MAX_BOND) {
+            return;
+        }
+        int oldBond = this.getBond();
+        this.bondExperience = Math.min(this.bondExperience + amount, PetBond.BOND_3);
+        int newBond = this.getBond();
+        if (newBond > oldBond) {
+            if (this.entity instanceof BaseCreatureEntity creature) {
+                creature.setBond(newBond);
+            }
+            if (this.host instanceof Player player) {
+                player.displayClientMessage(Component.translatable("message.pet.bond", this.getDisplayName(), newBond).withStyle(ChatFormatting.LIGHT_PURPLE), false);
+            }
+        }
+        if (this.host instanceof Player player && ExtendedPlayer.getForPlayer(player) != null) {
+            ExtendedPlayer.getForPlayer(player).sendPetEntryToPlayer(this);
+        }
     }
 
     public void setLevel(int level) {
@@ -474,6 +508,12 @@ public class PetEntry {
             this.handleDeadOrStaleEntity();
             this.handleRespawn();
             this.updateActiveEntity();
+
+            // Bond from time spent out together:
+            if (this.usesSpirit() && this.entity != null && this.entity.isAlive() && ++this.bondTicks >= PetBond.TIME_INTERVAL) {
+                this.bondTicks = 0;
+                this.addBondExperience(1);
+            }
         }
         else {
             this.removeLiveEntityWithoutDeactivating();
@@ -555,6 +595,9 @@ public class PetEntry {
         if (this.entity instanceof BaseCreatureEntity entityCreature) {
             entityCreature.applyLevel(this.entityLevel);
             entityCreature.setExperience(this.entityExperience);
+            if (this.usesSpirit()) {
+                entityCreature.setBond(this.getBond());
+            }
             this.applyCreatureSpawnState(entityCreature);
             this.moveEntityToValidHostOffset(entityCreature);
 
@@ -851,6 +894,8 @@ public class PetEntry {
             this.isRespawning = nbtTagCompound.getBoolean("Respawning");
         if (nbtTagCompound.contains("SpawningActive"))
             this.spawningActive = nbtTagCompound.getBoolean("SpawningActive");
+        if (nbtTagCompound.contains("BondExperience"))
+            this.bondExperience = nbtTagCompound.getInt("BondExperience");
 
         this.summonSet.read(nbtTagCompound);
 
@@ -877,6 +922,7 @@ public class PetEntry {
         nbtTagCompound.putInt("RespawnTime", this.respawnTime);
         nbtTagCompound.putBoolean("Respawning", this.isRespawning);
         nbtTagCompound.putBoolean("SpawningActive", this.spawningActive);
+        nbtTagCompound.putInt("BondExperience", this.bondExperience);
         this.summonSet.write(nbtTagCompound);
 
         if (this.usesSpirit()) {

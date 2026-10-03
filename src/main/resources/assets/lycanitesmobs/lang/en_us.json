@@ -1717,5 +1717,9 @@
   "gui.lycanitesmobs.imprint.status.station_empty": "Put in a creature part or an imprinted weapon, then a mana item (redstone, lapis, charges, nether star...).",
   "gui.lycanitesmobs.imprint.status.mana_full": "Mana is full.",
   "gui.lycanitesmobs.imprint.status.insert_mana": "Add mana items to recharge it.",
-  "gui.lycanitesmobs.imprint.slot.item": "Item"
+  "gui.lycanitesmobs.imprint.slot.item": "Item",
+  "creature.stat.bond": "Bond %s",
+  "creature.stat.bond.max": "Max Bond",
+  "message.pet.bond": "Your bond with %s grew to Bond %s!",
+  "message.beastiary.mastered": "You have mastered summoning %s: your summons of it fight harder and last longer."
 }
