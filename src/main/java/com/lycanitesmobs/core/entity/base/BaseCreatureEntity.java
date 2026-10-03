@@ -1079,7 +1079,7 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
      * Syncs targets, attack phase, animation state and subspecies/variant/size between server and client. Ported from the
      * official onSyncUpdate() - the port had defined these data slots but never written them, so clients never saw a
      * creature's variant (base textures only), size, targets or attack animation state.
-     * TODO(port): the ARENA (boss arena centre) slot isn't synced.
+     * The ARENA (boss arena centre) slot is written by the official but never read on the client, so it is not synced.
      **/
     public void onSyncUpdate() {
         if (this.syncQueued) {
@@ -4014,6 +4014,13 @@ public abstract class BaseCreatureEntity extends PathfinderMob {
         if (!pickupEntity.isAlive() || this.distanceToSqr(pickupEntity) > 32D * 32D) {
             this.dropPickupEntity();
         }
+    }
+
+    /** S202: a perched creature (e.g. on its owner's shoulder) can't be targeted by the crosshair, so it doesn't block
+     * the player's clicks and attacks. It's taken off with the dismount key, not by clicking it. **/
+    @Override
+    public boolean isPickable() {
+        return !this.hasPerchTarget() && super.isPickable();
     }
 
     public boolean hasPerchTarget() {

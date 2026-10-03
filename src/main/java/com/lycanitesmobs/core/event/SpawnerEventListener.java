@@ -113,7 +113,12 @@ public class SpawnerEventListener {
         if (event.isCanceled() || event.getState() == null) {
             return;
         }
-        Player player = event.getBreaker() instanceof Player breaker ? breaker : null;
+        // Only a player's harvest counts, as officially (the official hooked BlockEvent.BreakEvent). BlockDropsEvent also
+        // fires for blocks popping off on their own (arena building, explosions, water, trampling), and passing those
+        // through turned every broken grass tuft near a boss arena into a Spriggan roll.
+        if (!(event.getBreaker() instanceof Player player)) {
+            return;
+        }
         SpawnerTriggerDispatcher.getInstance().onHarvestDrops(event.getLevel(), player, event.getPos(), event.getState(), event.getTool());
     }
 

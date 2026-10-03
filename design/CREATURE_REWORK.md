@@ -7,7 +7,7 @@
 
 **How effects work:** a creature applies **all** of its element's debuffs on each elemental hit, and all buffs to itself/allies. So every relocated debuff raises that element's creatures' power. This draft keeps every effect (none dropped) with at most 2 debuffs per element. If an element feels too strong, move a debuff onto specific creatures' own attacks instead, or drop it.
 
-## Elements (proposed)
+## Elements (applied 2026-09-30, 99837b4)
 
 | Element | Fusion | Creatures now -> after | Buffs | Debuffs | Change |
 |---|---|---|---|---|---|
@@ -164,7 +164,7 @@ element**, used only by these three End forms. Shade and Spectre still move off 
 own effects (Leech, Decay); Nether also gains them per the table above. Variant rule per form: 80 / 10 / 10 (2
 uncommon colours each).
 
-## Creature type moves (approved by Glenn, 2026-09-30; not applied yet)
+## Creature type moves (approved by Glenn, 2026-09-30; applied 2026-09-30, 99837b4)
 
 Goal: even out the groups, every type at least 3 members. Types don't affect fusion. Beastiary text for the moved "X Elementals" gets rewritten with the element rework. Taming/summoning is being reworked separately, so tameability is ignored here.
 
@@ -206,12 +206,12 @@ Group sizes, now -> after moves and cuts:
 - slime: 0 -> 3
 - golem: 1 -> 3
 
-## Final cut list (10, Glenn 2026-09-30; not removed yet)
+## Final cut list (10, Glenn 2026-09-30; removed 2026-09-30, 99837b4)
 
 geken, triffid, eyewig, malwrath, feradon, brucha, abtu, cryptkeeper, tpumpkyn, dawon. 121 - 10 = **111 planned creatures**.
 Every type keeps 3+ members (verified by script).
 
-## Spawn rarity (Glenn 2026-09-30; FINAL, not applied yet)
+## Spawn rarity (Glenn 2026-09-30; FINAL, applied 2026-09-30, 99837b4)
 
 Two global spawn rates (common, rare >= 65% of common). Not rated (no natural spawn): rahovart, asmodeus, amalgalich
 (altar bosses), concapedesegment, joustealpha, makaalpha (parts), sylph (summon/fusion only).

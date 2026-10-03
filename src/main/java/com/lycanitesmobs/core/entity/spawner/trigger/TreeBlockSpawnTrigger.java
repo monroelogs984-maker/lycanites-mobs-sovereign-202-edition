@@ -38,10 +38,13 @@ public class TreeBlockSpawnTrigger extends BlockSpawnTrigger {
 			int z = pos.getZ();
 			for(int searchX = x - 1; searchX <= x + 1; searchX++) {
 				for(int searchZ = z - 1; searchZ <= z + 1; searchZ++) {
+					// S202 fix (upstream bug): the official checked the centre column for emptiness, which is the broken log
+					// itself, so only logs at canopy height ever counted. Each column is now scanned up past trunk logs.
 					for(int searchY = y; searchY <= Math.min(world.getMaxBuildHeight(), y + 32); searchY++) {
-						if(this.isLeaves(world.getBlockState(new BlockPos(searchX, searchY, searchZ))))
+						BlockState searchState = world.getBlockState(new BlockPos(searchX, searchY, searchZ));
+						if(this.isLeaves(searchState))
 							return true;
-						if(!world.isEmptyBlock(new BlockPos(x, searchY, z)))
+						if(!searchState.isAir() && !this.isLog(searchState))
 							break;
 					}
 				}
@@ -61,10 +64,12 @@ public class TreeBlockSpawnTrigger extends BlockSpawnTrigger {
 			int z = pos.getZ();
 			for(int searchX = x - 1; searchX <= x + 1; searchX++) {
 				for(int searchZ = z - 1; searchZ <= z + 1; searchZ++) {
-					for(int searchY = y; searchY >= Math.max(0, y - 32); searchY--) {
-						if(this.isLog(world.getBlockState(new BlockPos(searchX, searchY, searchZ))))
+					// S202 fix (same upstream bug as isTreeLogBlock, mirrored): scan each column down past leaves.
+					for(int searchY = y; searchY >= Math.max(world.getMinBuildHeight(), y - 32); searchY--) {
+						BlockState searchState = world.getBlockState(new BlockPos(searchX, searchY, searchZ));
+						if(this.isLog(searchState))
 							return true;
-						if(!world.isEmptyBlock(new BlockPos(x, searchY, z)))
+						if(!searchState.isAir() && !this.isLeaves(searchState))
 							break;
 					}
 				}

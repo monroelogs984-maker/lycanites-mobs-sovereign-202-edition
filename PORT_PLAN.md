@@ -1864,3 +1864,29 @@ kill listener), Bond on `PetEntry` (time accrual in `onUpdate`, NBT, sync) and o
 mastery bonus, Beastiary Pets page Bond bar, chat messages. Harness-verified. **Harness gotcha:** a command run from
 inside another command (`performPrefixedCommand` in a command handler) is queued until the outer one finishes, so
 grant knowledge in an earlier stage than the code that reads it.
+
+## Verification sweep (2026-10-03)
+
+Run in the dev client on a fresh world, first with a temporary harness, then through Claude Puppet with Glenn
+playing as "Dev" (puppet jar in `run/client/mods`; bridge `run/client/claudepuppet/`; wrap player commands in
+`execute as Dev run ...`).
+- **Natural spawning works** (142 Lycanites joined in 90 s of day in a desert, 94 at night, 41 underground) but the
+  volume and fairness are still official; see `design/SPAWN_BUDGET.md` (the next build).
+- **All trigger spawners work:** ore, gem, tree, crop, glowstone, chaos (elemental kills only, by design), undeath,
+  death, explosion, fishing, lava mix, and sleep from a real bed.
+- **Mob events:** the real timer (500 delay samples within 54000-60000), Black Plague ran its minute, next timer
+  scheduled, Overworld rotation order exact and looping. Black Plague brought 27 Reapers in a minute (tuning note).
+- **Boss:** emerald soulkey used up in survival, teleport 595 blocks into the Amalgalich arena, boss targets the
+  player, death, return teleport after 10 s, event ends.
+- **Pets by hand (Glenn):** taming, soulstone binding (mounts go under Pets > Mounts), perching.
+- **Bugs fixed:**
+  - Tree trigger (upstream bug): leaf search checked the centre column, so only canopy-height logs counted.
+  - Block triggers fired on *any* block dropping items (port used BlockDropsEvent with no player check); the
+    official only counted player breaks. Boss arenas popping grass/flowers produced ~20 Spriggans in seconds.
+  - Server freeze: `TameableCreatureEntity` saved `isAggressive()`; Concapede's override reads the light level, which
+    hangs on chunk-unload save. Saves the stance bit now. Exposed by the 19-class tameable switch.
+  - Perched creatures are no longer pickable, so they don't block the owner's crosshair (official had the same issue).
+- **Notes:** boss arena sync slot is dead upstream too (written, never read); TODO closed. Sleep/explosion
+  cooldowns start at 0 play time (a new character's first minute can't trigger them; official).
+- **Not verified:** dungeon walkthrough, Beastiary/Bond bar screenshots, mount riding (Glenn's riding check
+  unconfirmed).

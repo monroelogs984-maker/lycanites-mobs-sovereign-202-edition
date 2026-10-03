@@ -1169,7 +1169,9 @@ public abstract class TameableCreatureEntity extends AgeableCreatureEntity imple
         nbt.putBoolean("Sitting", this.isSitting());
         nbt.putBoolean("Following", this.isFollowing());
         nbt.putBoolean("Passive", this.isPassive());
-        nbt.putBoolean("Aggressive", this.isAggressive());
+        // The stance setting itself: isAggressive() is a live check that some creatures compute from the world (Concapede
+        // tests the light level), and a world lookup while chunks are being saved on unload hangs the server.
+        nbt.putBoolean("Aggressive", this.hasBehaviourBit(TAMED_ID.STANCE_AGGRESSIVE.id));
         nbt.putBoolean("PVP", this.isPVP());
         nbt.putFloat("Hunger", this.getCreatureHunger());
         nbt.putFloat("Stamina", this.getStamina());
